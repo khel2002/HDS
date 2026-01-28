@@ -70,15 +70,16 @@ $color-contrast-light: $white !default;
 $color-contrast-dark: $pure-black !default;
 
 // scss-docs-start theme-color-variables
-$primary: $purple !default;
-$secondary: #8a8d93 !default;
-$success: $green !default;
-$info: $blue !default;
-$warning: $orange !default;
-$danger: $red !default;
-$light: #dfdfe3 !default;
-$dark: #312d4b !default;
-$gray: $gray-100 !default; // (C)
+$primary: #007fff !default;   // Azure Blue
+$secondary: #5a8fd4 !default; // Lighter blue-gray for secondary elements
+$success: #00b894 !default;   // Green (keep success semantic)
+$info: #1e90ff !default;      // Dodger blue for info
+$warning: #ffc107 !default;   // Amber for warnings
+$danger: #e74c3c !default;    // Red for danger
+$light: #f0f8ff !default;     // Azure-ish light background
+$dark: #0f1c2e !default;      // Dark navy for dark theme
+$gray: #cfd8e1 !default;      // Soft gray for borders/text
+ // (C)
 
 // scss-docs-end theme-color-variables
 

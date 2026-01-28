@@ -11,6 +11,8 @@ use App\Http\Controllers\FrontpageController;
 // Pages
 use App\Http\Controllers\pages\{
     AccountSettingsAccount,
+    MiscError,
+    MiscUnderMaintenance
 };
 
 // Authentication
@@ -19,6 +21,9 @@ use App\Http\Controllers\authentications\{
     RegisterBasic,
     ForgotPasswordBasic
 };
+
+
+
 
 /*
 |--------------------------------------------------------------------------

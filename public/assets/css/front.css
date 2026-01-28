@@ -1,0 +1,185 @@
+
+ body {
+        font-family: BlinkMacSystemFont, 'Segoe UI', system-ui, -apple-system, 'Roboto Slab', Roboto, Arial, sans-serif;
+      }
+
+      .masthead-subheading {
+        font-size: 1.5rem;
+        line-height: 1.5rem;
+        margin-bottom: 0;
+        font-weight: 400;
+      }
+
+      .masthead-heading {
+        margin-top: 0;
+        font-weight: 500;
+        letter-spacing: 5px;
+      }
+
+      header.masthead {
+        height: 100vh;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+      }
+
+      /* Dark overlay */
+      header.masthead::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      header.masthead .container {
+        position: relative;
+        z-index: 10;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        color: #fff;
+        padding: 0 1rem;
+      }
+
+      /* Subheading */
+      .masthead-subheading {
+        font-size: 0.9rem;
+        line-height: 1.2rem;
+        margin-bottom: 0.5rem;
+        font-weight: 400;
+      }
+
+      /* Main Heading */
+      .masthead-heading {
+        font-size: 3rem;
+        font-weight: 500;
+        letter-spacing: 5px;
+        margin: 0.5rem 0;
+      }
+
+      /* Paragraph */
+      .masthead p {
+        color: #a59a7c;
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      /* Buttons */
+      .btn-modern {
+        padding: 0.6rem 1.5rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.5rem;
+        /* for small screens */
+      }
+
+      /* Primary Button */
+      .btn-modern.btn-primary {
+        background-color: #022f5c;
+        border: 1px solid #022f5c;
+        color: #fff;
+      }
+
+      .btn-modern.btn-primary:hover,
+      .btn-modern.btn-primary:focus,
+      .btn-modern.btn-primary:active {
+        background-color: #0066cc;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        border: 1px solid #0066cc;
+        outline: none;
+      }
+
+      /* Outline Button */
+      .btn-modern.btn-outline-light {
+        color: #fff;
+        border: 1px solid #fff;
+        background-color: transparent;
+      }
+
+      .btn-modern.btn-outline-light:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Responsive Styles */
+      @media (max-width: 1200px) {
+        .masthead-heading {
+          font-size: 3.5rem;
+        }
+      }
+
+      @media (max-width: 992px) {
+        .masthead-heading {
+          font-size: 3rem;
+        }
+
+        .masthead-subheading {
+          font-size: 0.85rem;
+        }
+
+        .masthead p {
+          font-size: 0.95rem;
+        }
+
+        .btn-modern {
+          padding: 0.5rem 1.2rem;
+          font-size: 0.9rem;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .masthead-heading {
+          font-size: 2.5rem;
+        }
+
+        .masthead-subheading {
+          font-size: 0.8rem;
+        }
+
+        .masthead p {
+          font-size: 0.9rem;
+        }
+
+        .btn-modern {
+          width: 100%;
+          /* full width buttons for mobile */
+          justify-content: center;
+          margin-bottom: 0.5rem;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .masthead-heading {
+          font-size: 2rem;
+        }
+
+        .masthead-subheading {
+          font-size: 0.75rem;
+        }
+
+        .masthead p {
+          font-size: 0.85rem;
+        }
+
+        .btn-modern {
+          font-size: 0.85rem;
+          padding: 0.5rem 1rem;
+        }
+      }
+      .rooms-section {
+        padding: 50px 0;
+      }
+      .d-block {
+        border-radius: 15px;
+        overflow: hidden;
+      }
