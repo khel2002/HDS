@@ -32,7 +32,7 @@ use App\Http\Controllers\authentications\{
 */
 Route::get('/', [Analytics::class, 'index'])->name('dashboard');
 Route::get('/landing', [FrontpageController::class, 'index'])->name('landing');
-
+Route::get('/sample-landing', [FrontpageController::class, 'sampleLanding'])->name('sample-landing');
 /*
 |--------------------------------------------------------------------------
 | Authentication Routes

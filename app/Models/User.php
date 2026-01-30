@@ -2,47 +2,74 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    protected $table = 'users';
+    protected $primaryKey = 'user_id';
+
     protected $fillable = [
-        'name',
+        'role_id',
         'email',
         'password',
+        'temporary_act',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
-        'remember_token',
     ];
 
+    protected $casts = [
+        'temporary_act' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Get the role of the user
      */
-    protected function casts(): array
+    public function role()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->belongsTo(Role::class, 'role_id', 'role_id');
+    }
+
+    /**
+     * Get the guest details for the user
+     */
+    public function guestDetails()
+    {
+        return $this->hasOne(GuestDetail::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Get the reservations for the user
+     */
+    public function reservations()
+    {
+        return $this->hasMany(Reservation::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Get the registrations for the user
+     */
+    public function registrations()
+    {
+        return $this->hasMany(Registration::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Get the service requests made by the user
+     */
+    public function serviceRequests()
+    {
+        return $this->hasMany(ServiceRequest::class, 'requested_by_user_id', 'user_id');
     }
 }

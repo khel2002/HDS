@@ -11,4 +11,8 @@ class FrontpageController extends Controller
   {
     return view('frontpages.landingpage');
   }
+  public function sampleLanding()
+  {
+    return view('frontpages.landingpage-sample');
+  }
 }

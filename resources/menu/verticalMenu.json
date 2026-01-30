@@ -13,7 +13,12 @@
       "icon": "menu-icon icon-base ri ri-file-copy-line",
       "slug": "landing"
     },
-
+     {
+      "url": "/sample-landing",
+      "name": "Sample Landing Page",
+      "icon": "menu-icon icon-base ri ri-file-copy-line",
+      "slug": "sample-landing"
+    },
     {
       "menuHeader": "Account"
     },
