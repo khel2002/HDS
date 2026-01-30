@@ -1,0 +1,62 @@
+{
+  "menu": [
+    {
+      "url": "/guest/dashboard",
+      "name": "My Stay",
+      "icon": "menu-icon icon-base ri ri-home-smile-line",
+      "slug": "dashboard"
+    },
+    {
+      "menuHeader": "Services"
+    },
+    {
+      "name": "Breakfast",
+      "icon": "menu-icon icon-base ri ri-restaurant-2-line",
+      "slug": "breakfast",
+      "submenu": [
+        {
+          "url": "/guest/breakfast/menu",
+          "name": "View Menu",
+          "slug": "breakfast-menu"
+        },
+        {
+          "url": "/guest/breakfast/order",
+          "name": "Order Breakfast",
+          "slug": "order-breakfast"
+        },
+        {
+          "url": "/guest/breakfast/my-orders",
+          "name": "My Orders",
+          "slug": "my-breakfast-orders"
+        }
+      ]
+    },
+    {
+      "url": "/guest/room-service",
+      "name": "Room Service",
+      "icon": "menu-icon icon-base ri ri-customer-service-2-line",
+      "slug": "room-service"
+    },
+    {
+      "url": "/guest/my-requests",
+      "name": "My Requests",
+      "icon": "menu-icon icon-base ri ri-file-list-line",
+      "slug": "my-requests"
+    },
+    {
+      "menuHeader": "Information"
+    },
+    {
+      "url": "/guest/checkout-info",
+      "name": "Check-out Information",
+      "icon": "menu-icon icon-base ri ri-information-line",
+      "slug": "checkout-info"
+    },
+    {
+      "url": "/guest/help",
+      "name": "Help & Contact",
+      "icon": "menu-icon icon-base ri ri-customer-service-line",
+      "slug": "help"
+    }
+  ]
+}

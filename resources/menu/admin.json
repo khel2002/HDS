@@ -1,0 +1,377 @@
+{
+  "menu": [
+    {
+      "url": "/admin/dashboard",
+      "name": "Dashboard",
+      "icon": "menu-icon icon-base ri ri-home-smile-line",
+      "slug": "dashboard"
+    },
+    {
+      "menuHeader": "Reservations"
+    },
+    {
+      "name": "Reservations",
+      "icon": "menu-icon icon-base ri ri-calendar-check-line",
+      "slug": "reservations",
+      "submenu": [
+        {
+          "url": "/admin/reservations/all",
+          "name": "All Reservations",
+          "slug": "all-reservations"
+        }
+      ]
+    },
+    {
+      "menuHeader": "Guest Management"
+    },
+    {
+      "name": "Registration",
+      "icon": "menu-icon icon-base ri ri-door-open-line",
+      "slug": "registration",
+      "submenu": [
+        {
+          "url": "/admin/registration/check-in",
+          "name": "Check-in Guest",
+          "slug": "check-in"
+        },
+        {
+          "url": "/admin/registration/check-out",
+          "name": "Check-out Guest",
+          "slug": "check-out"
+        },
+        {
+          "url": "/admin/registration/active",
+          "name": "Active Registrations",
+          "slug": "active-registrations"
+        },
+        {
+          "url": "/admin/registration/all",
+          "name": "All Registrations",
+          "slug": "all-registrations"
+        },
+        {
+          "url": "/admin/registration/history",
+          "name": "Registration History",
+          "slug": "registration-history"
+        }
+      ]
+    },
+    {
+      "name": "Guest Management",
+      "icon": "menu-icon icon-base ri ri-user-3-line",
+      "slug": "guests",
+      "submenu": [
+        {
+          "url": "/admin/guests/all",
+          "name": "All Guests",
+          "slug": "all-guests"
+        },
+        {
+          "url": "/admin/guests/current",
+          "name": "Current Guests",
+          "slug": "current-guests"
+        },
+        {
+          "url": "/admin/guests/vip",
+          "name": "VIP Guests",
+          "slug": "vip-guests"
+        },
+        {
+          "url": "/admin/guests/history",
+          "name": "Guest History",
+          "slug": "guest-history"
+        }
+      ]
+    },
+    {
+      "menuHeader": "Room Management"
+    },
+    {
+      "name": "Rooms",
+      "icon": "menu-icon icon-base ri ri-hotel-bed-line",
+      "slug": "rooms",
+      "submenu": [
+        {
+          "url": "/admin/rooms/all",
+          "name": "All Rooms",
+          "slug": "all-rooms"
+        },
+        {
+          "url": "/admin/rooms/available",
+          "name": "Available",
+          "slug": "available-rooms"
+        },
+        {
+          "url": "/admin/rooms/occupied",
+          "name": "Occupied",
+          "slug": "occupied-rooms"
+        },
+        {
+          "url": "/admin/rooms/maintenance",
+          "name": "Maintenance",
+          "slug": "maintenance-rooms"
+        }
+      ]
+    },
+    {
+      "name": "Room Types",
+      "icon": "menu-icon icon-base ri ri-apps-line",
+      "slug": "room-types",
+      "submenu": [
+        {
+          "url": "/admin/room-types/all",
+          "name": "All Room Types",
+          "slug": "all-room-types"
+        },
+        {
+          "url": "/admin/room-types/pricing",
+          "name": "Manage Pricing",
+          "slug": "room-type-pricing"
+        }
+      ]
+    },
+    {
+      "name": "Amenities",
+      "icon": "menu-icon icon-base ri ri-service-line",
+      "slug": "amenities",
+      "submenu": [
+        {
+          "url": "/admin/amenities/all",
+          "name": "All Amenities",
+          "slug": "all-amenities"
+        }
+      ]
+    },
+    {
+      "menuHeader": "Services"
+    },
+    {
+      "name": "Service Requests",
+      "icon": "menu-icon icon-base ri ri-customer-service-2-line",
+      "slug": "service-requests",
+      "submenu": [
+        {
+          "url": "/admin/services/all",
+          "name": "All Requests",
+          "slug": "all-service-requests"
+        }
+      ]
+    },
+    {
+      "name": "Breakfast Management",
+      "icon": "menu-icon icon-base ri ri-restaurant-2-line",
+      "slug": "breakfast",
+      "submenu": [
+        {
+          "url": "/admin/breakfast/orders",
+          "name": "All Orders",
+          "slug": "breakfast-orders"
+        },
+        {
+          "url": "/admin/breakfast/menu",
+          "name": "Manage Menu",
+          "slug": "breakfast-menu"
+        },
+        {
+          "url": "/admin/breakfast/analytics",
+          "name": "Order Analytics",
+          "slug": "breakfast-analytics"
+        }
+      ]
+    },
+    {
+      "menuHeader": "Financial"
+    },
+    {
+      "name": "Payments",
+      "icon": "menu-icon icon-base ri ri-wallet-3-line",
+      "slug": "payments",
+      "submenu": [
+        {
+          "url": "/admin/payments/all",
+          "name": "All Transactions",
+          "slug": "all-payments"
+        },
+        {
+          "url": "/admin/payments/record",
+          "name": "Record Payment",
+          "slug": "record-payment"
+        },
+        {
+          "url": "/admin/payments/cash",
+          "name": "Cash Payments",
+          "slug": "cash-payments"
+        },
+        {
+          "url": "/admin/payments/online",
+          "name": "Online Payments",
+          "slug": "online-payments"
+        },
+        {
+          "url": "/admin/payments/pending",
+          "name": "Pending Payments",
+          "slug": "pending-payments"
+        }
+      ]
+    },
+    {
+      "name": "Revenue",
+      "icon": "menu-icon icon-base ri ri-money-dollar-circle-line",
+      "slug": "revenue",
+      "submenu": [
+        {
+          "url": "/admin/revenue/daily",
+          "name": "Daily Revenue",
+          "slug": "daily-revenue"
+        },
+        {
+          "url": "/admin/revenue/monthly",
+          "name": "Monthly Revenue",
+          "slug": "monthly-revenue"
+        },
+        {
+          "url": "/admin/revenue/yearly",
+          "name": "Yearly Revenue",
+          "slug": "yearly-revenue"
+        },
+        {
+          "url": "/admin/revenue/forecast",
+          "name": "Revenue Forecast",
+          "slug": "revenue-forecast"
+        }
+      ]
+    },
+    {
+      "menuHeader": "Reports & Analytics"
+    },
+    {
+      "name": "Reports",
+      "icon": "menu-icon icon-base ri ri-file-chart-line",
+      "slug": "reports",
+      "submenu": [
+        {
+          "url": "/admin/reports/occupancy",
+          "name": "Occupancy Report",
+          "slug": "occupancy-report"
+        },
+        {
+          "url": "/admin/reports/revenue",
+          "name": "Revenue Report",
+          "slug": "revenue-report"
+        },
+        {
+          "url": "/admin/reports/guest",
+          "name": "Guest Report",
+          "slug": "guest-report"
+        },
+        {
+          "url": "/admin/reports/service",
+          "name": "Service Report",
+          "slug": "service-report"
+        },
+        {
+          "url": "/admin/reports/performance",
+          "name": "Performance Report",
+          "slug": "performance-report"
+        },
+        {
+          "url": "/admin/reports/custom",
+          "name": "Custom Reports",
+          "slug": "custom-reports"
+        }
+      ]
+    },
+    {
+      "url": "/admin/analytics",
+      "name": "Analytics Dashboard",
+      "icon": "menu-icon icon-base ri ri-bar-chart-box-line",
+      "slug": "analytics"
+    },
+    {
+      "menuHeader": "User Management"
+    },
+    {
+      "name": "Users",
+      "icon": "menu-icon icon-base ri ri-group-line",
+      "slug": "users",
+      "submenu": [
+        {
+          "url": "/admin/users/all",
+          "name": "All Users",
+          "slug": "all-users"
+        },
+        {
+          "url": "/admin/users/staff",
+          "name": "Staff Users",
+          "slug": "staff-users"
+        },
+        {
+          "url": "/admin/users/guests",
+          "name": "Guest Users",
+          "slug": "guest-users"
+        }
+      ]
+    },
+    {
+      "menuHeader": "System"
+    },
+    {
+      "name": "Settings",
+      "icon": "menu-icon icon-base ri ri-settings-3-line",
+      "slug": "settings",
+      "submenu": [
+        {
+          "url": "/admin/settings/general",
+          "name": "General Settings",
+          "slug": "general-settings"
+        },
+        {
+          "url": "/admin/settings/booking",
+          "name": "Booking Settings",
+          "slug": "booking-settings"
+        },
+        {
+          "url": "/admin/settings/payment",
+          "name": "Payment Settings",
+          "slug": "payment-settings"
+        },
+        {
+          "url": "/admin/settings/notification",
+          "name": "Notifications",
+          "slug": "notification-settings"
+        }
+      ]
+    },
+    {
+      "url": "/admin/activity-log",
+      "name": "Activity Log",
+      "icon": "menu-icon icon-base ri ri-history-line",
+      "slug": "activity-log"
+    },
+    {
+      "menuHeader": "Account"
+    },
+    {
+      "name": "My Profile",
+      "icon": "menu-icon icon-base ri ri-user-settings-line",
+      "slug": "profile",
+      "submenu": [
+        {
+          "url": "/admin/profile/view",
+          "name": "View Profile",
+          "slug": "view-profile"
+        },
+        {
+          "url": "/admin/profile/edit",
+          "name": "Edit Profile",
+          "slug": "edit-profile"
+        },
+        {
+          "url": "/admin/profile/change-password",
+          "name": "Change Password",
+          "slug": "change-password"
+        }
+      ]
+    }
+  ]
+}

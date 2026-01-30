@@ -4,16 +4,82 @@
 
 @section('page-style')
 @vite(['resources/assets/vendor/scss/pages/page-auth.scss'])
+<style>
+    .split-layout {
+        display: flex;
+        min-height: 100vh;
+    }
+
+    .split-left {
+        flex: 1;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .split-left img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: cover;
+        border-radius: 1rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .split-right {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: #fff;
+    }
+
+    .login-container {
+        width: 100%;
+        max-width: 450px;
+    }
+
+    @media (max-width: 991px) {
+        .split-layout {
+            flex-direction: column;
+        }
+
+        .split-left {
+            min-height: 300px;
+            max-height: 400px;
+        }
+
+        .split-right {
+            flex: 1;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .split-left {
+            min-height: 200px;
+            max-height: 250px;
+        }
+    }
+</style>
 @endsection
 
 @section('content')
-<div class="position-relative">
-    <div class="authentication-wrapper authentication-basic container-p-y">
-        <div class="authentication-inner py-6 mx-4">
-            <!-- Login -->
-            <div class="card p-sm-7 p-2">
+<div class="split-layout">
+    <!-- Left Side - Image -->
+    <div class="split-left">
+        <img src="{{ asset('assets/img/login/332453497_1430352321038172_2805964747262411697_n.jpg') }}" alt="Login Visual" />
+    </div>
+
+    <!-- Right Side - Login Form -->
+    <div class="split-right">
+        <div class="login-container">
+            <div class="card border-0 shadow-none">
                 <!-- Logo -->
-                <div class="app-brand justify-content-center mt-5">
+                <div class="app-brand justify-content-center mb-5">
                     <a href="{{ url('/') }}" class="app-brand-link gap-3">
                         <span class="app-brand-logo demo">@include('_partials.macros')</span>
                         <span class="app-brand-text demo text-heading fw-semibold">{{ config('variables.templateName') }}</span>
@@ -21,7 +87,7 @@
                 </div>
                 <!-- /Logo -->
 
-                <div class="card-body mt-1">
+                <div class="card-body p-0">
                     <h4 class="mb-1">Welcome to {{ config('variables.templateName') }}! 👋🏻</h4>
                     <p class="mb-5">Please sign-in to your account and start the adventure</p>
 
@@ -55,18 +121,9 @@
                         </div>
                     </form>
 
-                    <p class="text-center mb-5">
-                        <span>New on our platform?</span>
-                        <a href="{{ url('auth/register-basic') }}">
-                            <span>Create an account</span>
-                        </a>
-                    </p>
+
                 </div>
             </div>
-            <!-- /Login -->
-            <img src="{{ asset('assets/img/illustrations/tree-3.png') }}" alt="auth-tree" class="authentication-image-object-left d-none d-lg-block" />
-            <img src="{{ asset('assets/img/illustrations/auth-basic-mask-light.png') }}" class="authentication-image d-none d-lg-block scaleX-n1-rtl" height="172" alt="triangle-bg" />
-            <img src="{{ asset('assets/img/illustrations/tree.png') }}" alt="auth-tree" class="authentication-image-object-right d-none d-lg-block" />
         </div>
     </div>
 </div>

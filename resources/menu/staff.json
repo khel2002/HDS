@@ -1,0 +1,208 @@
+{
+  "menu": [
+    {
+      "url": "/staff/dashboard",
+      "name": "Dashboard",
+      "icon": "menu-icon icon-base ri ri-home-smile-line",
+      "slug": "dashboard"
+    },
+    {
+      "menuHeader": "Reservations"
+    },
+    {
+      "name": "Reservations",
+      "icon": "menu-icon icon-base ri ri-calendar-check-line",
+      "slug": "reservations",
+      "submenu": [
+        {
+          "url": "/staff/reservations/all",
+          "name": "All Reservations",
+          "slug": "all-reservations"
+        }
+      ]
+    },
+    {
+      "menuHeader": "Guest Management"
+    },
+    {
+      "name": "Check-in/Check-out",
+      "icon": "menu-icon icon-base ri ri-door-open-line",
+      "slug": "registration",
+      "submenu": [
+        {
+          "url": "/staff/registration/check-in",
+          "name": "Check-in Guest",
+          "slug": "check-in"
+        },
+        {
+          "url": "/staff/registration/check-out",
+          "name": "Check-out Guest",
+          "slug": "check-out"
+        },
+        {
+          "url": "/staff/registration/active",
+          "name": "Active Registrations",
+          "slug": "active-registrations"
+        },
+        {
+          "url": "/staff/registration/history",
+          "name": "Registration History",
+          "slug": "registration-history"
+        }
+      ]
+    },
+    {
+      "name": "Guest Details",
+      "icon": "menu-icon icon-base ri ri-user-3-line",
+      "slug": "guests",
+      "submenu": [
+        {
+          "url": "/staff/guests/all",
+          "name": "All Guests",
+          "slug": "all-guests"
+        },
+        {
+          "url": "/staff/guests/current",
+          "name": "Current Guests",
+          "slug": "current-guests"
+        },
+        {
+          "url": "/staff/guests/history",
+          "name": "Guest History",
+          "slug": "guest-history"
+        }
+      ]
+    },
+    {
+      "menuHeader": "Room Management"
+    },
+    {
+      "name": "Rooms",
+      "icon": "menu-icon icon-base ri ri-hotel-bed-line",
+      "slug": "rooms",
+      "submenu": [
+        {
+          "url": "/staff/rooms/all",
+          "name": "All Rooms",
+          "slug": "all-rooms"
+        },
+        {
+          "url": "/staff/rooms/available",
+          "name": "Available Rooms",
+          "slug": "available-rooms"
+        },
+        {
+          "url": "/staff/rooms/occupied",
+          "name": "Occupied Rooms",
+          "slug": "occupied-rooms"
+        },
+        {
+          "url": "/staff/rooms/maintenance",
+          "name": "Maintenance",
+          "slug": "maintenance-rooms"
+        },
+        {
+          "url": "/staff/rooms/update-status",
+          "name": "Update Room Status",
+          "slug": "update-room-status"
+        }
+      ]
+    },
+    {
+      "menuHeader": "Services"
+    },
+    {
+      "name": "Service Requests",
+      "icon": "menu-icon icon-base ri ri-customer-service-2-line",
+      "slug": "service-requests",
+      "submenu": [
+        {
+          "url": "/staff/services/all",
+          "name": "All Requests",
+          "slug": "all-service-requests"
+        }
+      ]
+    },
+    {
+      "name": "Breakfast Orders",
+      "icon": "menu-icon icon-base ri ri-restaurant-2-line",
+      "slug": "breakfast",
+      "submenu": [
+        {
+          "url": "/staff/breakfast/orders",
+          "name": "All Orders",
+          "slug": "breakfast-orders"
+        },
+        {
+          "url": "/staff/breakfast/menu",
+          "name": "Breakfast Menu",
+          "slug": "breakfast-menu"
+        },
+        {
+          "url": "/staff/breakfast/pending",
+          "name": "Pending Orders",
+          "slug": "pending-breakfast"
+        }
+      ]
+    },
+    {
+      "menuHeader": "Payments"
+    },
+    {
+      "name": "Payments",
+      "icon": "menu-icon icon-base ri ri-wallet-3-line",
+      "slug": "payments",
+      "submenu": [
+        {
+          "url": "/staff/payments/record",
+          "name": "Record Payment",
+          "slug": "record-payment"
+        },
+        {
+          "url": "/staff/payments/transactions",
+          "name": "All Transactions",
+          "slug": "payment-transactions"
+        },
+        {
+          "url": "/staff/payments/cash",
+          "name": "Cash Payments",
+          "slug": "cash-payments"
+        },
+        {
+          "url": "/staff/payments/online",
+          "name": "Online Payments",
+          "slug": "online-payments"
+        }
+      ]
+    },
+    {
+      "menuHeader": "Reports"
+    },
+    {
+      "url": "/staff/reports",
+      "name": "Reports",
+      "icon": "menu-icon icon-base ri ri-file-chart-line",
+      "slug": "reports"
+    },
+    {
+      "menuHeader": "Account"
+    },
+    {
+      "name": "My Profile",
+      "icon": "menu-icon icon-base ri ri-user-settings-line",
+      "slug": "profile",
+      "submenu": [
+        {
+          "url": "/staff/profile/view",
+          "name": "View Profile",
+          "slug": "view-profile"
+        },
+        {
+          "url": "/staff/profile/change-password",
+          "name": "Change Password",
+          "slug": "change-password"
+        }
+      ]
+    }
+  ]
+}
