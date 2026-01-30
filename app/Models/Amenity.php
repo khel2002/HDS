@@ -5,23 +5,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Role extends Model
+class Amenity extends Model
 {
     use HasFactory;
 
-    protected $table = 'roles';
-    protected $primaryKey = 'role_id';
+    protected $table = 'amenities';
+    protected $primaryKey = 'amenity_id';
     public $timestamps = false;
 
     protected $fillable = [
-        'role_name',
+        'amenity_name',
     ];
 
     /**
-     * Get the users with this role
+     * Get the rooms that have this amenity
      */
-    public function users()
+    public function rooms()
     {
-        return $this->hasMany(User::class, 'role_id', 'role_id');
+        return $this->belongsToMany(Room::class, 'room_amenities', 'amenity_id', 'room_id');
     }
 }
