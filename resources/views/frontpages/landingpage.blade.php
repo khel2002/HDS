@@ -18,7 +18,7 @@
     </style>
   @endsection
   @section('content')
-    <header class="masthead" style="background-image: url('{{ asset('assets/img/frontpages/img/test.jpg') }}'); ">
+    <header class="masthead" style="background-image: url('{{ asset('assets/img/frontpages/img/header-bg.jpg') }}'); ">
       <div class="container">
         <div class="masthead-subheading" style="font-size: 0.9rem;">
           <i class="mdi mdi-map-marker-outline"></i>
@@ -32,9 +32,6 @@
           <a class="btn btn-primary btn-modern text-uppercase me-sm-2 mb-2 mb-sm-0" href="#booking">
             <i class="ri-calendar-line me-2"></i> Book Your Stay
           </a>
-          <a class="btn btn-outline-light btn-modern text-uppercase" href="#services">
-            Tell Me More
-          </a>
         </div>
       </div>
     </header>
@@ -42,30 +39,31 @@
     <div class="rooms-section">
       <div class="container text-center">
         <h2 class="section-heading text-uppercase">Our Rooms</h2>
-
         <div class="d-none d-lg-block">
           <div id="roomsCarouselDesktop" class="carousel slide mt-4">
             <div class="carousel-inner shadow-none">
-              <!-- Slide 1 -->
               <div class="carousel-item active">
                 <div class="row">
-                  <div class="col-lg-4">@include('frontpages.room-card', [
-                      'title' => 'Family Room',
-                      'description' => 'Micheal',
-                  ])</div>
-                  <div class="col-lg-4">@include('frontpages.room-card', ['title' => 'Standard Room'])</div>
-                  <div class="col-lg-4">@include('frontpages.room-card', ['title' => 'Luxury Suite'])</div>
+                  @foreach ($roomsFirst as $room)
+                    <div class="col-lg-4">@include('frontpages.room-card', [
+                        'room_type_name' => $room->roomType->room_type_name,
+                        'description' => $room->roomType->description,
+                        'image' => $room->image_path,
+                    ])</div>
+                  @endforeach
                 </div>
               </div>
-              <!-- Slide 2 -->
               <div class="carousel-item">
                 <div class="row">
-                  <div class="col-lg-4">@include('frontpages.room-card', ['title' => 'Deluxe Room'])</div>
-                  <div class="col-lg-4">@include('frontpages.room-card', ['title' => 'Twin Room'])</div>
-                  <div class="col-lg-4">@include('frontpages.room-card', ['title' => 'Executive Suite'])</div>
+                  @foreach ($roomsSecond as $room)
+                    <div class="col-lg-4">@include('frontpages.room-card', [
+                        'room_type_name' => $room->roomType->room_type_name,
+                        'description' => $room->roomType->description,
+                        'image' => $room->image_path,
+                    ])</div>
+                  @endforeach
                 </div>
               </div>
-
             </div>
 
             <button class="carousel-control-prev custom-carousel-btn" type="button"
@@ -85,32 +83,25 @@
             <div class="carousel-inner">
 
               <div class="carousel-item active">
-                @include('frontpages.room-card', [
-                    'title' => 'Family Room',
-                    'description' => 'Micheal',
-                ])
+                @foreach ($roomsMobFirst as $room)
+                  @include('frontpages.room-card', [
+                      'room_type_name' => $room->roomType->room_type_name,
+                      'description' => $room->roomType->description,
+                      'image' => $room->image_path,
+                  ])
+                @endforeach
               </div>
+              @foreach ($roomsMobSecond as $room)
+                <div class="carousel-item">
 
-              <div class="carousel-item">
-                @include('frontpages.room-card', ['title' => 'Standard Room'])
-              </div>
+                  @include('frontpages.room-card', [
+                      'room_type_name' => $room->roomType->room_type_name,
+                      'description' => $room->roomType->description,
+                      'image' => $room->image_path,
+                  ])
 
-              <div class="carousel-item">
-                @include('frontpages.room-card', ['title' => 'Luxury Suite'])
-              </div>
-
-              <div class="carousel-item">
-                @include('frontpages.room-card', ['title' => 'Deluxe Room'])
-              </div>
-
-              <div class="carousel-item">
-                @include('frontpages.room-card', ['title' => 'Twin Room'])
-              </div>
-
-              <div class="carousel-item">
-                @include('frontpages.room-card', ['title' => 'Executive Suite'])
-              </div>
-
+                </div>
+              @endforeach
             </div>
 
             <button class="carousel-control-prev" type="button" data-bs-target="#roomsCarouselMobile"
@@ -126,6 +117,59 @@
       </div>
     </div>
 
+    <section class="features-section">
+      <div class="container">
+        <div class="section-header text-center">
+          <h2 class="section-title">Venues</h2>
+          <p class="section-description">
+            One Destination, Infinite Occasions
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-dumbbell"></i>
+            </div>
+            <h3 class="feature-title">Fitness Center</h3>
+            <p class="feature-description">
+              State-of-the-art gym with personal trainers available 24/7
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-spa"></i>
+            </div>
+            <h3 class="feature-title">Luxury Spa</h3>
+            <p class="feature-description">
+              Rejuvenate with our comprehensive spa and wellness treatments
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-car"></i>
+            </div>
+            <h3 class="feature-title">Valet Parking</h3>
+            <p class="feature-description">
+              Complimentary valet service for all our valued guests
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3 class="feature-title">24/7 Security</h3>
+            <p class="feature-description">
+              Your safety is our priority with round-the-clock security
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="cta-section">
       <div class="cta-overlay"></div>
       <div class="cta-content">
@@ -138,9 +182,9 @@
 
     <!-- Footer -->
     <footer class="footer">
-      <div class="container">
+      <div class="footer-">
         <div class="footer-grid">
-          <div class="footer-column">
+          <div class="footer-column" style="margin-left:50px;">
             <h3 class="footer-title">Hotel De SLSU</h3>
             <p class="footer-text">
               Your hub for Corporate events, stay, and facilities.
@@ -153,7 +197,7 @@
           </div>
 
           <div class="footer-column">
-            <h4 class="footer-heading">Quick Links</h4>
+            <h4 class="footer-heading ">Quick Links</h4>
             <ul class="footer-links ">
               <li><a href="#">About Us</a></li>
               <li><a href="#">Rooms & Venue</a></li>
@@ -183,7 +227,7 @@
         </div>
 
         <div class="footer-bottom">
-          <p>&copy; 2026 michael and renz Developer.</p>
+          <p>&copy; 2026 Hotel De SLSU. Developed by Michael & Renz. All rights reserved.</p>
         </div>
       </div>
     </footer>

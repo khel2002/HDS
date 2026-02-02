@@ -783,7 +783,6 @@
         </div>
       </div>
 
-      <!-- Mobile Carousel (1 card per slide) -->
       <div class="d-block d-lg-none">
         <div id="roomsCarouselMobile" class="carousel slide">
           <div class="carousel-inner">
@@ -851,7 +850,6 @@
     </div>
   </section>
 
-  <!-- Footer -->
   <footer class="footer">
     <div class="container">
       <div class="footer-grid">
