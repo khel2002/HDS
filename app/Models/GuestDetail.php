@@ -30,38 +30,33 @@ class GuestDetail extends Model
         'created_at' => 'datetime',
     ];
 
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = null;
+    public $timestamps = false;
 
-    /**
-     * Get the user that owns the guest details
-     */
+    // Relationships
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
-    /**
-     * Get the reservations for the guest
-     */
     public function reservations()
     {
         return $this->hasMany(Reservation::class, 'guest_details_id', 'guest_details_id');
     }
 
-    /**
-     * Get the registrations for the guest
-     */
     public function registrations()
     {
         return $this->hasMany(Registration::class, 'guest_details_id', 'guest_details_id');
     }
 
-    /**
-     * Get the guest's full name
-     */
+    // Accessor
     public function getFullNameAttribute()
     {
-        return trim($this->first_name . ' ' . ($this->middle_name ? $this->middle_name . ' ' : '') . $this->last_name);
+        $parts = array_filter([
+            $this->first_name,
+            $this->middle_name,
+            $this->last_name,
+        ]);
+
+        return implode(' ', $parts);
     }
 }

@@ -26,7 +26,6 @@ class LoginBasic extends Controller
 
     public function login(Request $request)
     {
-        dd($request->all());
         $request->validate([
             'email' => 'required|email',
             'password' => 'required|string|min:6',
@@ -109,6 +108,6 @@ class LoginBasic extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login')->with('success', 'You have been logged out successfully.');
+        return redirect('/auth/login')->with('success', 'You have been logged out successfully.');
     }
 }

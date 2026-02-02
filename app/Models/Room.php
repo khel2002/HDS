@@ -13,60 +13,68 @@ class Room extends Model
 
     protected $table = 'rooms';
     protected $primaryKey = 'room_id';
-    public $timestamps = false;
 
     protected $fillable = [
         'room_type_id',
         'room_number',
         'status',
-        'image_path'
+        'image_path',
     ];
 
-    /**
-     * Get the room type
-     */
+    public $timestamps = false;
+
+    // Relationships
     public function roomType()
     {
         return $this->belongsTo(RoomType::class, 'room_type_id', 'room_type_id');
     }
 
-    /**
-     * Get the amenities for this room
-     */
     public function amenities()
     {
-        return $this->belongsToMany(Amenity::class, 'room_amenities', 'room_id', 'amenity_id');
+        return $this->belongsToMany(
+            Amenity::class,
+            'room_amenities',
+            'room_id',
+            'amenity_id',
+            'room_id',
+            'amenity_id'
+        );
     }
 
-    /**
-     * Get the reservations for this room
-     */
     public function reservations()
     {
         return $this->hasMany(Reservation::class, 'room_id', 'room_id');
     }
 
-    /**
-     * Scope a query to only include available rooms
-     */
+    // Scopes
     public function scopeAvailable($query)
     {
         return $query->where('status', 'available');
     }
 
-    /**
-     * Scope a query to only include occupied rooms
-     */
     public function scopeOccupied($query)
     {
         return $query->where('status', 'occupied');
     }
 
-    /**
-     * Scope a query to only include rooms under maintenance
-     */
     public function scopeMaintenance($query)
     {
         return $query->where('status', 'maintenance');
+    }
+
+    // Methods
+    public function isAvailable()
+    {
+        return $this->status === 'available';
+    }
+
+    public function isOccupied()
+    {
+        return $this->status === 'occupied';
+    }
+
+    public function isUnderMaintenance()
+    {
+        return $this->status === 'maintenance';
     }
 }

@@ -59,6 +59,8 @@ class GoogleAuthController extends Controller
             Log::info('=== END DEBUG ===');
 
 
+
+
             if (empty($hrmisData)) {
                 return redirect('/auth/login')->with('error', 'Your email is not registered in HRMIS. Please contact HR department.');
             }
@@ -79,9 +81,18 @@ class GoogleAuthController extends Controller
 
 
             $user->update([
-                'first_name' => $this->extractStringValue($hrmisData, 'first_name') ?? $user->first_name,
-                'middle_name' => $this->extractStringValue($hrmisData, 'middle_name') ?? $user->middle_name,
-                'last_name' => $this->extractStringValue($hrmisData, 'last_name') ?? $user->last_name,
+                'first_name' => $this->extractStringValue($hrmisData, 'FirstName')
+                             ?? $this->extractStringValue($hrmisData, 'first_name')
+                             ?? $this->extractStringValue($hrmisData, 'firstname')
+                             ?? $user->first_name,
+                'middle_name' => $this->extractStringValue($hrmisData, 'MiddleName')
+                              ?? $this->extractStringValue($hrmisData, 'middle_name')
+                              ?? $this->extractStringValue($hrmisData, 'middlename')
+                              ?? $user->middle_name,
+                'last_name' => $this->extractStringValue($hrmisData, 'LastName')
+                            ?? $this->extractStringValue($hrmisData, 'last_name')
+                            ?? $this->extractStringValue($hrmisData, 'lastname')
+                            ?? $user->last_name,
                 'STATUS' => 'active',
                 'last_login_at' => now(),
             ]);
@@ -273,9 +284,15 @@ class GoogleAuthController extends Controller
             'email' => $email,
             'password' => Hash::make(uniqid()),
             'role_id' => $roleId,
-            'first_name' => $this->extractStringValue($hrmisData, 'first_name'),
-            'middle_name' => $this->extractStringValue($hrmisData, 'middle_name'),
-            'last_name' => $this->extractStringValue($hrmisData, 'last_name'),
+            'first_name' => $this->extractStringValue($hrmisData, 'FirstName')
+                         ?? $this->extractStringValue($hrmisData, 'first_name')
+                         ?? $this->extractStringValue($hrmisData, 'firstname'),
+            'middle_name' => $this->extractStringValue($hrmisData, 'MiddleName')
+                          ?? $this->extractStringValue($hrmisData, 'middle_name')
+                          ?? $this->extractStringValue($hrmisData, 'middlename'),
+            'last_name' => $this->extractStringValue($hrmisData, 'LastName')
+                        ?? $this->extractStringValue($hrmisData, 'last_name')
+                        ?? $this->extractStringValue($hrmisData, 'lastname'),
             'STATUS' => 'active',
             'temporary_act' => 0,
         ]);

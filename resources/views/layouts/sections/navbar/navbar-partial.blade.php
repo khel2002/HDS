@@ -88,10 +88,10 @@ use Illuminate\Support\Facades\Route;
                 </li>
                 <li>
                     <div class="d-grid px-4 pt-2 pb-1">
-                        <a class="btn btn-danger d-flex" href="javascript:void(0);">
-                            <small class="align-middle">Logout</small>
-                            <i class="ri ri-logout-box-r-line ms-2 icon-xs"></i>
-                        </a>
+                        <form action="{{ route('logout') }}" method="POST">
+                          @csrf
+                          <button type="submit">Logout</button>
+                      </form>
                     </div>
                 </li>
             </ul>

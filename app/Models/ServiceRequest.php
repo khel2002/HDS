@@ -18,6 +18,7 @@ class ServiceRequest extends Model
         'service_type',
         'description',
         'request_status',
+        'requested_at',
         'completed_at',
     ];
 
@@ -26,78 +27,76 @@ class ServiceRequest extends Model
         'completed_at' => 'datetime',
     ];
 
-    const CREATED_AT = 'requested_at';
-    const UPDATED_AT = null;
+    public $timestamps = false;
 
-    /**
-     * Get the registration for this service request
-     */
+    // Relationships
     public function registration()
     {
         return $this->belongsTo(Registration::class, 'registration_id', 'registration_id');
     }
 
-    /**
-     * Get the user who made the service request
-     */
-    public function requestedByUser()
+    public function requestedBy()
     {
         return $this->belongsTo(User::class, 'requested_by_user_id', 'user_id');
     }
 
-    /**
-     * Get the breakfast orders for this service request
-     */
     public function breakfastOrders()
     {
         return $this->hasMany(ServiceBreakfastOrder::class, 'service_request_id', 'service_request_id');
     }
 
-    /**
-     * Scope a query to only include pending requests
-     */
+    // Scopes
     public function scopePending($query)
     {
         return $query->where('request_status', 'pending');
     }
 
-    /**
-     * Scope a query to only include in progress requests
-     */
     public function scopeInProgress($query)
     {
         return $query->where('request_status', 'in_progress');
     }
 
-    /**
-     * Scope a query to only include completed requests
-     */
     public function scopeCompleted($query)
     {
         return $query->where('request_status', 'completed');
     }
 
-    /**
-     * Scope a query to only include cancelled requests
-     */
     public function scopeCancelled($query)
     {
         return $query->where('request_status', 'cancelled');
     }
 
-    /**
-     * Scope a query to only include food service requests
-     */
     public function scopeFood($query)
     {
         return $query->where('service_type', 'food');
     }
 
-    /**
-     * Scope a query to only include room service requests
-     */
     public function scopeRoomService($query)
     {
         return $query->where('service_type', 'room_service');
+    }
+
+    public function scopeToday($query)
+    {
+        return $query->whereDate('requested_at', today());
+    }
+
+    // Methods
+    public function isPending()
+    {
+        return $this->request_status === 'pending';
+    }
+
+    public function isCompleted()
+    {
+        return $this->request_status === 'completed';
+    }
+
+    public function markAsCompleted()
+    {
+        $this->update([
+            'request_status' => 'completed',
+            'completed_at' => now(),
+        ]);
     }
 }

@@ -8,14 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class HRMISService
 {
-    /**
-     * Sync employee data from HRMIS to local database
-     * Only syncs: first_name, middle_name, last_name, status
-     *
-     * @param array $hrmisData Employee data from HRMIS API
-     * @param int $userId The user ID to update
-     * @return bool
-     */
+
     public function syncEmployee(array $hrmisData, int $userId): bool
     {
         try {
@@ -23,15 +16,16 @@ class HRMISService
 
             $user = User::findOrFail($userId);
 
-            // Update user with HRMIS data (only name fields and status)
+
+
             $user->update([
-                'first_name' => $hrmisData['first_name'] ?? $user->first_name,
-                'middle_name' => $hrmisData['middle_name'] ?? $user->middle_name,
-                'last_name' => $hrmisData['last_name'] ?? $user->last_name,
-                'STATUS' => strtolower($hrmisData['status'] ?? '') === 'active' ? 'active' : 'inactive',
+                'first_name' => $hrmisData['FirstName'] ?? $hrmisData['first_name'] ?? $hrmisData['firstname'] ?? $user->first_name,
+                'middle_name' => $hrmisData['MiddleName'] ?? $hrmisData['middle_name'] ?? $hrmisData['middlename'] ?? $user->middle_name,
+                'last_name' => $hrmisData['LastName'] ?? $hrmisData['last_name'] ?? $hrmisData['lastname'] ?? $user->last_name,
+                'STATUS' => strtolower($hrmisData['status'] ?? $hrmisData['Status'] ?? '') === 'active' ? 'active' : 'inactive',
             ]);
 
-            // Sync guest details if user is a guest
+
             if ($this->shouldCreateGuestDetails($user)) {
                 $this->syncGuestDetails($hrmisData, $userId);
             }
@@ -48,58 +42,40 @@ class HRMISService
         }
     }
 
-    /**
-     * Check if guest details should be created
-     * Only create guest details for users with guest role (role_id = 4)
-     *
-     * @param User $user
-     * @return bool
-     */
+
     private function shouldCreateGuestDetails(User $user): bool
     {
-        // Only create guest details for users with guest role (role_id = 4)
+
+
         return $user->role_id == 4;
     }
 
-    /**
-     * Sync guest details from HRMIS data
-     *
-     * @param array $hrmisData
-     * @param int $userId
-     * @return void
-     */
+
     private function syncGuestDetails(array $hrmisData, int $userId): void
     {
         $guestDetails = [
             'user_id' => $userId,
-            'first_name' => $hrmisData['first_name'] ?? '',
-            'middle_name' => $hrmisData['middle_name'] ?? null,
-            'last_name' => $hrmisData['last_name'] ?? '',
-            'contact_number' => $hrmisData['contact_number'] ?? $hrmisData['phone'] ?? null,
-            'dob' => $hrmisData['date_of_birth'] ?? $hrmisData['dob'] ?? null,
+            'first_name' => $hrmisData['FirstName'] ?? $hrmisData['first_name'] ?? $hrmisData['firstname'] ?? '',
+            'middle_name' => $hrmisData['MiddleName'] ?? $hrmisData['middle_name'] ?? $hrmisData['middlename'] ?? null,
+            'last_name' => $hrmisData['LastName'] ?? $hrmisData['last_name'] ?? $hrmisData['lastname'] ?? '',
+            'contact_number' => $hrmisData['contact_number'] ?? $hrmisData['ContactNumber'] ?? $hrmisData['phone'] ?? $hrmisData['Phone'] ?? null,
+            'dob' => $hrmisData['date_of_birth'] ?? $hrmisData['DateOfBirth'] ?? $hrmisData['dob'] ?? $hrmisData['DOB'] ?? null,
         ];
 
-        // Check if guest details already exist
         $existing = DB::table('guest_details')
             ->where('user_id', $userId)
             ->first();
 
         if ($existing) {
-            // Update existing guest details
             DB::table('guest_details')
                 ->where('user_id', $userId)
                 ->update($guestDetails);
         } else {
-            // Create new guest details
             DB::table('guest_details')->insert($guestDetails);
         }
     }
 
-    /**
-     * Fetch all employees from HRMIS and sync them
-     *
-     * @return array Results of sync operation
-     */
+
     public function syncAllEmployees(): array
     {
         try {
@@ -120,14 +96,14 @@ class HRMISService
             ];
 
             foreach ($employees as $employeeData) {
-                $email = $employeeData['email'] ?? null;
+                $email = $employeeData['email'] ?? $employeeData['Email'] ?? null;
 
                 if (!$email) {
                     $results['failed']++;
                     continue;
                 }
 
-                // Find user by email
+
                 $user = User::where('email', $email)->first();
 
                 if ($user) {
@@ -138,7 +114,7 @@ class HRMISService
                         $results['failed']++;
                     }
                 } else {
-                    // User doesn't exist in local database
+
                     $results['failed']++;
                 }
             }
@@ -151,12 +127,7 @@ class HRMISService
         }
     }
 
-    /**
-     * Verify if an employee is active in HRMIS
-     *
-     * @param string $email
-     * @return array ['exists' => bool, 'active' => bool, 'data' => array|null]
-     */
+
     public function verifyEmployeeStatus(string $email): array
     {
         try {
@@ -184,7 +155,7 @@ class HRMISService
                 ];
             }
 
-            $isActive = strtolower($hrmisData['status'] ?? '') === 'active';
+            $isActive = strtolower($hrmisData['status'] ?? $hrmisData['Status'] ?? '') === 'active';
 
             return [
                 'exists' => true,

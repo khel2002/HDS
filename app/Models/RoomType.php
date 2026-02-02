@@ -11,7 +11,6 @@ class RoomType extends Model
 
     protected $table = 'room_types';
     protected $primaryKey = 'room_type_id';
-    public $timestamps = false;
 
     protected $fillable = [
         'room_type_name',
@@ -20,16 +19,31 @@ class RoomType extends Model
         'max_pax',
     ];
 
+    public $timestamps = false;
+
     protected $casts = [
         'rate_per_night' => 'decimal:2',
-        'max_pax' => 'integer',
     ];
 
-    /**
-     * Get the rooms of this type
-     */
+    // Relationships
     public function rooms()
     {
         return $this->hasMany(Room::class, 'room_type_id', 'room_type_id');
+    }
+
+    // Methods
+    public function getAvailableRoomsCount()
+    {
+        return $this->rooms()->where('status', 'available')->count();
+    }
+
+    public function getOccupiedRoomsCount()
+    {
+        return $this->rooms()->where('status', 'occupied')->count();
+    }
+
+    public function getTotalRoomsCount()
+    {
+        return $this->rooms()->count();
     }
 }

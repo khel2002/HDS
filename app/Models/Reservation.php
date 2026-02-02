@@ -32,99 +32,74 @@ class Reservation extends Model
     ];
 
     protected $casts = [
-        'reservation_fee' => 'integer',
-        'total_amount' => 'decimal:2',
-        'balance' => 'decimal:2',
         'booking_date' => 'date',
         'check_in_date' => 'date',
         'check_out_date' => 'date',
-        'adults' => 'integer',
-        'children' => 'integer',
-        'no_nights' => 'integer',
         'reservation_fee_paid' => 'boolean',
         'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = null;
-
-    /**
-     * Get the user that made the reservation
-     */
+    // Relationships
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
-    /**
-     * Get the guest details for the reservation
-     */
     public function guestDetails()
     {
-        return $this->belongsTo(GuestDetail::class, 'guest_details_id', 'guest_details_id');
+        return $this->belongsTo(GuestDetails::class, 'guest_details_id', 'guest_details_id');
     }
 
-    /**
-     * Get the payment for the reservation
-     */
-    public function payment()
-    {
-        return $this->belongsTo(Payment::class, 'payment_id', 'payment_id');
-    }
-
-    /**
-     * Get the room for the reservation
-     */
     public function room()
     {
         return $this->belongsTo(Room::class, 'room_id', 'room_id');
     }
 
-    /**
-     * Get the registration for this reservation
-     */
-    public function registration()
+    public function payment()
     {
-        return $this->hasOne(Registration::class, 'reservation_id', 'reservation_id');
+        return $this->belongsTo(Payment::class, 'payment_id', 'payment_id');
     }
 
-    /**
-     * Get the total number of guests (computed field)
-     */
-    public function getNoOfPaxAttribute()
+    public function registrations()
+    {
+        return $this->hasMany(Registration::class, 'reservation_id', 'reservation_id');
+    }
+
+    // Accessors
+    public function getTotalPaxAttribute()
     {
         return $this->adults + $this->children;
     }
 
-    /**
-     * Scope a query to only include pending reservations
-     */
+    // Scopes
     public function scopePending($query)
     {
         return $query->where('reservation_status', 'pending');
     }
 
-    /**
-     * Scope a query to only include approved reservations
-     */
     public function scopeApproved($query)
     {
         return $query->where('reservation_status', 'approved');
     }
 
-    /**
-     * Scope a query to only include rejected reservations
-     */
     public function scopeRejected($query)
     {
         return $query->where('reservation_status', 'rejected');
     }
 
-    /**
-     * Scope a query to only include cancelled reservations
-     */
     public function scopeCancelled($query)
     {
         return $query->where('reservation_status', 'cancelled');
+    }
+
+    public function scopeCheckingInToday($query)
+    {
+        return $query->whereDate('check_in_date', today());
+    }
+
+    public function scopeCheckingOutToday($query)
+    {
+        return $query->whereDate('check_out_date', today());
     }
 }

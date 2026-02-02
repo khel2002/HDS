@@ -135,7 +135,7 @@ class User extends Authenticatable
      *
      * @return bool
      */
-    public function isAdmin(): bool
+    public function isGuest(): bool
     {
         return $this->hasRole(1);
     }
@@ -155,7 +155,7 @@ class User extends Authenticatable
      *
      * @return bool
      */
-    public function isManager(): bool
+    public function isAdmin(): bool
     {
         return $this->hasRole(3);
     }
@@ -165,7 +165,7 @@ class User extends Authenticatable
      *
      * @return bool
      */
-    public function isGuest(): bool
+    public function isSuperAdmin(): bool
     {
         return $this->hasRole(4);
     }
