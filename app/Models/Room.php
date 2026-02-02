@@ -17,6 +17,7 @@ class Room extends Model
         'room_type_id',
         'room_number',
         'status',
+        'image_path'
     ];
 
     /**

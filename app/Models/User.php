@@ -10,31 +10,67 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
     protected $table = 'users';
+
+    /**
+     * The primary key associated with the table.
+     *
+     * @var string
+     */
     protected $primaryKey = 'user_id';
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'role_id',
         'email',
         'password',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'STATUS',
         'temporary_act',
+        'last_login_at',
+        'remember_token',
     ];
-
-    protected $hidden = [
-        'password',
-    ];
-
-    protected $casts = [
-        'temporary_act' => 'boolean',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-    ];
-
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
 
     /**
-     * Get the role of the user
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'last_login_at' => 'datetime',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+            'temporary_act' => 'boolean',
+        ];
+    }
+
+    /**
+     * Get the role that owns the user.
      */
     public function role()
     {
@@ -42,15 +78,15 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the guest details for the user
+     * Get the guest details for the user.
      */
     public function guestDetails()
     {
-        return $this->hasOne(GuestDetail::class, 'user_id', 'user_id');
+        return $this->hasOne(GuestDetails::class, 'user_id', 'user_id');
     }
 
     /**
-     * Get the reservations for the user
+     * Get the reservations for the user.
      */
     public function reservations()
     {
@@ -58,18 +94,79 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the registrations for the user
+     * Get the user's full name.
+     *
+     * @return string
      */
-    public function registrations()
+    public function getFullNameAttribute(): string
     {
-        return $this->hasMany(Registration::class, 'user_id', 'user_id');
+        $parts = array_filter([
+            $this->first_name,
+            $this->middle_name,
+            $this->last_name,
+        ]);
+
+        return implode(' ', $parts);
     }
 
     /**
-     * Get the service requests made by the user
+     * Check if user is active in HRMIS.
+     *
+     * @return bool
      */
-    public function serviceRequests()
+    public function isActive(): bool
     {
-        return $this->hasMany(ServiceRequest::class, 'requested_by_user_id', 'user_id');
+        return strtolower($this->STATUS ?? '') === 'active';
+    }
+
+    /**
+     * Check if user has a specific role.
+     *
+     * @param int $roleId
+     * @return bool
+     */
+    public function hasRole(int $roleId): bool
+    {
+        return $this->role_id === $roleId;
+    }
+
+    /**
+     * Check if user is admin (role_id = 1).
+     *
+     * @return bool
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasRole(1);
+    }
+
+    /**
+     * Check if user is staff (role_id = 2).
+     *
+     * @return bool
+     */
+    public function isStaff(): bool
+    {
+        return $this->hasRole(2);
+    }
+
+    /**
+     * Check if user is manager (role_id = 3).
+     *
+     * @return bool
+     */
+    public function isManager(): bool
+    {
+        return $this->hasRole(3);
+    }
+
+    /**
+     * Check if user is guest (role_id = 4).
+     *
+     * @return bool
+     */
+    public function isGuest(): bool
+    {
+        return $this->hasRole(4);
     }
 }

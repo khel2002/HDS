@@ -21,7 +21,7 @@ use App\Http\Controllers\authentications\{
     RegisterBasic,
     ForgotPasswordBasic
 };
-
+use App\Http\Controllers\GoogleAuthController;
 
 
 
@@ -40,10 +40,15 @@ Route::get('/landing', [FrontpageController::class, 'index'])->name('landing');
 */
 Route::prefix('auth')->group(function () {
     Route::get('/login', [LoginBasic::class, 'index'])->name('login');
+Route::post('/login', [LoginBasic::class, 'login'])->name('login.post');
     Route::get('/register', [RegisterBasic::class, 'index'])->name('register');
     Route::get('/forgot-password', [ForgotPasswordBasic::class, 'index'])->name('forgot-password');
 });
 
+Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('google.login');
+Route::get('/callback', [GoogleAuthController::class, 'handleGoogleCallback'])->name('google.callback');
+
+Route::post('/logout', [GoogleAuthController::class, 'logout'])->name('logout');
 /*
 |--------------------------------------------------------------------------
 | Account Settings

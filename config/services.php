@@ -34,17 +34,16 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+'hrmis_api' => [
+    'url' => env('HRMIS_API_URL'),
+    'url_all' => env('HRMIS_API_URL1'),
+    'url_departments' => env('HRMIS_API_URL2'),
+    'token' => env('HRMIS_API_TOKEN'),
+],
 
-    'hrmis_api' => [
-        'url' => env('HRMIS_API_URL'),
-        'urlAll' => env('HRMIS_API_URL1'),
-        'urlDepartment' => env('HRMIS_API_URL2'),
-        'token' => env('HRMIS_API_TOKEN'),
-    ],
-    'google'=>[
-      'google_client_id'=>env('GOOGLE_CLIENT_ID'),
-      'google_client_secret'=>env('GOOGLE_CLIENT_SECRET'),
-      'google_redirect'=>env('GOOGLE_REDIRECT'),
-    ],
-
+'google' => [
+    'client_id' => env('GOOGLE_CLIENT_ID'),
+    'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+    'redirect' => env('GOOGLE_REDIRECT'),
+],
 ];

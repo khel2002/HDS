@@ -43,6 +43,46 @@
         max-width: 450px;
     }
 
+    .divider {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        margin: 1.5rem 0;
+    }
+
+    .divider::before,
+    .divider::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #d9dee3;
+    }
+
+    .divider span {
+        padding: 0 1rem;
+        color: #697a8d;
+        font-size: 0.875rem;
+    }
+
+    .btn-google {
+        background-color: #fff;
+        border: 1px solid #dadce0;
+        color: #3c4043;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .btn-google:hover {
+        background-color: #f8f9fa;
+        border-color: #dadce0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-google img {
+        width: 20px;
+        height: 20px;
+        margin-right: 12px;
+    }
+
     @media (max-width: 991px) {
         .split-layout {
             flex-direction: column;
@@ -91,37 +131,122 @@
                     <h4 class="mb-1">Welcome to {{ config('variables.templateName') }}! 👋🏻</h4>
                     <p class="mb-5">Please sign-in to your account and start the adventure</p>
 
-                    <form id="formAuthentication" class="mb-5" action="{{ url('/') }}" method="GET">
-                        <div class="form-floating form-floating-outline mb-5 form-control-validation">
-                            <input type="text" class="form-control" id="email" name="email-username" placeholder="Enter your email or username" autofocus />
-                            <label for="email">Email or Username</label>
+                    <!-- Display Success Messages -->
+                    @if(session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <strong>Success!</strong> {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
-                        <div class="mb-5">
-                            <div class="form-password-toggle form-control-validation">
+                    @endif
+
+                    <!-- Display Error Messages -->
+                    @if(session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Error!</strong> {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+
+                    <!-- Validation Errors -->
+                    @if($errors->any())
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Error!</strong>
+                            <ul class="mb-0">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+
+                    <!-- Traditional Login Form -->
+                    <form id="formAuthentication" class="mb-4" action="{{ route('login.post') }}" method="POST">
+                        @csrf
+                        <div class="form-floating form-floating-outline mb-4">
+                            <input
+                                type="email"
+                                class="form-control @error('email') is-invalid @enderror"
+                                id="email"
+                                name="email"
+                                placeholder="Enter your email"
+                                value="{{ old('email') }}"
+                                autofocus
+                                required
+                            />
+                            <label for="email">Email</label>
+                            @error('email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-password-toggle">
                                 <div class="input-group input-group-merge">
                                     <div class="form-floating form-floating-outline">
-                                        <input type="password" id="password" class="form-control" name="password" placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;" aria-describedby="password" />
+                                        <input
+                                            type="password"
+                                            id="password"
+                                            class="form-control @error('password') is-invalid @enderror"
+                                            name="password"
+                                            placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
+                                            aria-describedby="password"
+                                            required
+                                        />
                                         <label for="password">Password</label>
                                     </div>
-                                    <span class="input-group-text cursor-pointer"><i class="icon-base ri ri-eye-off-line icon-20px"></i></span>
+                                    <span class="input-group-text cursor-pointer">
+                                        <i class="icon-base ri ri-eye-off-line icon-20px"></i>
+                                    </span>
                                 </div>
+                                @error('password')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
-                        <div class="mb-5 pb-2 d-flex justify-content-between pt-2 align-items-center">
+
+                        <div class="mb-4 d-flex justify-content-between align-items-center">
                             <div class="form-check mb-0">
-                                <input class="form-check-input" type="checkbox" id="remember-me" />
-                                <label class="form-check-label" for="remember-me"> Remember Me </label>
+                                <input class="form-check-input" type="checkbox" id="remember" name="remember" />
+                                <label class="form-check-label" for="remember">Remember Me</label>
                             </div>
-                            <a href="{{ url('auth/forgot-password-basic') }}" class="float-end mb-1">
+                            <a href="{{ url('auth/forgot-password-basic') }}" class="text-primary">
                                 <span>Forgot Password?</span>
                             </a>
                         </div>
-                        <div class="mb-5">
-                            <button class="btn btn-primary d-grid w-100" type="submit">login</button>
+
+                        <div class="mb-4">
+                            <button class="btn btn-primary d-grid w-100" type="submit">
+                                <span>Sign In</span>
+                            </button>
                         </div>
                     </form>
 
+                    <!-- Divider -->
+                    <div class="divider">
+                        <span>OR</span>
+                    </div>
 
+                    <!-- Google SSO Button -->
+                    <div class="mb-4">
+                        <a href="{{ route('google.login') }}" class="btn btn-google d-grid w-100 d-flex align-items-center justify-content-center">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19.6 10.227c0-.709-.064-1.39-.182-2.045H10v3.868h5.382a4.6 4.6 0 01-1.996 3.018v2.51h3.232c1.891-1.742 2.982-4.305 2.982-7.35z" fill="#4285F4"/>
+                                <path d="M10 20c2.7 0 4.964-.895 6.618-2.423l-3.232-2.509c-.895.6-2.04.955-3.386.955-2.605 0-4.81-1.76-5.595-4.123H1.064v2.59A9.996 9.996 0 0010 20z" fill="#34A853"/>
+                                <path d="M4.405 11.9c-.2-.6-.314-1.24-.314-1.9 0-.66.114-1.3.314-1.9V5.51H1.064A9.996 9.996 0 000 10c0 1.614.386 3.14 1.064 4.49l3.34-2.59z" fill="#FBBC05"/>
+                                <path d="M10 3.977c1.468 0 2.786.505 3.823 1.496l2.868-2.868C14.959.99 12.695 0 10 0 6.09 0 2.71 2.24 1.064 5.51l3.34 2.59C5.19 5.736 7.395 3.977 10 3.977z" fill="#EA4335"/>
+                            </svg>
+                            <span>Sign in with Google</span>
+                        </a>
+                    </div>
+
+                    <!-- Info Text -->
+                    <p class="text-center text-muted mb-0">
+                        <small>
+                            <i class="ri-information-line"></i>
+                            Sign in with your Google account to automatically sync with HRMIS
+                        </small>
+                    </p>
                 </div>
             </div>
         </div>
