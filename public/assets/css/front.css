@@ -71,7 +71,41 @@
         font-weight: 500;
         letter-spacing: 5px;
         margin: 0.5rem 0;
+        text-align: center;
+        line-height: 1;
       }
+
+      .masthead-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .brand-logo {
+        width: 70px;
+        height: auto;
+      }
+
+      .masthead-heading {
+        font-family: 'Cinzel', serif;
+        line-height: 1;
+      }
+
+      .top-text {
+        display: block;
+        font-size: 30px;
+        letter-spacing: 4px;
+        text-align: left;
+        margin-bottom: 2px;
+      }
+
+      .bottom-text {
+        display: block;
+        font-size: 70px;
+        font-weight: 700;
+        text-align: left;
+      }
+
 
       /* Paragraph */
       .masthead p {

@@ -97,6 +97,7 @@
     <!-- Rooms Table -->
     <div class="col-12">
       <div class="card">
+<<<<<<< Updated upstream
         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
           <h5 class="mb-0">All Rooms</h5>
           <div class="d-flex gap-2 flex-wrap">
@@ -115,6 +116,39 @@
               <i class="icon-base ri ri-refresh-line me-1"></i>
               Refresh
             </button>
+=======
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-md-3">
+              <label class="form-label">Room Type</label>
+              <select class="form-select" id="roomTypeFilter">
+                <option value="">All Types</option>
+                @foreach ($roomTypes as $type)
+                  <option value="{{ $type->room_type_id }}">{{ $type->room_type_name }}</option>
+                @endforeach
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Status</label>
+              <select class="form-select" id="statusFilter">
+                <option value="">All Status</option>
+                <option value="available">Available</option>
+                <option value="occupied">Occupied</option>
+                <option value="maintenance">Maintenance</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Search</label>
+              <input type="text" class="form-control" id="searchRoom" placeholder="Room number...">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">&nbsp;</label>
+              <button class="btn btn-outline-secondary d-block w-100" type="button">
+                <i class="icon-base ri ri-refresh-line me-1"></i>
+                Reset Filters
+              </button>
+            </div>
+>>>>>>> Stashed changes
           </div>
         </div>
         <div class="table-responsive">
@@ -233,6 +267,7 @@
       </div>
     </div>
 
+<<<<<<< Updated upstream
     <!-- Amenities Modals -->
     @foreach($rooms as $room)
       @if(!empty($room->amenities) && count($room->amenities) > 2)
@@ -251,6 +286,48 @@
                       {{ $amenity }}
                     </span>
                   @endforeach
+=======
+    <!-- Rooms Grid -->
+    @foreach ($rooms as $room)
+      <div class="col-xl-4 col-md-6">
+        <div class="card h-100">
+          <div class="card-header p-0 position-relative">
+            @if ($room->image_path)
+              <img src="{{ asset('storage/' . $room->image_path) }}" class="card-img-top"
+                alt="{{ $room->room_type_name }}" style="height: 200px; object-fit: cover;">
+            @else
+              <div class="bg-label-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                <i class="icon-base ri ri-image-line icon-64px text-body-secondary"></i>
+              </div>
+            @endif
+            <div class="position-absolute top-0 end-0 m-3">
+              @if ($room->status === 'available')
+                <span class="badge bg-success">Available</span>
+              @elseif($room->status === 'occupied')
+                <span class="badge bg-warning">Occupied</span>
+              @else
+                <span class="badge bg-danger">Maintenance</span>
+              @endif
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h5 class="mb-1">Room {{ $room->room_number }}</h5>
+                <p class="mb-0 text-body-secondary">{{ $room->room_type_name }}</p>
+              </div>
+              <div class="dropdown">
+                <button class="btn text-body-secondary p-0" type="button" data-bs-toggle="dropdown"
+                  aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base ri ri-more-2-line icon-24px"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end">
+                  <a class="dropdown-item" href="javascript:void(0);">View Details</a>
+                  <a class="dropdown-item" href="javascript:void(0);">Edit Room</a>
+                  <a class="dropdown-item" href="javascript:void(0);">Change Status</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item text-danger" href="javascript:void(0);">Delete Room</a>
+>>>>>>> Stashed changes
                 </div>
               </div>
               <div class="modal-footer">
@@ -262,6 +339,7 @@
       @endif
     @endforeach
 
+<<<<<<< Updated upstream
     <!-- View Details Modals -->
     @foreach($rooms as $room)
       <div class="modal fade" id="viewDetailsModal{{ $room->room_id }}" tabindex="-1" aria-hidden="true">
@@ -399,6 +477,17 @@
                         @endforeach
                       </div>
                     </div>
+=======
+            @if (!empty($room->amenities))
+              <div class="mb-3">
+                <p class="mb-2 fw-medium">Amenities:</p>
+                <div class="d-flex flex-wrap gap-2">
+                  @foreach (array_slice($room->amenities, 0, 3) as $amenity)
+                    <span class="badge bg-label-info">{{ $amenity }}</span>
+                  @endforeach
+                  @if (count($room->amenities) > 3)
+                    <span class="badge bg-label-secondary">+{{ count($room->amenities) - 3 }} more</span>
+>>>>>>> Stashed changes
                   @endif
                 </div>
               </div>
@@ -421,7 +510,7 @@
       </div>
     @endforeach
 
-    @if(count($rooms) === 0)
+    @if (count($rooms) === 0)
       <div class="col-12">
         <div class="card">
           <div class="card-body text-center py-5">
@@ -440,12 +529,30 @@
     <!-- Room Types Summary -->
     <div class="col-12">
       <div class="card">
+<<<<<<< Updated upstream
         <div class="card-header d-flex justify-content-between align-items-center">
           <h5 class="mb-0">Rooms Overview</h5>
           <a href="{{ route('super_admin.room-types.index') }}" class="btn btn-sm btn-outline-primary">
             <i class="icon-base ri ri-settings-3-line me-1"></i>
             Manage Types
           </a>
+=======
+        <div class="card-header">
+          <div class="d-flex align-items-center justify-content-between">
+            <h5 class="card-title m-0 me-2">Room Types Overview</h5>
+            <div class="dropdown">
+              <button class="btn text-body-secondary p-0" type="button" id="roomTypesDropdown"
+                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="icon-base ri ri-more-2-line icon-24px"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="roomTypesDropdown">
+                <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+                <a class="dropdown-item" href="javascript:void(0);">Export</a>
+                <a class="dropdown-item" href="javascript:void(0);">Manage Types</a>
+              </div>
+            </div>
+          </div>
+>>>>>>> Stashed changes
         </div>
         <div class="card-body">
           <div class="table-responsive">
@@ -463,7 +570,7 @@
                 </tr>
               </thead>
               <tbody>
-                @foreach($roomTypes as $type)
+                @foreach ($roomTypes as $type)
                   @php
                     $typeRooms = $rooms->where('room_type_id', $type->room_type_id);
                     $typeAvailable = $typeRooms->where('status', 'available')->count();

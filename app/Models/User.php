@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\GuestDetail;
 
 class User extends Authenticatable
 {
@@ -82,7 +83,7 @@ class User extends Authenticatable
      */
     public function guestDetails()
     {
-        return $this->hasOne(GuestDetails::class, 'user_id', 'user_id');
+        return $this->hasOne(GuestDetail::class, 'user_id', 'user_id');
     }
 
     /**

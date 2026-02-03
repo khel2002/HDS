@@ -48,7 +48,7 @@ class Reservation extends Model
 
     public function guestDetails()
     {
-        return $this->belongsTo(GuestDetails::class, 'guest_details_id', 'guest_details_id');
+        return $this->belongsTo(GuestDetail::class, 'guest_details_id', 'guest_details_id');
     }
 
     public function room()

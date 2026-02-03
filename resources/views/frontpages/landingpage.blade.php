@@ -10,6 +10,7 @@
     {{-- Font --}}
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('assets/css/front.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
       @media (max-width: 992px) {}
@@ -24,7 +25,14 @@
           <i class="mdi mdi-map-marker-outline"></i>
           San Roque Sogod Southern Leyte 6606
         </div>
-        <div class="masthead-heading" style="font-size: 4rem;">Hotel De SLSU</div>
+        <div class="masthead-brand">
+          <img src="{{ asset('assets/img/frontpages/img/header-bg.jpg') }}" alt="Hotel De SLSU Logo" class="brand-logo">
+          <div class="masthead-heading">
+            <span class="top-text">Hotel De</span>
+            <span class="bottom-text">SLSU</span>
+          </div>
+        </div>
+
         <p>
           "Your hub for <b class="text-white">Corporate</b> events, stay, and facilities"
         </p>
