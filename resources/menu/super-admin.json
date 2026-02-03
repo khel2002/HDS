@@ -4,7 +4,7 @@
       "url": "/super-admin/dashboard",
       "name": "Dashboard",
       "icon": "menu-icon icon-base ri ri-home-smile-line",
-      "slug": "dashboard"
+      "slug": "super_admin.dashboard"
     },
     {
       "menuHeader": "Reservations"
@@ -89,7 +89,7 @@
         {
           "url": "/super-admin/rooms/all",
           "name": "All Rooms",
-          "slug": "all-rooms"
+          "slug": "index"
         }
       ]
     },
