@@ -1109,35 +1109,6 @@
         </div>
     </div>
 </div>
-
-<!-- Room Status Distribution -->
-<div class="section-card">
-    <div class="section-card-header">
-        <h2 class="section-card-title">Room Status Distribution</h2>
-    </div>
-    <div class="section-card-body">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="chart-container-modern">
-                    <canvas id="roomStatusChart"></canvas>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="status-cards-grid">
-                    @foreach($roomStatusDistribution as $status)
-                    <div class="status-card-item">
-                        <div class="status-card-left">
-                            <span class="status-indicator-dot {{ $status->status }}"></span>
-                            <span class="status-card-label">{{ $status->status }}</span>
-                        </div>
-                        <span class="status-card-value">{{ $status->count }}</span>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 @endsection
 
 @section('page-script')

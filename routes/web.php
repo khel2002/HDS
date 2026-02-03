@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\dashboard\Analytics;
 use App\Http\Controllers\SuperAdmin\SuperAdminDashboardController;
 use App\Http\Controllers\SuperAdmin\RoomController;
+use App\Http\Controllers\SuperAdmin\RoomTypeController;
+use App\Http\Controllers\SuperAdmin\AmenitiesController;
 // Frontpage
 use App\Http\Controllers\FrontpageController;
 
@@ -126,6 +128,11 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super_a
     Route::get('/rooms/all', [RoomController::class, 'index'])->name('super_admin.rooms.index');
     Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show');
 
+    Route::get('/room-types/all', [RoomTypeController::class, 'index'])->name('room-types.index');
+    Route::get('/room-types/{id}', [RoomTypeController::class, 'show'])->name('room-types.show');
+
+    Route::get('/amenities/all', [AmenitiesController::class, 'index'])->name('amenities.index');
+    route::get('/amenities/{id}', [AmenitiesController::class, 'show'])->name('amenities.show');
 });
 
 /*

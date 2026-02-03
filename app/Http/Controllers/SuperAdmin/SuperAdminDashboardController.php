@@ -11,14 +11,14 @@ class SuperAdminDashboardController extends Controller
 {
    public function index()
     {
-        // Get current date metrics
+
         $today = Carbon::today();
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
-        // Dashboard Statistics
+
         $stats = [
-            // Reservations
+
             'total_reservations' => DB::table('reservations')->count(),
             'pending_reservations' => DB::table('reservations')
                 ->where('reservation_status', 'pending')
@@ -34,7 +34,7 @@ class SuperAdminDashboardController extends Controller
                 ->whereDate('check_out_date', $today)
                 ->count(),
 
-            // Guests
+
             'total_guests' => DB::table('guest_details')->count(),
             'active_guests' => DB::table('registrations')
                 ->whereNull('check_out_date')
@@ -44,7 +44,7 @@ class SuperAdminDashboardController extends Controller
                 ->whereYear('created_at', $currentYear)
                 ->count(),
 
-            // Rooms
+
             'total_rooms' => DB::table('rooms')->count(),
             'available_rooms' => DB::table('rooms')
                 ->where('status', 'available')
@@ -57,7 +57,7 @@ class SuperAdminDashboardController extends Controller
                 ->count(),
             'occupancy_rate' => $this->calculateOccupancyRate(),
 
-            // Financial
+
             'today_revenue' => DB::table('payments')
                 ->whereDate('payment_date', $today)
                 ->where('payment_status', 'completed')
@@ -79,7 +79,7 @@ class SuperAdminDashboardController extends Controller
                 ->where('payment_status', 'completed')
                 ->count(),
 
-            // Service Requests
+
             'pending_service_requests' => DB::table('service_requests')
                 ->where('request_status', 'pending')
                 ->count(),
@@ -91,13 +91,13 @@ class SuperAdminDashboardController extends Controller
                 ->where('request_status', 'completed')
                 ->count(),
 
-            // Breakfast Orders
+
             'breakfast_orders_today' => DB::table('service_requests')
                 ->whereDate('requested_at', $today)
                 ->where('service_type', 'food')
                 ->count(),
 
-            // Users
+
             'total_users' => DB::table('users')->count(),
             'active_staff' => DB::table('users')
                 ->whereIn('role_id', [1, 2, 3])
@@ -105,7 +105,7 @@ class SuperAdminDashboardController extends Controller
                 ->count(),
         ];
 
-        // Recent Activities
+
         $recentReservations = DB::table('reservations')
             ->join('guest_details', 'reservations.guest_details_id', '=', 'guest_details.guest_details_id')
             ->leftJoin('rooms', 'reservations.room_id', '=', 'rooms.room_id')
@@ -165,19 +165,19 @@ class SuperAdminDashboardController extends Controller
             ->limit(10)
             ->get();
 
-        // Revenue Chart Data (Last 7 days)
+
         $revenueChartData = $this->getRevenueChartData();
 
-        // Occupancy Chart Data (Last 30 days)
+
         $occupancyChartData = $this->getOccupancyChartData();
 
-        // Room Status Distribution
+
         $roomStatusDistribution = DB::table('rooms')
             ->select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->get();
 
-        // Room Type Statistics
+
         $roomTypeStats = DB::table('room_types')
             ->leftJoin('rooms', 'room_types.room_type_id', '=', 'rooms.room_type_id')
             ->select(
@@ -190,13 +190,13 @@ class SuperAdminDashboardController extends Controller
             ->groupBy('room_types.room_type_id', 'room_types.room_type_name', 'room_types.rate_per_night')
             ->get();
 
-        // Reservation Status Distribution
+
         $reservationStatusStats = DB::table('reservations')
             ->select('reservation_status', DB::raw('count(*) as count'))
             ->groupBy('reservation_status')
             ->get();
 
-        // Return the view with data
+
         return view('content.dashboard.super_admin_dashboard', compact(
             'stats',
             'recentReservations',
@@ -248,7 +248,7 @@ class SuperAdminDashboardController extends Controller
         $totalRooms = DB::table('rooms')->count();
 
         if ($totalRooms == 0) {
-            // Return empty data if no rooms
+
             for ($i = 29; $i >= 0; $i--) {
                 $date = Carbon::now()->subDays($i);
                 $data[] = [
@@ -262,7 +262,7 @@ class SuperAdminDashboardController extends Controller
         for ($i = 29; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
 
-            // Count rooms that are occupied on this date
+
             $occupiedRooms = DB::table('registrations')
                 ->join('reservations', 'registrations.reservation_id', '=', 'reservations.reservation_id')
                 ->whereDate('reservations.check_in_date', '<=', $date)

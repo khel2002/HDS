@@ -1,12 +1,13 @@
 
   :root {
-      --azure-primary: #0080FF;
+     --azure-primary: #060E4D;
+
       --azure-light: #4DA6FF;
       --azure-lighter: #E6F3FF;
       --azure-dark: #0066CC;
       --azure-darker: #004C99;
       --azure-accent: #00A3FF;
-      --azure-slsu: #060E4D;
+      --azure-slsu: #0080FF;
       --azure-darkest: #0a1883;
 
   }

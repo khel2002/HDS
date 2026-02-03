@@ -10,7 +10,7 @@ class RoomController extends Controller
 {
     public function index()
     {
-        // Fetch all rooms with their types and amenities
+
         $rooms = DB::table('rooms')
             ->join('room_types', 'rooms.room_type_id', '=', 'room_types.room_type_id')
             ->select(
@@ -22,7 +22,7 @@ class RoomController extends Controller
             )
             ->get();
 
-        // Get amenities for each room
+
         foreach ($rooms as $room) {
             $room->amenities = DB::table('room_amenities')
                 ->join('amenities', 'room_amenities.amenity_id', '=', 'amenities.amenity_id')
@@ -31,7 +31,7 @@ class RoomController extends Controller
                 ->toArray();
         }
 
-        // Get room statistics
+
         $stats = [
             'total_rooms' => DB::table('rooms')->count(),
             'available_rooms' => DB::table('rooms')->where('status', 'available')->count(),
