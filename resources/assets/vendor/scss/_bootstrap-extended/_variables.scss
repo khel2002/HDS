@@ -70,7 +70,6 @@ $color-contrast-light: $white !default;
 $color-contrast-dark: $pure-black !default;
 
 // scss-docs-start theme-color-variables
-<<<<<<< Updated upstream
 
 $primary: #060E4D !default;       // Azure Primary (deep blue)
 $secondary: #4DA6FF !default;     // Azure Light (secondary elements)
@@ -84,18 +83,6 @@ $gray: #cfd8e1 !default;          // Soft gray for borders/text
 $azure-dark: #0066CC !default;    // Azure Dark
 $azure-darker: #004C99 !default;  // Azure Darker
 $azure-slsu: #0080FF !default;
-=======
-$primary: #060E4D !default;   // Azure Blue
-$secondary: #0080FF !default; // Lighter blue-gray for secondary elements
-$success: #00b894 !default;   // Green (keep success semantic)
-$info: #1e90ff !default;      // Dodger blue for info
-$warning: #ffc107 !default;   // Amber for warnings
-$danger: #e74c3c !default;    // Red for danger
-$light: #f0f8ff !default;     // Azure-ish light background
-$dark: #0f1c2e !default;      // Dark navy for dark theme
-$gray: #cfd8e1 !default;      // Soft gray for borders/text
- // (C)
->>>>>>> Stashed changes
 
 // scss-docs-end theme-color-variables
 

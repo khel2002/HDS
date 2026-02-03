@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\admin\AdminController;
+use App\Http\Controllers\admin\AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
 // Dashboard
@@ -25,6 +27,7 @@ use App\Http\Controllers\authentications\{
     ForgotPasswordBasic
 };
 use App\Http\Controllers\GoogleAuthController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -66,7 +69,7 @@ Route::middleware(['auth'])->group(function () {
         // Redirect based on role_id
         if ($user->isSuperAdmin()) {
             return redirect()->route('super_admin.dashboard');
-        } elseif ($user->isAdmin() || $user->isManager()) {
+        } elseif ($user->isAdmin()) {
             return redirect()->route('admin.dashboard');
         } elseif ($user->isStaff()) {
             return redirect()->route('staff.dashboard');
@@ -110,7 +113,9 @@ Route::middleware(['auth', 'staff'])->prefix('staff')->name('staff.')->group(fun
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [Analytics::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+     Route::get('/users/all', [AdminController::class, 'index'])->name('admin.accounts');
 
     // Add admin-specific routes here
     // Route::resource('/users', AdminUserController::class);
@@ -133,6 +138,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super_a
 
     Route::get('/amenities/all', [AmenitiesController::class, 'index'])->name('amenities.index');
     route::get('/amenities/{id}', [AmenitiesController::class, 'show'])->name('amenities.show');
+
 });
 
 /*

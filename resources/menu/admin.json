@@ -298,7 +298,7 @@
         {
           "url": "/admin/users/all",
           "name": "All Users",
-          "slug": "all-users"
+          "slug": "admin.accounts"
         },
         {
           "url": "/admin/users/staff",
