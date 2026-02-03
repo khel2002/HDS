@@ -90,21 +90,6 @@
           "url": "/super-admin/rooms/all",
           "name": "All Rooms",
           "slug": "all-rooms"
-        },
-        {
-          "url": "/super-admin/rooms/available",
-          "name": "Available Rooms",
-          "slug": "available-rooms"
-        },
-        {
-          "url": "/super-admin/rooms/occupied",
-          "name": "Occupied Rooms",
-          "slug": "occupied-rooms"
-        },
-        {
-          "url": "/super-admin/rooms/maintenance",
-          "name": "Maintenance",
-          "slug": "maintenance-rooms"
         }
       ]
     },
@@ -117,11 +102,6 @@
           "url": "/super-admin/room-types/all",
           "name": "All Room Types",
           "slug": "all-room-types"
-        },
-        {
-          "url": "/super-admin/room-types/pricing",
-          "name": "Manage Pricing",
-          "slug": "room-type-pricing"
         }
       ]
     },
