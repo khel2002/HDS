@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\admin\AdminController;
+use App\Http\Controllers\admin\AdminAccountManagementController;
 use App\Http\Controllers\admin\AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -95,7 +95,7 @@ Route::middleware(['auth', 'staff'])->prefix('staff')->name('staff.')->group(fun
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-     Route::get('/users/all', [AdminController::class, 'index'])->name('admin.accounts');
+     Route::get('/account-management', [AdminAccountManagementController::class, 'index'])->name('accounts-management');
 
 
 

@@ -293,17 +293,12 @@
     {
       "name": "Users",
       "icon": "menu-icon icon-base ri ri-group-line",
-      "slug": "users",
+      "slug": "admin",
       "submenu": [
         {
-          "url": "/admin/users/all",
+          "url": "admin/account-management",
           "name": "All Users",
-          "slug": "admin.accounts"
-        },
-        {
-          "url": "/admin/users/staff",
-          "name": "Staff Users",
-          "slug": "staff-users"
+          "slug": "admin.accounts-management"
         },
         {
           "url": "/admin/users/guests",
