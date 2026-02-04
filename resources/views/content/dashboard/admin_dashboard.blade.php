@@ -1,6 +1,6 @@
 @extends('layouts/contentNavbarLayout')
 
-@section('title', 'Super Admin Dashboard')
+@section('title', 'Admin Dashboard')
 
 @section('page-style')
   <link rel="preconnect" href="https://fonts.googleapis.com">
