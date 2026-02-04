@@ -84,36 +84,36 @@
     {
       "name": "Rooms",
       "icon": "menu-icon icon-base ri ri-hotel-bed-line",
-      "slug": "rooms",
+      "slug": "super_admin.rooms",
       "submenu": [
         {
           "url": "/super-admin/rooms/all",
           "name": "All Rooms",
-          "slug": "index"
+          "slug": "super_admin.rooms.index"
         }
       ]
     },
     {
       "name": "Room Types",
       "icon": "menu-icon icon-base ri ri-apps-line",
-      "slug": "room-types",
+      "slug": "super_admin.room-types",
       "submenu": [
         {
           "url": "/super-admin/room-types/all",
           "name": "All Room Types",
-          "slug": "all-room-types"
+          "slug": "super_admin.room-types.index"
         }
       ]
     },
     {
       "name": "Amenities",
       "icon": "menu-icon icon-base ri ri-service-line",
-      "slug": "amenities",
+      "slug": "super_admin.amenities",
       "submenu": [
         {
           "url": "/super-admin/amenities/all",
           "name": "All Amenities",
-          "slug": "all-amenities"
+          "slug": "super_admin.amenities.index"
         }
       ]
     },

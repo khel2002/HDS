@@ -115,8 +115,13 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super_a
         Route::patch('/{id}/status', [RoomController::class, 'updateStatus'])->name('update-status');
     });
 
-    Route::get('/room-types/all', [RoomTypeController::class, 'index'])->name('room-types.index');
-    Route::get('/room-types/{id}', [RoomTypeController::class, 'show'])->name('room-types.show');
+   Route::prefix('room-types')->name('room-types.')->group(function () {
+    Route::get('/', [RoomTypeController::class, 'index'])->name('index');
+    Route::get('/{id}', [RoomTypeController::class, 'show'])->name('show');
+    Route::post('/', [RoomTypeController::class, 'store'])->name('store');
+    Route::put('/{id}', [RoomTypeController::class, 'update'])->name('update');
+    Route::delete('/{id}', [RoomTypeController::class, 'destroy'])->name('destroy');
+    });
 
     Route::get('/amenities/all', [AmenitiesController::class, 'index'])->name('amenities.index');
     route::get('/amenities/{id}', [AmenitiesController::class, 'show'])->name('amenities.show');

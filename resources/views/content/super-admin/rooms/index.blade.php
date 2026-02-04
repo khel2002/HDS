@@ -11,6 +11,23 @@
             <div>
               <h4 class="mb-1">Room Management</h4>
               <p class="mb-0">Manage and view all hotel rooms</p>
+              @if(isset($selectedRoomType) && $selectedRoomType)
+                @php
+                  $selectedType = $roomTypes->firstWhere('room_type_id', $selectedRoomType);
+                @endphp
+                @if($selectedType)
+                  <div class="mt-2">
+                    <span class="badge bg-label-primary">
+                      <i class="icon-base ri ri-filter-line me-1"></i>
+                      Filtered by: {{ $selectedType->room_type_name }}
+                    </span>
+                    <a href="{{ route('super_admin.rooms.index') }}" class="badge bg-label-secondary ms-2">
+                      <i class="icon-base ri ri-close-line me-1"></i>
+                      Clear Filter
+                    </a>
+                  </div>
+                @endif
+              @endif
             </div>
             <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#addRoomModal">
               <i class="icon-base ri ri-add-line me-1"></i>
@@ -101,6 +118,14 @@
           <h5 class="mb-0">All Rooms</h5>
           <div class="d-flex gap-2 flex-wrap">
             <input type="text" id="searchTable" class="form-control form-control-sm" placeholder="Search rooms..." style="width: 200px;">
+            <select id="filterRoomType" class="form-select form-select-sm" style="width: 180px;" onchange="filterByRoomType(this.value)">
+              <option value="">All Room Types</option>
+              @foreach($roomTypes as $type)
+                <option value="{{ $type->room_type_id }}" {{ isset($selectedRoomType) && $selectedRoomType == $type->room_type_id ? 'selected' : '' }}>
+                  {{ $type->room_type_name }}
+                </option>
+              @endforeach
+            </select>
             <select id="filterStatus" class="form-select form-select-sm" style="width: 150px;">
               <option value="">All Status</option>
               <option value="available">Available</option>
@@ -227,7 +252,7 @@
 
     <!-- Add Room Modal -->
     <div class="modal fade" id="addRoomModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">
@@ -240,65 +265,83 @@
             @csrf
             <div class="modal-body">
               <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label for="room_number" class="form-label">Room Number <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="room_number" name="room_number" required placeholder="e.g., 101" maxlength="10">
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label for="room_type_id" class="form-label">Room Type <span class="text-danger">*</span></label>
-                  <select class="form-select" id="room_type_id" name="room_type_id" required onchange="updateRoomTypeDescription('add')">
-                    <option value="">Select Room Type</option>
-                    @foreach($roomTypes as $type)
-                      <option value="{{ $type->room_type_id }}"
-                              data-description="{{ $type->description ?? 'No description available' }}"
-                              data-rate="{{ number_format($type->rate_per_night, 2) }}"
-                              data-pax="{{ $type->max_pax }}">
-                        {{ $type->room_type_name }}
-                      </option>
-                    @endforeach
-                  </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
-                  <select class="form-select" id="status" name="status" required>
-                    <option value="available" selected>Available</option>
-                    <option value="occupied">Occupied</option>
-                    <option value="maintenance">Maintenance</option>
-                  </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Selected Room Type Info</label>
-                  <div class="alert alert-info mb-0 py-2" role="alert">
-                    <small id="add_room_type_info">Please select a room type</small>
+                <!-- Left Column - Basic Information -->
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                  <h6 class="mb-3 text-primary">Basic Information</h6>
+
+                  <div class="mb-3">
+                    <label for="room_number" class="form-label">Room Number <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="room_number" name="room_number" required placeholder="e.g., 101" maxlength="10">
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="room_type_id" class="form-label">Room Type <span class="text-danger">*</span></label>
+                    <select class="form-select" id="room_type_id" name="room_type_id" required onchange="updateRoomTypeDescription('add')">
+                      <option value="">Select Room Type</option>
+                      @foreach($roomTypes as $type)
+                        <option value="{{ $type->room_type_id }}"
+                                data-description="{{ $type->description ?? 'No description available' }}"
+                                data-rate="{{ number_format($type->rate_per_night, 2) }}"
+                                data-pax="{{ $type->max_pax }}">
+                          {{ $type->room_type_name }}
+                        </option>
+                      @endforeach
+                    </select>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                    <select class="form-select" id="status" name="status" required>
+                      <option value="available" selected>Available</option>
+                      <option value="occupied">Occupied</option>
+                      <option value="maintenance">Maintenance</option>
+                    </select>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label">Selected Room Type Info</label>
+                    <div class="alert alert-info mb-0 py-2" role="alert">
+                      <small id="add_room_type_info">Please select a room type</small>
+                    </div>
+                  </div>
+
+                  <div class="mb-0">
+                    <label for="image" class="form-label">Room Image</label>
+                    <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                    <small class="text-muted">Accepted formats: JPG, PNG, GIF. Max size: 2MB</small>
                   </div>
                 </div>
-                <div class="col-12 mb-3">
-                  <label for="image" class="form-label">Room Image</label>
-                  <input type="file" class="form-control" id="image" name="image" accept="image/*">
-                  <small class="text-muted">Accepted formats: JPG, PNG, GIF. Max size: 2MB</small>
-                </div>
-                <div class="col-12 mb-3">
-                  <label class="form-label">Amenities (Select to auto-generate description)</label>
-                  <div class="row">
-                    @foreach($amenities as $amenity)
-                      <div class="col-md-6 mb-2">
-                        <div class="form-check">
-                          <input class="form-check-input amenity-checkbox" type="checkbox" name="amenities[]" value="{{ $amenity->amenity_id }}" id="amenity_{{ $amenity->amenity_id }}" onchange="updateDescription('add')">
-                          <label class="form-check-label" for="amenity_{{ $amenity->amenity_id }}">
-                            {{ $amenity->amenity_name }}
-                          </label>
-                        </div>
+
+                <!-- Right Column - Amenities & Description -->
+                <div class="col-lg-6">
+                  <h6 class="mb-3 text-primary">Amenities & Description</h6>
+
+                  <div class="mb-3">
+                    <label class="form-label">Amenities (Select to auto-generate description)</label>
+                    <div class="border rounded p-3" style="max-height: 280px; overflow-y: auto;">
+                      <div class="row">
+                        @foreach($amenities as $amenity)
+                          <div class="col-12 mb-2">
+                            <div class="form-check">
+                              <input class="form-check-input amenity-checkbox" type="checkbox" name="amenities[]" value="{{ $amenity->amenity_id }}" id="amenity_{{ $amenity->amenity_id }}" onchange="updateDescription('add')">
+                              <label class="form-check-label" for="amenity_{{ $amenity->amenity_id }}">
+                                {{ $amenity->amenity_name }}
+                              </label>
+                            </div>
+                          </div>
+                        @endforeach
                       </div>
-                    @endforeach
+                    </div>
                   </div>
-                </div>
-                <div class="col-12 mb-3">
-                  <label class="form-label">Auto-Generated Description (Will be saved to Room Type)</label>
-                  <div class="alert alert-warning mb-2" role="alert">
-                    <small><i class="ri-information-line me-1"></i> <strong>Note:</strong> This description will be saved to the selected room type and will apply to all rooms of that type.</small>
-                  </div>
-                  <div class="alert alert-secondary" role="alert">
-                    <small id="add_auto_description">No amenities selected yet. Select amenities above to auto-generate a description.</small>
+
+                  <div class="mb-0">
+                    <label class="form-label">Auto-Generated Description</label>
+                    <div class="alert alert-warning mb-2" role="alert">
+                      <small><i class="ri-information-line me-1"></i> <strong>Note:</strong> This description will be saved to the selected room type and will apply to all rooms of that type.</small>
+                    </div>
+                    <div class="alert alert-secondary mb-0" role="alert">
+                      <small id="add_auto_description">No amenities selected yet. Select amenities above to auto-generate a description.</small>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -719,174 +762,6 @@
     }
   </style>
 
-  @push('scripts')
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script>
-    console.log('Room management script loaded');
-
-    // Update room type description and info - GLOBAL FUNCTION
-    window.updateRoomTypeDescription = function(prefix) {
-      const select = document.getElementById(prefix + '_room_type_id') || document.getElementById('room_type_id');
-      const selectedOption = select.options[select.selectedIndex];
-      const infoElement = document.getElementById(prefix + '_room_type_info');
-
-      if (selectedOption.value) {
-        const description = selectedOption.getAttribute('data-description');
-        const rate = selectedOption.getAttribute('data-rate');
-        const pax = selectedOption.getAttribute('data-pax');
-
-        if (infoElement) {
-          infoElement.textContent = `Rate: ₱${rate}/night | Max: ${pax} guest(s)`;
-        }
-      } else {
-        if (infoElement) {
-          infoElement.textContent = 'Please select a room type';
-        }
-      }
-    }
-
-    // Update description based on selected amenities - GLOBAL FUNCTION
-    window.updateDescription = function(prefix) {
-      let checkboxes;
-
-      if (prefix === 'add') {
-        checkboxes = document.querySelectorAll('.amenity-checkbox:checked');
-      } else {
-        checkboxes = document.querySelectorAll('.amenity-checkbox-' + prefix.replace('edit_', '') + ':checked');
-      }
-
-      const descElement = document.getElementById(prefix + '_auto_description');
-
-      if (checkboxes.length > 0) {
-        const amenities = Array.from(checkboxes).map(cb => {
-          const label = document.querySelector('label[for="' + cb.id + '"]');
-          return label ? label.textContent.trim() : '';
-        }).filter(name => name !== '');
-
-        descElement.textContent = `This room features: ${amenities.join(', ')}.`;
-      } else {
-        descElement.textContent = 'No amenities selected yet. Select amenities above to auto-generate a description.';
-      }
-    }
-
-    // Delete confirmation with SweetAlert2 - GLOBAL FUNCTION
-    window.confirmDelete = function(roomId, roomNumber, status) {
-      console.log('confirmDelete called:', roomId, roomNumber, status);
-      if (status === 'occupied') {
-        Swal.fire({
-          title: 'Cannot Delete!',
-          text: `Room ${roomNumber} is currently occupied. Please change the status first.`,
-          icon: 'error',
-          confirmButtonColor: '#696cff',
-          confirmButtonText: 'OK'
-        });
-        return;
-      }
-
-      Swal.fire({
-        title: 'Delete Room?',
-        html: `Are you sure you want to delete <strong>Room ${roomNumber}</strong>?<br><small class="text-muted">This action cannot be undone.</small>`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#8592a3',
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'Cancel'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // Create and submit delete form
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = `/super-admin/rooms/${roomId}`;
-
-          const csrfToken = document.createElement('input');
-          csrfToken.type = 'hidden';
-          csrfToken.name = '_token';
-          csrfToken.value = '{{ csrf_token() }}';
-
-          const methodField = document.createElement('input');
-          methodField.type = 'hidden';
-          methodField.name = '_method';
-          methodField.value = 'DELETE';
-
-          form.appendChild(csrfToken);
-          form.appendChild(methodField);
-          document.body.appendChild(form);
-          form.submit();
-        }
-      });
-    }
-
-    // DOM Ready event listeners
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialize tooltips
-      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-      });
-
-      // Table search and filter
-      const searchInput = document.getElementById('searchTable');
-      const filterStatus = document.getElementById('filterStatus');
-      const table = document.querySelector('.table-responsive table tbody');
-      const rows = table.querySelectorAll('tr');
-
-      function filterTable() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const statusFilter = filterStatus.value.toLowerCase();
-
-        rows.forEach(row => {
-          const text = row.textContent.toLowerCase();
-          const statusBadge = row.querySelector('.badge');
-          const rowStatus = statusBadge ? statusBadge.textContent.toLowerCase() : '';
-
-          const matchesSearch = text.includes(searchTerm);
-          const matchesStatus = !statusFilter || rowStatus.includes(statusFilter);
-
-          row.style.display = matchesSearch && matchesStatus ? '' : 'none';
-        });
-      }
-
-      searchInput.addEventListener('keyup', filterTable);
-      filterStatus.addEventListener('change', filterTable);
-
-      // Initialize description for edit modals on page load
-      @foreach($rooms as $room)
-        updateDescription('edit_{{ $room->room_id }}');
-      @endforeach
-
-      // Add SweetAlert2 confirmation to all form submissions
-      const forms = document.querySelectorAll('form[method="POST"]');
-      forms.forEach(form => {
-        // Skip delete forms (they have their own handler)
-        if (!form.querySelector('input[name="_method"][value="DELETE"]')) {
-          form.addEventListener('submit', function(e) {
-            // Only show confirmation for update and status change forms
-            if (form.querySelector('input[name="_method"][value="PUT"]') ||
-                form.querySelector('input[name="_method"][value="PATCH"]')) {
-              e.preventDefault();
-
-              const isStatusChange = form.querySelector('input[name="_method"][value="PATCH"]');
-
-              Swal.fire({
-                title: isStatusChange ? 'Update Room Status?' : 'Save Changes?',
-                text: isStatusChange ? 'Are you sure you want to change the room status?' : 'Are you sure you want to save these changes?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#696cff',
-                cancelButtonColor: '#8592a3',
-                confirmButtonText: 'Yes, save it!',
-                cancelButtonText: 'Cancel'
-              }).then((result) => {
-                if (result.isConfirmed) {
-                  form.submit();
-                }
-              });
-            }
-          });
-        }
-      });
-    });
-  </script>
-  @endpush
+  <script src="{{ asset('js/roomjs/index_script.js') }}"></script>
 @endsection

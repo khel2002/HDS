@@ -9,9 +9,13 @@ use Illuminate\Support\Facades\Storage;
 
 class RoomController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $rooms = DB::table('rooms')
+        // Get the room type filter from query parameter
+        $selectedRoomType = $request->query('room_type');
+
+        // Base query for rooms
+        $query = DB::table('rooms')
             ->join('room_types', 'rooms.room_type_id', '=', 'room_types.room_type_id')
             ->select(
                 'rooms.room_id',
@@ -23,8 +27,14 @@ class RoomController extends Controller
                 'room_types.description',
                 'room_types.rate_per_night',
                 'room_types.max_pax'
-            )
-            ->get();
+            );
+
+        // Apply room type filter if provided
+        if ($selectedRoomType) {
+            $query->where('rooms.room_type_id', $selectedRoomType);
+        }
+
+        $rooms = $query->get();
 
         foreach ($rooms as $room) {
             $room->amenities = DB::table('room_amenities')
@@ -34,17 +44,27 @@ class RoomController extends Controller
                 ->toArray();
         }
 
-        $stats = [
-            'total_rooms' => DB::table('rooms')->count(),
-            'available_rooms' => DB::table('rooms')->where('status', 'available')->count(),
-            'occupied_rooms' => DB::table('rooms')->where('status', 'occupied')->count(),
-            'maintenance_rooms' => DB::table('rooms')->where('status', 'maintenance')->count(),
-        ];
+        // Calculate stats based on filtered or all rooms
+        if ($selectedRoomType) {
+            $stats = [
+                'total_rooms' => $rooms->count(),
+                'available_rooms' => $rooms->where('status', 'available')->count(),
+                'occupied_rooms' => $rooms->where('status', 'occupied')->count(),
+                'maintenance_rooms' => $rooms->where('status', 'maintenance')->count(),
+            ];
+        } else {
+            $stats = [
+                'total_rooms' => DB::table('rooms')->count(),
+                'available_rooms' => DB::table('rooms')->where('status', 'available')->count(),
+                'occupied_rooms' => DB::table('rooms')->where('status', 'occupied')->count(),
+                'maintenance_rooms' => DB::table('rooms')->where('status', 'maintenance')->count(),
+            ];
+        }
 
         $roomTypes = DB::table('room_types')->get();
         $amenities = DB::table('amenities')->get();
 
-        return view('content.super-admin.rooms.index', compact('rooms', 'stats', 'roomTypes', 'amenities'));
+        return view('content.super-admin.rooms.index', compact('rooms', 'stats', 'roomTypes', 'amenities', 'selectedRoomType'));
     }
 
     public function show($id)
