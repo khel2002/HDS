@@ -106,8 +106,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super_admin.')->group(function () {
     Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
 
-     Route::prefix('rooms')->name('rooms.')->group(function () {
-        Route::get('/all', [RoomController::class, 'index'])->name('index');
+      Route::prefix('rooms')->name('rooms.')->group(function () {
+        Route::get('/', [RoomController::class, 'index'])->name('index'); // This is the GET route for listing/filtering
         Route::post('/', [RoomController::class, 'store'])->name('store');
         Route::get('/{id}', [RoomController::class, 'show'])->name('show');
         Route::put('/{id}', [RoomController::class, 'update'])->name('update');

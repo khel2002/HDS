@@ -29,13 +29,14 @@ class RoomController extends Controller
                 'room_types.max_pax'
             );
 
-        // Apply room type filter if provided
-        if ($selectedRoomType) {
+        // Apply room type filter if provided and not empty
+        if ($selectedRoomType && $selectedRoomType !== '') {
             $query->where('rooms.room_type_id', $selectedRoomType);
         }
 
         $rooms = $query->get();
 
+        // Get amenities for each room
         foreach ($rooms as $room) {
             $room->amenities = DB::table('room_amenities')
                 ->join('amenities', 'room_amenities.amenity_id', '=', 'amenities.amenity_id')
@@ -44,22 +45,15 @@ class RoomController extends Controller
                 ->toArray();
         }
 
-        // Calculate stats based on filtered or all rooms
-        if ($selectedRoomType) {
-            $stats = [
-                'total_rooms' => $rooms->count(),
-                'available_rooms' => $rooms->where('status', 'available')->count(),
-                'occupied_rooms' => $rooms->where('status', 'occupied')->count(),
-                'maintenance_rooms' => $rooms->where('status', 'maintenance')->count(),
-            ];
-        } else {
-            $stats = [
-                'total_rooms' => DB::table('rooms')->count(),
-                'available_rooms' => DB::table('rooms')->where('status', 'available')->count(),
-                'occupied_rooms' => DB::table('rooms')->where('status', 'occupied')->count(),
-                'maintenance_rooms' => DB::table('rooms')->where('status', 'maintenance')->count(),
-            ];
-        }
+        // Calculate stats based on ALL rooms (not filtered)
+        $allRoomsStats = [
+            'total_rooms' => DB::table('rooms')->count(),
+            'available_rooms' => DB::table('rooms')->where('status', 'available')->count(),
+            'occupied_rooms' => DB::table('rooms')->where('status', 'occupied')->count(),
+            'maintenance_rooms' => DB::table('rooms')->where('status', 'maintenance')->count(),
+        ];
+
+        $stats = $allRoomsStats;
 
         $roomTypes = DB::table('room_types')->get();
         $amenities = DB::table('amenities')->get();

@@ -111,141 +111,169 @@
       </div>
     </div>
 
+    <!-- Filters -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-md-3">
+              <label class="form-label">Search Room</label>
+              <input type="text" class="form-control" id="searchTable" placeholder="Search by room number...">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Room Type</label>
+              <select id="filterRoomType" class="form-select" onchange="filterByRoomType(this.value)">
+                <option value="">All Room Types</option>
+                @foreach($roomTypes as $type)
+                  <option value="{{ $type->room_type_id }}" {{ isset($selectedRoomType) && $selectedRoomType == $type->room_type_id ? 'selected' : '' }}>
+                    {{ $type->room_type_name }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Status</label>
+              <select id="filterStatus" class="form-select">
+                <option value="">All Status</option>
+                <option value="available">Available</option>
+                <option value="occupied">Occupied</option>
+                <option value="maintenance">Maintenance</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">&nbsp;</label>
+              <button class="btn btn-outline-secondary d-block w-100" type="button" onclick="window.location.href='{{ route('super_admin.rooms.index') }}'">
+                <i class="icon-base ri ri-refresh-line me-1"></i>
+                Reset Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Rooms Table -->
     <div class="col-12">
       <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
-          <h5 class="mb-0">All Rooms</h5>
-          <div class="d-flex gap-2 flex-wrap">
-            <input type="text" id="searchTable" class="form-control form-control-sm" placeholder="Search rooms..." style="width: 200px;">
-            <select id="filterRoomType" class="form-select form-select-sm" style="width: 180px;" onchange="filterByRoomType(this.value)">
-              <option value="">All Room Types</option>
-              @foreach($roomTypes as $type)
-                <option value="{{ $type->room_type_id }}" {{ isset($selectedRoomType) && $selectedRoomType == $type->room_type_id ? 'selected' : '' }}>
-                  {{ $type->room_type_name }}
-                </option>
-              @endforeach
-            </select>
-            <select id="filterStatus" class="form-select form-select-sm" style="width: 150px;">
-              <option value="">All Status</option>
-              <option value="available">Available</option>
-              <option value="occupied">Occupied</option>
-              <option value="maintenance">Maintenance</option>
-            </select>
-            <button class="btn btn-outline-secondary btn-sm" type="button">
-              <i class="icon-base ri ri-download-line me-1"></i>
-              Export
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.location.reload()">
-              <i class="icon-base ri ri-refresh-line me-1"></i>
-              Refresh
-            </button>
+        <div class="card-header">
+          <div class="d-flex align-items-center justify-content-between">
+            <h5 class="card-title m-0 me-2">All Rooms</h5>
+            <div class="dropdown">
+              <button class="btn text-body-secondary p-0" type="button" id="roomsDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="icon-base ri ri-more-2-line icon-24px"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="roomsDropdown">
+                <a class="dropdown-item" href="javascript:void(0);" onclick="window.location.reload()">Refresh</a>
+                <a class="dropdown-item" href="javascript:void(0);">Export to Excel</a>
+                <a class="dropdown-item" href="javascript:void(0);">Export to PDF</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="javascript:void(0);">Print</a>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Room #</th>
-                <th>Image</th>
-                <th>Room Type</th>
-                <th>Status</th>
-                <th>Rate/Night</th>
-                <th>Max Capacity</th>
-                <th>Amenities</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach($rooms as $room)
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
                 <tr>
-                  <td>
-                    <span class="fw-medium">{{ $room->room_number }}</span>
-                  </td>
-                  <td>
-                    @if ($room->image_path)
-                      <img
-                        src="{{ asset('storage/' . $room->image_path) }}"
-                        alt="{{ $room->room_type_name }}"
-                        class="rounded"
-                        style="width: 60px; height: 45px; object-fit: cover;"
-                      >
-                    @else
-                      <div class="bg-label-secondary rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 45px;">
-                        <i class="icon-base ri ri-image-line text-body-secondary"></i>
+                  <th class="text-truncate">Room #</th>
+                  <th class="text-truncate">Image</th>
+                  <th class="text-truncate">Room Type</th>
+                  <th class="text-truncate">Status</th>
+                  <th class="text-truncate">Rate/Night</th>
+                  <th class="text-truncate">Max Capacity</th>
+                  <th class="text-truncate">Amenities</th>
+                  <th class="text-truncate">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="roomsTableBody">
+                @foreach($rooms as $room)
+                  <tr data-room-number="{{ strtolower($room->room_number) }}" data-room-type="{{ $room->room_type_id }}" data-status="{{ $room->status }}">
+                    <td class="text-truncate">
+                      <span class="fw-medium">{{ $room->room_number }}</span>
+                    </td>
+                    <td class="text-truncate">
+                      @if ($room->image_path)
+                        <img
+                          src="{{ asset('storage/' . $room->image_path) }}"
+                          alt="{{ $room->room_type_name }}"
+                          class="rounded"
+                          style="width: 60px; height: 45px; object-fit: cover;"
+                        >
+                      @else
+                        <div class="bg-label-secondary rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 45px;">
+                          <i class="icon-base ri ri-image-line text-body-secondary"></i>
+                        </div>
+                      @endif
+                    </td>
+                    <td class="text-truncate">
+                      <div class="d-flex align-items-center">
+                        <i class="icon-base ri ri-hotel-bed-line icon-20px text-primary me-2"></i>
+                        <span>{{ $room->room_type_name }}</span>
                       </div>
-                    @endif
-                  </td>
-                  <td>
-                    <div class="d-flex align-items-center">
-                      <i class="icon-base ri ri-hotel-bed-line icon-20px text-primary me-2"></i>
-                      <span>{{ $room->room_type_name }}</span>
-                    </div>
-                  </td>
-                  <td>
-                    @if($room->status === 'available')
-                      <span class="badge bg-label-success">Available</span>
-                    @elseif($room->status === 'occupied')
-                      <span class="badge bg-label-warning">Occupied</span>
-                    @else
-                      <span class="badge bg-label-danger">Maintenance</span>
-                    @endif
-                  </td>
-                  <td>
-                    <span class="fw-medium text-primary">₱{{ number_format($room->rate_per_night, 2) }}</span>
-                  </td>
-                  <td>
-                    <span class="badge bg-label-info rounded-pill">{{ $room->max_pax }} {{ $room->max_pax > 1 ? 'Guests' : 'Guest' }}</span>
-                  </td>
-                  <td>
-                    @if(!empty($room->amenities))
-                      <div class="d-flex flex-wrap gap-1">
-                        @foreach(array_slice($room->amenities, 0, 2) as $amenity)
-                          <span class="badge bg-label-secondary" style="font-size: 0.75rem;">{{ $amenity }}</span>
-                        @endforeach
-                        @if(count($room->amenities) > 2)
-                          <span class="badge bg-label-secondary cursor-pointer" style="font-size: 0.75rem;"
-                                data-bs-toggle="modal"
-                                data-bs-target="#amenitiesModal{{ $room->room_id }}"
-                                role="button">
-                            +{{ count($room->amenities) - 2 }}
-                          </span>
-                        @endif
-                      </div>
-                    @else
-                      <span class="text-body-secondary">—</span>
-                    @endif
-                  </td>
-                  <td>
-                    <div class="d-flex gap-1">
-                      <button class="btn btn-sm btn-icon btn-text-secondary rounded-pill" type="button" title="View Details" data-bs-toggle="modal" data-bs-target="#viewDetailsModal{{ $room->room_id }}">
-                        <i class="icon-base ri ri-eye-line"></i>
-                      </button>
-                      <button class="btn btn-sm btn-icon btn-text-secondary rounded-pill" type="button" title="Edit" data-bs-toggle="modal" data-bs-target="#editRoomModal{{ $room->room_id }}">
-                        <i class="icon-base ri ri-edit-line"></i>
-                      </button>
+                    </td>
+                    <td class="text-truncate">
+                      @if($room->status === 'available')
+                        <span class="badge bg-label-success">Available</span>
+                      @elseif($room->status === 'occupied')
+                        <span class="badge bg-label-warning">Occupied</span>
+                      @else
+                        <span class="badge bg-label-danger">Maintenance</span>
+                      @endif
+                    </td>
+                    <td class="text-truncate">
+                      <span class="fw-medium text-primary">₱{{ number_format($room->rate_per_night, 2) }}</span>
+                    </td>
+                    <td class="text-truncate">
+                      <span class="badge bg-label-info rounded-pill">{{ $room->max_pax }} {{ $room->max_pax > 1 ? 'Guests' : 'Guest' }}</span>
+                    </td>
+                    <td class="text-truncate">
+                      @if(!empty($room->amenities))
+                        <div class="d-flex flex-wrap gap-1">
+                          @foreach(array_slice($room->amenities, 0, 2) as $amenity)
+                            <span class="badge bg-label-secondary" style="font-size: 0.75rem;">{{ $amenity }}</span>
+                          @endforeach
+                          @if(count($room->amenities) > 2)
+                            <span class="badge bg-label-secondary cursor-pointer" style="font-size: 0.75rem;"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#amenitiesModal{{ $room->room_id }}"
+                                  role="button">
+                              +{{ count($room->amenities) - 2 }}
+                            </span>
+                          @endif
+                        </div>
+                      @else
+                        <span class="text-body-secondary">—</span>
+                      @endif
+                    </td>
+                    <td class="text-truncate">
                       <div class="dropdown">
-                        <button class="btn btn-sm btn-icon btn-text-secondary rounded-pill" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More Actions">
+                        <button type="button" class="btn btn-sm btn-icon" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                           <i class="icon-base ri ri-more-2-line"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end">
+                          <a class="dropdown-item" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#viewDetailsModal{{ $room->room_id }}">
+                            <i class="icon-base ri ri-eye-line me-2"></i>View Details
+                          </a>
+                          <a class="dropdown-item" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#editRoomModal{{ $room->room_id }}">
+                            <i class="icon-base ri ri-edit-line me-2"></i>Edit
+                          </a>
                           <a class="dropdown-item" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#changeStatusModal{{ $room->room_id }}">
-                            <i class="icon-base ri ri-refresh-line me-2"></i>
-                            Change Status
+                            <i class="icon-base ri ri-refresh-line me-2"></i>Change Status
                           </a>
                           <div class="dropdown-divider"></div>
                           <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="confirmDelete({{ $room->room_id }}, '{{ $room->room_number }}', '{{ $room->status }}')">
-                            <i class="icon-base ri ri-delete-bin-line me-2"></i>
-                            Delete Room
+                            <i class="icon-base ri ri-delete-bin-line me-2"></i>Delete Room
                           </a>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                </tr>
-              @endforeach
-            </tbody>
-          </table>
+                    </td>
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
