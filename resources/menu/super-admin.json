@@ -111,7 +111,7 @@
       "slug": "super_admin.amenities",
       "submenu": [
         {
-          "url": "/super-admin/amenities/all",
+          "url": "/super-admin/amenities",
           "name": "All Amenities",
           "slug": "super_admin.amenities.index"
         }

@@ -123,9 +123,13 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super_a
     Route::delete('/{id}', [RoomTypeController::class, 'destroy'])->name('destroy');
     });
 
-    Route::get('/amenities/all', [AmenitiesController::class, 'index'])->name('amenities.index');
-    route::get('/amenities/{id}', [AmenitiesController::class, 'show'])->name('amenities.show');
-
+    Route::prefix('amenities')->name('amenities.')->group(function () {
+        Route::get('/', [AmenitiesController::class, 'index'])->name('index');
+        Route::post('/', [AmenitiesController::class, 'store'])->name('store');
+        Route::get('/{id}', [AmenitiesController::class, 'show'])->name('show');
+        Route::put('/{id}', [AmenitiesController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AmenitiesController::class, 'destroy'])->name('destroy');
+    });
 });
 
 

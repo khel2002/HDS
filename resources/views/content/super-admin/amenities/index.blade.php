@@ -10,7 +10,7 @@
           <div class="d-flex justify-content-between align-items-center">
             <div>
               <h4 class="mb-1">Amenities Management</h4>
-              <p class="mb-0">Manage and view all room amenities</p>
+              <p class="mb-0">Manage and configure room amenities</p>
             </div>
             <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#addAmenityModal">
               <i class="icon-base ri ri-add-line me-1"></i>
@@ -76,100 +76,130 @@
       </div>
     </div>
 
+    <!-- Filters -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-md-4">
+              <label class="form-label">Search Amenity</label>
+              <input type="text" class="form-control" id="searchAmenity" placeholder="Search by name...">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Filter By Status</label>
+              <select class="form-select" id="statusFilter">
+                <option value="">All Amenities</option>
+                <option value="active">Active (In Use)</option>
+                <option value="inactive">Inactive (Not Used)</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">&nbsp;</label>
+              <button class="btn btn-outline-secondary d-block w-100" type="button" onclick="window.location.reload()">
+                <i class="icon-base ri ri-refresh-line me-1"></i>
+                Reset Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Amenities Table -->
     <div class="col-12">
       <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
-          <h5 class="mb-0">All Amenities</h5>
-          <div class="d-flex gap-2 flex-wrap">
-            <input type="text" id="searchTable" class="form-control form-control-sm" placeholder="Search amenities..." style="width: 200px;">
-            <button class="btn btn-outline-secondary btn-sm" type="button">
-              <i class="icon-base ri ri-download-line me-1"></i>
-              Export
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.location.reload()">
-              <i class="icon-base ri ri-refresh-line me-1"></i>
-              Refresh
-            </button>
+        <div class="card-header">
+          <div class="d-flex align-items-center justify-content-between">
+            <h5 class="card-title m-0 me-2">All Amenities</h5>
+            <div class="dropdown">
+              <button class="btn text-body-secondary p-0" type="button" id="amenitiesDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="icon-base ri ri-more-2-line icon-24px"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="amenitiesDropdown">
+                <a class="dropdown-item" href="javascript:void(0);" onclick="window.location.reload()">Refresh</a>
+                <a class="dropdown-item" href="javascript:void(0);">Export to Excel</a>
+                <a class="dropdown-item" href="javascript:void(0);">Export to PDF</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="javascript:void(0);">Print</a>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th style="width: 80px;">ID</th>
-                <th>Amenity Name</th>
-                <th class="text-center">Rooms Using</th>
-                <th class="text-center">Status</th>
-                <th style="width: 150px;">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach($amenities as $amenity)
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
                 <tr>
-                  <td>
-                    <span class="text-body-secondary">#{{ $amenity->amenity_id }}</span>
-                  </td>
-                  <td>
-                    <div class="d-flex align-items-center">
-                      <div class="avatar avatar-sm me-3">
-                        <span class="avatar-initial rounded bg-label-primary">
-                          <i class="icon-base ri ri-check-line"></i>
-                        </span>
-                      </div>
-                      <span class="fw-medium">{{ $amenity->amenity_name }}</span>
-                    </div>
-                  </td>
-                  <td class="text-center">
-                    @php
-                      $roomCount = $amenity->rooms->count();
-                    @endphp
-                    @if($roomCount > 0)
-                      <span class="badge bg-label-primary rounded-pill cursor-pointer"
-                            data-bs-toggle="modal"
-                            data-bs-target="#roomsUsingModal{{ $amenity->amenity_id }}"
-                            role="button">
-                        {{ $roomCount }} {{ $roomCount > 1 ? 'Rooms' : 'Room' }}
-                      </span>
-                    @else
-                      <span class="badge bg-label-secondary rounded-pill">Not Used</span>
-                    @endif
-                  </td>
-                  <td class="text-center">
-                    @if($roomCount > 0)
-                      <span class="badge bg-label-success">Active</span>
-                    @else
-                      <span class="badge bg-label-secondary">Inactive</span>
-                    @endif
-                  </td>
-                  <td>
-                    <div class="d-flex gap-1">
-                      <button class="btn btn-sm btn-icon btn-text-secondary rounded-pill"
-                              type="button"
-                              title="View Details"
-                              data-bs-toggle="modal"
-                              data-bs-target="#viewAmenityModal{{ $amenity->amenity_id }}">
-                        <i class="icon-base ri ri-eye-line"></i>
-                      </button>
-                      <button class="btn btn-sm btn-icon btn-text-secondary rounded-pill"
-                              type="button"
-                              title="Edit"
-                              data-bs-toggle="modal"
-                              data-bs-target="#editAmenityModal{{ $amenity->amenity_id }}">
-                        <i class="icon-base ri ri-edit-line"></i>
-                      </button>
-                      <button class="btn btn-sm btn-icon btn-text-danger rounded-pill"
-                              type="button"
-                              title="Delete"
-                              onclick="confirmDelete({{ $amenity->amenity_id }}, '{{ $amenity->amenity_name }}', {{ $roomCount }})">
-                        <i class="icon-base ri ri-delete-bin-line"></i>
-                      </button>
-                    </div>
-                  </td>
+                  <th class="text-truncate" style="width: 80px;">ID</th>
+                  <th class="text-truncate">Amenity Name</th>
+                  <th class="text-truncate text-center">Rooms Using</th>
+                  <th class="text-truncate text-center">Status</th>
+                  <th class="text-truncate">Actions</th>
                 </tr>
-              @endforeach
-            </tbody>
-          </table>
+              </thead>
+              <tbody id="amenitiesTableBody">
+                @foreach($amenities as $amenity)
+                  @php
+                    $roomCount = $amenity->rooms->count();
+                    $status = $roomCount > 0 ? 'active' : 'inactive';
+                  @endphp
+                  <tr data-amenity-name="{{ strtolower($amenity->amenity_name) }}" data-status="{{ $status }}">
+                    <td class="text-truncate">
+                      <span class="text-body-secondary">#{{ $amenity->amenity_id }}</span>
+                    </td>
+                    <td class="text-truncate">
+                      <div class="d-flex align-items-center">
+                        <div class="avatar avatar-sm me-3">
+                          <span class="avatar-initial rounded bg-label-primary">
+                            <i class="icon-base ri ri-check-line"></i>
+                          </span>
+                        </div>
+                        <span class="fw-medium">{{ $amenity->amenity_name }}</span>
+                      </div>
+                    </td>
+                    <td class="text-truncate text-center">
+                      @if($roomCount > 0)
+                        <span class="badge bg-label-primary rounded-pill cursor-pointer"
+                              data-bs-toggle="modal"
+                              data-bs-target="#roomsUsingModal{{ $amenity->amenity_id }}"
+                              role="button">
+                          {{ $roomCount }} {{ $roomCount > 1 ? 'Rooms' : 'Room' }}
+                        </span>
+                      @else
+                        <span class="badge bg-label-secondary rounded-pill">Not Used</span>
+                      @endif
+                    </td>
+                    <td class="text-truncate text-center">
+                      @if($roomCount > 0)
+                        <span class="badge bg-label-success">Active</span>
+                      @else
+                        <span class="badge bg-label-secondary">Inactive</span>
+                      @endif
+                    </td>
+                    <td class="text-truncate">
+                      <div class="dropdown">
+                        <button type="button" class="btn btn-sm btn-icon" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          <i class="icon-base ri ri-more-2-line"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end">
+                          <a class="dropdown-item" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#viewAmenityModal{{ $amenity->amenity_id }}">
+                            <i class="icon-base ri ri-eye-line me-2"></i>View Details
+                          </a>
+                          <a class="dropdown-item" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#editAmenityModal{{ $amenity->amenity_id }}">
+                            <i class="icon-base ri ri-edit-line me-2"></i>Edit
+                          </a>
+                          <div class="dropdown-divider"></div>
+                          <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="confirmDelete({{ $amenity->amenity_id }}, '{{ $amenity->amenity_name }}', {{ $roomCount }})">
+                            <i class="icon-base ri ri-delete-bin-line me-2"></i>Delete
+                          </a>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -201,16 +231,16 @@
             <table class="table table-hover">
               <thead>
                 <tr>
-                  <th>Rank</th>
-                  <th>Amenity Name</th>
-                  <th class="text-center">Total Rooms</th>
-                  <th>Usage Percentage</th>
-                  <th>Popular In</th>
+                  <th class="text-truncate">Rank</th>
+                  <th class="text-truncate">Amenity Name</th>
+                  <th class="text-truncate text-center">Total Rooms</th>
+                  <th class="text-truncate">Usage Percentage</th>
+                  <th class="text-truncate">Popular In</th>
                 </tr>
               </thead>
               <tbody>
                 @php
-                  $sortedAmenities = $amenities->sortByDesc(function($amenity) {
+                  $sortedAmenities = collect($amenities)->sortByDesc(function($amenity) {
                     return $amenity->rooms->count();
                   })->take(10);
                   $totalRooms = $rooms->count() ?: 1;
@@ -219,22 +249,22 @@
                   @php
                     $roomCount = $amenity->rooms->count();
                     $percentage = round(($roomCount / $totalRooms) * 100);
-                    $roomTypes = $amenity->rooms->pluck('room_type_name')->unique()->take(3);
+                    $roomTypes = collect($amenity->rooms)->pluck('room_type_name')->unique()->take(3);
                   @endphp
                   <tr>
-                    <td>
+                    <td class="text-truncate">
                       <span class="badge bg-label-primary rounded-pill">#{{ $index + 1 }}</span>
                     </td>
-                    <td>
+                    <td class="text-truncate">
                       <div class="d-flex align-items-center">
                         <i class="icon-base ri ri-star-line text-warning me-2"></i>
                         <span class="fw-medium">{{ $amenity->amenity_name }}</span>
                       </div>
                     </td>
-                    <td class="text-center">
+                    <td class="text-truncate text-center">
                       <span class="badge bg-label-info rounded-pill">{{ $roomCount }}</span>
                     </td>
-                    <td>
+                    <td class="text-truncate">
                       <div class="d-flex align-items-center gap-2">
                         <div class="progress" style="width: 100px; height: 8px;">
                           <div class="progress-bar" role="progressbar" style="width: {{ $percentage }}%" aria-valuenow="{{ $percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
@@ -242,14 +272,14 @@
                         <span class="text-body-secondary">{{ $percentage }}%</span>
                       </div>
                     </td>
-                    <td>
+                    <td class="text-truncate">
                       @if($roomTypes->count() > 0)
                         <div class="d-flex flex-wrap gap-1">
                           @foreach($roomTypes as $roomType)
                             <span class="badge bg-label-secondary">{{ $roomType }}</span>
                           @endforeach
-                          @if($amenity->rooms->pluck('room_type_name')->unique()->count() > 3)
-                            <span class="badge bg-label-secondary">+{{ $amenity->rooms->pluck('room_type_name')->unique()->count() - 3 }} more</span>
+                          @if(collect($amenity->rooms)->pluck('room_type_name')->unique()->count() > 3)
+                            <span class="badge bg-label-secondary">+{{ collect($amenity->rooms)->pluck('room_type_name')->unique()->count() - 3 }} more</span>
                           @endif
                         </div>
                       @else
@@ -277,12 +307,12 @@
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <form action="" method="POST">
+        <form action="{{ route('super_admin.amenities.store') }}" method="POST">
           @csrf
           <div class="modal-body">
             <div class="mb-3">
               <label for="amenity_name" class="form-label">Amenity Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="amenity_name" name="amenity_name" required placeholder="e.g., WiFi, Air Conditioning">
+              <input type="text" class="form-control" id="amenity_name" name="amenity_name" required placeholder="e.g., WiFi, Air Conditioning" maxlength="45">
             </div>
             <div class="alert alert-info mb-0">
               <i class="icon-base ri ri-information-line me-2"></i>
@@ -313,13 +343,13 @@
             </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <form action="" method="POST">
+          <form action="{{ route('super_admin.amenities.update', $amenity->amenity_id) }}" method="POST">
             @csrf
             @method('PUT')
             <div class="modal-body">
               <div class="mb-3">
                 <label for="edit_amenity_name_{{ $amenity->amenity_id }}" class="form-label">Amenity Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="edit_amenity_name_{{ $amenity->amenity_id }}" name="amenity_name" value="{{ $amenity->amenity_name }}" required>
+                <input type="text" class="form-control" id="edit_amenity_name_{{ $amenity->amenity_id }}" name="amenity_name" value="{{ $amenity->amenity_name }}" required maxlength="45">
               </div>
               @if($amenity->rooms->count() > 0)
                 <div class="alert alert-warning mb-0">
@@ -349,7 +379,7 @@
           <div class="modal-header">
             <h5 class="modal-title">
               <i class="icon-base ri ri-information-line me-2"></i>
-              Amenity Details
+              Amenity Details: {{ $amenity->amenity_name }}
             </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
@@ -357,7 +387,7 @@
             <div class="row">
               <!-- Amenity Information -->
               <div class="col-md-6 mb-4">
-                <h6 class="mb-3">Basic Information</h6>
+                <h6 class="mb-3 text-primary">Basic Information</h6>
                 <div class="card mb-0">
                   <div class="card-body">
                     <div class="mb-3">
@@ -382,7 +412,7 @@
 
               <!-- Usage Statistics -->
               <div class="col-md-6 mb-4">
-                <h6 class="mb-3">Usage Statistics</h6>
+                <h6 class="mb-3 text-primary">Usage Statistics</h6>
                 <div class="card mb-0">
                   <div class="card-body">
                     <div class="mb-3">
@@ -409,7 +439,7 @@
               <!-- Rooms Using This Amenity -->
               @if($amenity->rooms->count() > 0)
                 <div class="col-12">
-                  <h6 class="mb-3">Rooms Using This Amenity</h6>
+                  <h6 class="mb-3 text-primary">Rooms Using This Amenity</h6>
                   <div class="card mb-0">
                     <div class="card-body">
                       <div class="table-responsive">
@@ -419,11 +449,11 @@
                               <th>Room #</th>
                               <th>Room Type</th>
                               <th>Status</th>
-                              <th>Rate</th>
+                              <th>Rate/Night</th>
                             </tr>
                           </thead>
                           <tbody>
-                            @foreach($amenity->rooms->take(10) as $room)
+                            @foreach(collect($amenity->rooms)->take(10) as $room)
                               <tr>
                                 <td><span class="fw-medium">{{ $room->room_number }}</span></td>
                                 <td>{{ $room->room_type_name }}</td>
@@ -462,7 +492,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editAmenityModal{{ $amenity->amenity_id }}">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#editAmenityModal{{ $amenity->amenity_id }}">
               <i class="icon-base ri ri-edit-line me-1"></i>
               Edit Amenity
             </button>
@@ -543,59 +573,6 @@
     }
   </style>
 
-  @push('scripts')
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Simple table search
-      const searchInput = document.getElementById('searchTable');
-      const table = document.querySelector('.table-responsive table tbody');
-      const rows = table.querySelectorAll('tr');
-
-      searchInput.addEventListener('keyup', function() {
-        const searchTerm = this.value.toLowerCase();
-
-        rows.forEach(row => {
-          const text = row.textContent.toLowerCase();
-          row.style.display = text.includes(searchTerm) ? '' : 'none';
-        });
-      });
-    });
-
-    // Delete confirmation
-    function confirmDelete(amenityId, amenityName, roomCount) {
-      if (roomCount > 0) {
-        if (confirm(`Warning: "${amenityName}" is currently used in ${roomCount} room(s). Deleting this amenity will remove it from all rooms.\n\nAre you sure you want to continue?`)) {
-          // Submit delete form
-          deleteAmenity(amenityId);
-        }
-      } else {
-        if (confirm(`Are you sure you want to delete "${amenityName}"?`)) {
-          deleteAmenity(amenityId);
-        }
-      }
-    }
-
-    function deleteAmenity(amenityId) {
-      // Create and submit delete form
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `/super_admin/amenities/${amenityId}`;
-
-      const csrfToken = document.createElement('input');
-      csrfToken.type = 'hidden';
-      csrfToken.name = '_token';
-      csrfToken.value = '{{ csrf_token() }}';
-
-      const methodField = document.createElement('input');
-      methodField.type = 'hidden';
-      methodField.name = '_method';
-      methodField.value = 'DELETE';
-
-      form.appendChild(csrfToken);
-      form.appendChild(methodField);
-      document.body.appendChild(form);
-      form.submit();
-    }
-  </script>
-  @endpush
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="{{ asset('js/amenitiesjs/index_script.js') }}"></script>
 @endsection
