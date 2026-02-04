@@ -34,8 +34,9 @@ use App\Http\Controllers\GoogleAuthController;
 | Public Routes
 |--------------------------------------------------------------------------
 */
-Route::get('/landing', [FrontpageController::class, 'index'])->name('landing');
-
+Route::get('/landing', [FrontpageController::class, 'index'])->name('frontpage.index');
+Route::get('/room/{room_id}', [FrontpageController::class, 'roomDetails'])->name('frontpage.room-details');
+Route::get('/sample-landing', [FrontpageController::class, 'sampleLanding'])->name('frontpage.sample');
 
 Route::middleware(['guest'])->group(function () {
     Route::prefix('auth')->group(function () {
