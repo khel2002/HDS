@@ -1,10 +1,8 @@
 {{-- Room Card Component --}}
 @php
-  // Accept the room object and extract data
-  $title = $room->roomType->room_type_name ?? 'Room Title';
-  $description = $room->roomType->description ?? 'Spacious room with modern comfort and amenities.';
-  $imagePath = $room->image_path ?? 'assets/img/frontpages/img/test.jpg';
-  $roomId = $room->room_id ?? null;
+  $title = $title ?? ($room_type_name ?? 'Room Title');
+  $description = $description ?? 'Spacious room with modern comfort and amenities.';
+  $image = $image ?? 'assets/img/frontpages/img/test.jpg';
 @endphp
 
 <style>
@@ -13,7 +11,6 @@
     position: relative;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     height: 100%;
-    cursor: pointer;
   }
 
   .room-card-wrapper:hover {
@@ -25,19 +22,6 @@
     display: flex;
     flex-direction: column;
     padding: 0;
-  }
-
-  /* Make the entire card clickable */
-  .room-card-link {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    height: 100%;
-  }
-
-  .room-card-link:hover {
-    text-decoration: none;
-    color: inherit;
   }
 
   /* Image Container */
@@ -395,35 +379,18 @@
 </style>
 
 <div class="card bg-transparent shadow-none room-card-wrapper">
-  @if($roomId)
-    <a href="{{ route('frontpage.room-details', $roomId) }}" class="room-card-link">
-      <div class="card-body text-center">
-        <div class="room-card-image-container">
-          <img src="{{ asset('storage/' . $imagePath) }}" class="card-img room-card-img" alt="{{ $title }}"
-            loading="lazy">
+  <div class="card-body text-center">
+    <div class="room-card-image-container">
+      <img src="{{ asset('storage/' . $room->image_path) }}" class="card-img room-card-img" alt="{{ $title }}"
+        loading="lazy">
 
-          <div class="room-card-badge">Featured</div>
-          <h5 class="room-card-title">{{ $title }}</h5>
-        </div>
-
-        <p class="card-text room-card-description">
-          {{ $description }}
-        </p>
-      </div>
-    </a>
-  @else
-    <div class="card-body text-center">
-      <div class="room-card-image-container">
-        <img src="{{ asset('storage/' . $imagePath) }}" class="card-img room-card-img" alt="{{ $title }}"
-          loading="lazy">
-
-        <div class="room-card-badge">Featured</div>
-        <h5 class="room-card-title">{{ $title }}</h5>
-      </div>
-
-      <p class="card-text room-card-description">
-        {{ $description }}
-      </p>
+      {{-- Optional badge - uncomment to show --}}
+      <div class="room-card-badge">Featured</div>
+      <h5 class="room-card-title">{{ $title }}</h5>
     </div>
-  @endif
+
+    <p class="card-text room-card-description">
+      {{ $description }}
+    </p>
+  </div>
 </div>

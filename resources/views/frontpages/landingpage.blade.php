@@ -138,57 +138,8 @@
     </div>
   </section>
 
-  {{-- Venues/Amenities Section --}}
-  <section class="features-section" id="amenities">
-    <div class="container">
-      <div class="section-header text-center">
-        <h2 class="section-title">Venues & Amenities</h2>
-        <p class="section-description">One Destination, Infinite Occasions</p>
-      </div>
 
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-dumbbell"></i>
-          </div>
-          <h3 class="feature-title">Fitness Center</h3>
-          <p class="feature-description">
-            State-of-the-art gym with personal trainers available 24/7
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-spa"></i>
-          </div>
-          <h3 class="feature-title">Luxury Spa</h3>
-          <p class="feature-description">
-            Rejuvenate with our comprehensive spa and wellness treatments
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-car"></i>
-          </div>
-          <h3 class="feature-title">Valet Parking</h3>
-          <p class="feature-description">
-            Complimentary valet service for all our valued guests
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-shield-alt"></i>
-          </div>
-          <h3 class="feature-title">24/7 Security</h3>
-          <p class="feature-description">
-            Your safety is our priority with round-the-clock security
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
+  @include('frontpages.venues')
 
   {{-- Call to Action Section --}}
   <section class="cta-section">

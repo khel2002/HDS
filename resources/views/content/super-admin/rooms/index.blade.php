@@ -122,8 +122,8 @@
             </div>
             <div class="col-md-3">
               <label class="form-label">Room Type</label>
-              <select id="filterRoomType" class="form-select" onchange="filterByRoomType(this.value)">
-                <option value="">All Room Types</option>
+              <select class="form-select" id="roomTypeFilter">
+                <option value="">All Types</option>
                 @foreach($roomTypes as $type)
                   <option value="{{ $type->room_type_id }}" {{ isset($selectedRoomType) && $selectedRoomType == $type->room_type_id ? 'selected' : '' }}>
                     {{ $type->room_type_name }}

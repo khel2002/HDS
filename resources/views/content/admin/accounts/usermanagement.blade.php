@@ -1,13 +1,6 @@
 @extends('layouts/contentNavbarLayout')
 @section('title', 'Account - Management')
-<<<<<<< Updated upstream
 @section('content')
-=======
-
-
-@section('content')
-
->>>>>>> Stashed changes
   <div class="col-12">
     <div class="card">
       <div class="card-body">
@@ -51,30 +44,25 @@
               <th>Avatar</th>
               <th>Name</th>
               <th>Email</th>
-              <th>Status</th>
-              <th>Joined</th>
-<<<<<<< Updated upstream
+              <th class="text-center">Status</th>
+              <th class="text-center">Joined</th>
               <th class="text-center">Actions</th>
-=======
-              <th>Actions</th>
->>>>>>> Stashed changes
             </tr>
           </thead>
           <tbody>
             @foreach ($users as $user)
               <tr>
                 <td></td>
-<<<<<<< Updated upstream
                 <td>{{ $user->first_name }} {{ $user->last_name }} </td>
                 <td>{{ $user->email }}</td>
-                <td>
+                <td class="text-center align-middle">
                   <span
                     class="badge
                     {{ strtolower($user->STATUS) === 'active' ? 'bg-success' : 'bg-danger' }}">
                     {{ ucfirst(strtolower($user->STATUS)) }}
                   </span>
                 </td>
-                <td>{{ $user->created_at }}</td>
+                <td class="text-center align-middle">{{ $user->created_at }}</td>
                 <td class="text-center align-middle">
                   <div class="d-flex justify-content-center gap-1">
                     <button class="btn btn-sm btn-icon btn-text-secondary rounded-pill" type="button"
@@ -98,28 +86,17 @@
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item text-danger" href="javascript:void(0);">
                           <i class="icon-base ri ri-delete-bin-line me-2"></i>
-                          Delete Room
+                          Delete Account
                         </a>
                       </div>
                     </div>
                   </div>
                 </td>
-=======
-                <td>{{$user->first_name}} {{$user->last_name}} </td>
-                <td>{{$user->email}}</td>
-                <td>{{$user->status}}</td>
-                <td>{{$user->created_at}}</td>
-                <td></td>
->>>>>>> Stashed changes
               </tr>
             @endforeach
             @empty($users)
               <td colspan="6" class="text-center">No data found</td>
             @endempty
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
           </tbody>
         </table>
       </div>
