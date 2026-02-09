@@ -378,19 +378,20 @@
   }
 </style>
 
-<div class="card bg-transparent shadow-none room-card-wrapper">
-  <div class="card-body text-center">
-    <div class="room-card-image-container">
-      <img src="{{ asset('storage/' . $room->image_path) }}" class="card-img room-card-img" alt="{{ $title }}"
-        loading="lazy">
+<a href="{{ route('frontpage.room-details', ['room_id' => $room->room_id]) }}" class="text-decoration-none">
+  <div class="card bg-transparent shadow-none room-card-wrapper">
+    <div class="card-body text-center">
+      <div class="room-card-image-container">
+        <img src="{{ asset('storage/' . $room->image_path) }}" class="card-img room-card-img" alt="{{ $title }}"
+          loading="lazy">
 
-      {{-- Optional badge - uncomment to show --}}
-      <div class="room-card-badge">Featured</div>
-      <h5 class="room-card-title">{{ $title }}</h5>
+        <div class="room-card-badge">Featured</div>
+        <h5 class="room-card-title">{{ $title }}</h5>
+      </div>
+
+      <p class="card-text room-card-description">
+        {{ $description }}
+      </p>
     </div>
-
-    <p class="card-text room-card-description">
-      {{ $description }}
-    </p>
   </div>
-</div>
+</a>

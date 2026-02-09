@@ -39,9 +39,9 @@
     <div class="page-header">
       <h1 class="room-title-main">{{ $room->roomType->room_type_name }}</h1>
       <div class="header-actions">
-        <button class="action-btn" onclick="window.history.back()">
+        <a href="{{ route('frontpage.index') }}" class="action-btn">
           <i class="ri-arrow-left-line"></i> Back
-        </button>
+        </a>
       </div>
     </div>
 
@@ -112,14 +112,6 @@
                 <div class="feature-content">
                   <h4>Room {{ $room->room_id }}</h4>
                   <p>{{ $room->roomType->room_type_name }} with modern amenities.</p>
-                </div>
-              </div>
-
-              <div class="feature-item">
-                <div class="feature-icon"><i class="ri-calendar-check-line"></i></div>
-                <div class="feature-content">
-                  <h4>Free cancellation before check-in</h4>
-                  <p>Get a full refund if you change your mind.</p>
                 </div>
               </div>
             </div>

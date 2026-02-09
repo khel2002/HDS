@@ -3,6 +3,29 @@
 * {
   font-family: var(--bs-font-sans-serif);
 }
+/* Title */
+.swal-title-azure {
+  color: #060E4D !important;
+}
+
+/* Body text */
+.swal-text-azure {
+  color: #060E4D !important;
+}
+
+/* Confirm button */
+.swal-confirm-azure {
+  background-color: #060E4D !important;
+  color: #fff !important;
+  border-radius: 8px;
+}
+
+/* Cancel button */
+.swal-cancel-azure {
+  background-color: #E6F3FF !important;
+  color: #060E4D !important;
+  border-radius: 8px;
+}
 
 body {
   background: var(--bs-body-bg);
@@ -431,13 +454,13 @@ body {
 }
 
 .fc-button:hover {
-  background: var(--bs-primary-dark) !important;
-  border-color: var(--bs-primary-dark) !important;
+  background: var(--bs-secondary) !important;
+  border-color: var(--bs-secondary) !important;
 }
 
 .fc-button-active {
-  background: var(--bs-primary-dark) !important;
-  border-color: var(--bs-primary-dark) !important;
+  background: var(--bs-primary-bg-subtle) !important;
+  border-color: var(--bs-primary-bg-subtle) !important;
 }
 
 
@@ -745,7 +768,7 @@ body {
 }
 
 .reserve-btn:hover {
-  background: var(--bs-primary-dark);
+  background: var(--bs-secondary);
   box-shadow: 0 4px 12px rgba(var(--bs-primary-rgb), 0.4);
   transform: translateY(-2px);
 }
