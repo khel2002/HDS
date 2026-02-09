@@ -1392,26 +1392,33 @@ body {
     padding: 1.5rem;
   }
 
-  .sticky-nav {
-    padding: 0.75rem 0;
-  }
+.sticky-nav {
+  height: 50px !important;
+  min-height: 50px !important;
+  max-height: 50px !important;
+  padding: 0 !important;
+}
 
-  .sticky-nav.visible {
-    padding: 0.75rem 0;
-  }
+.sticky-nav-content {
+  height: 50px !important;
+  min-height: 50px !important;
+  max-height: 50px !important;
+  padding: 0 1rem !important;
+  display: flex;
+  align-items: center;
+}
 
-  .sticky-nav-content {
-    padding: 0 1rem;
-  }
+.nav-tabs,
+.sticky-nav-price {
+  height: 100%;
+}
 
-  .nav-tabs {
-    gap: 1rem;
-  }
-
-  .nav-tab {
-    font-size: 0.875rem;
-    padding: 0.5rem 0;
-  }
+.nav-tab {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem !important;
+}
 
   #calendar {
     padding: 1rem;
@@ -1464,7 +1471,7 @@ body {
 
   .sticky-nav-content {
     padding: 0 0;
-    height: 72px;
+    height: 50px;
   }
 
   .nav-tabs {
@@ -1597,4 +1604,181 @@ body {
 
 .select-none {
   user-select: none;
+}
+/* Amenities Modal Styles */
+.amenities-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+
+.amenities-modal.active {
+  display: flex;
+}
+
+.amenities-modal-content {
+  background: white;
+  width: 100%;
+  max-width: 780px;
+  max-height: 90vh;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modalFadeIn 0.3s ease;
+  margin: 2rem;
+}
+
+.amenities-modal-header {
+  position: relative;
+  padding: 1.5rem 3rem;
+  border-bottom: 1px solid var(--bs-border-color);
+  flex-shrink: 0;
+}
+
+.amenities-modal-header h2 {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--bs-heading-color);
+  text-align: center;
+}
+
+.close-amenities-btn {
+  position: absolute;
+  left: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--bs-body-secondary-color);
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.close-amenities-btn:hover {
+  background: var(--bs-gray-100);
+}
+
+.amenities-modal-body {
+  overflow-y: auto;
+  padding: 2rem 3rem;
+  flex: 1;
+}
+
+.amenity-section {
+  margin-bottom: 2.5rem;
+}
+
+.amenity-section:last-child {
+  margin-bottom: 0;
+}
+
+.amenity-section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--bs-heading-color);
+  margin: 0 0 1.25rem 0;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.amenity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.amenity-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.amenity-list-item i {
+  font-size: 1.5rem;
+  color: var(--bs-heading-color);
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.amenity-list-item span {
+  font-size: 1rem;
+  color: var(--bs-heading-color);
+  line-height: 1.5;
+}
+
+.amenity-name {
+  font-size: 1rem;
+  color: var(--bs-heading-color);
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.amenity-description {
+  font-size: 0.875rem;
+  color: var(--bs-body-secondary-color);
+  line-height: 1.5;
+}
+
+/* Mobile responsiveness for amenities modal */
+@media (max-width: 768px) {
+  .amenities-modal-content {
+    margin: 0;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .amenities-modal-header {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .amenities-modal-header h2 {
+    font-size: 1.125rem;
+  }
+
+  .close-amenities-btn {
+    left: 1rem;
+  }
+
+  .amenities-modal-body {
+    padding: 1.5rem;
+  }
+
+  .amenity-section {
+    margin-bottom: 2rem;
+  }
+
+  .amenity-section-title {
+    font-size: 1rem;
+  }
+
+  .amenity-list-item i {
+    font-size: 1.25rem;
+  }
+
+  .amenity-list-item span,
+  .amenity-name {
+    font-size: 0.9375rem;
+  }
+
+  .amenity-description {
+    font-size: 0.8125rem;
+  }
 }

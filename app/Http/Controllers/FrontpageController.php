@@ -12,7 +12,7 @@ class FrontpageController extends Controller
     public function index()
     {
         try {
-            // Get first 3 rooms for desktop carousel (first slide)
+
             $roomsFirst = DB::table('rooms')
                 ->join('room_types', 'rooms.room_type_id', '=', 'room_types.room_type_id')
                 ->select(
@@ -30,7 +30,7 @@ class FrontpageController extends Controller
                 ->take(3)
                 ->get()
                 ->map(function ($room) {
-                    // Transform to object structure matching Blade expectations
+
                     return (object) [
                         'room_id' => $room->room_id,
                         'room_type_id' => $room->room_type_id,
@@ -45,7 +45,7 @@ class FrontpageController extends Controller
                     ];
                 });
 
-            // Get next 3 rooms for desktop carousel (second slide)
+
             $roomsSecond = DB::table('rooms')
                 ->join('room_types', 'rooms.room_type_id', '=', 'room_types.room_type_id')
                 ->select(
@@ -78,7 +78,7 @@ class FrontpageController extends Controller
                     ];
                 });
 
-            // Get first room for mobile carousel
+
             $roomsMobFirst = DB::table('rooms')
                 ->join('room_types', 'rooms.room_type_id', '=', 'room_types.room_type_id')
                 ->select(
@@ -110,7 +110,7 @@ class FrontpageController extends Controller
                     ];
                 });
 
-            // Get remaining rooms for mobile carousel
+
             $roomsMobSecond = DB::table('rooms')
                 ->join('room_types', 'rooms.room_type_id', '=', 'room_types.room_type_id')
                 ->select(
@@ -154,7 +154,7 @@ class FrontpageController extends Controller
     public function roomDetails($room_id)
     {
         try {
-            // Get room details
+
             $roomData = DB::table('rooms')
                 ->join('room_types', 'rooms.room_type_id', '=', 'room_types.room_type_id')
                 ->where('rooms.room_id', $room_id)
@@ -174,7 +174,7 @@ class FrontpageController extends Controller
                 return redirect()->route('frontpage.index')->with('error', 'Room not found');
             }
 
-            // Transform to match Blade structure
+
             $room = (object) [
                 'room_id' => $roomData->room_id,
                 'room_type_id' => $roomData->room_type_id,
@@ -188,14 +188,14 @@ class FrontpageController extends Controller
                 ]
             ];
 
-            // Get amenities
+
             $amenities = DB::table('room_amenities')
                 ->join('amenities', 'room_amenities.amenity_id', '=', 'amenities.amenity_id')
                 ->where('room_amenities.room_id', $room_id)
                 ->pluck('amenities.amenity_name')
                 ->toArray();
 
-            // Get similar rooms
+
             $similarRooms = DB::table('rooms')
                 ->join('room_types', 'rooms.room_type_id', '=', 'room_types.room_type_id')
                 ->where('rooms.room_type_id', $room->room_type_id)
@@ -228,7 +228,7 @@ class FrontpageController extends Controller
                     ];
                 });
 
-            // Get all available rooms
+
             $allRooms = DB::table('rooms')
                 ->join('room_types', 'rooms.room_type_id', '=', 'room_types.room_type_id')
                 ->where('rooms.status', 'available')

@@ -28,15 +28,7 @@
           <a href="#availability" class="nav-tab">Availability</a>
           <a href="#location" class="nav-tab">Location</a>
         </div>
-        <div class="sticky-nav-price">
-          <div class="sticky-price">
-            <strong>₱{{ number_format($room->roomType->rate_per_night, 0) }}</strong> / night
-          </div>
-          @if($room->status === 'available')
-            <button class="sticky-reserve-btn" onclick="document.getElementById('booking').scrollIntoView({behavior: 'smooth', block: 'start'})">
-              Reserve
-            </button>
-          @endif
+
         </div>
       </div>
     </div>
@@ -167,7 +159,7 @@
                 @endforeach
               </div>
               @if(count($amenities) > 6)
-                <button class="show-amenities-btn">Show all {{ count($amenities) }} amenities</button>
+                <button class="show-amenities-btn" onclick="openAmenitiesModal()">Show all {{ count($amenities) }} amenities</button>
               @endif
             @else
               <div class="amenities-grid">
@@ -188,6 +180,7 @@
                   <span>Free parking</span>
                 </div>
               </div>
+              <button class="show-amenities-btn" onclick="openAmenitiesModal()">Show all amenities</button>
             @endif
           </div>
         </div>
@@ -373,6 +366,164 @@
     </div>
   </div>
 
+  <<!-- Amenities Modal -->
+  <div class="amenities-modal" id="amenitiesModal">
+    <div class="amenities-modal-content">
+      <div class="amenities-modal-header">
+        <button class="close-amenities-btn" onclick="closeAmenitiesModal()">
+          <i class="ri-close-line"></i>
+        </button>
+        <h2>What this place offers</h2>
+      </div>
+
+      <div class="amenities-modal-body">
+        @if(!empty($amenities) && count($amenities) > 0)
+          @php
+            // Categorize amenities based on your actual database amenities
+            $categorized = [
+              'Bedroom' => [],
+              'Bathroom' => [],
+              'Entertainment' => [],
+              'Internet and connectivity' => [],
+              'Climate control' => [],
+              'Room amenities' => [],
+              'Spaces' => [],
+              'View' => []
+            ];
+
+            // Icon mapping for your specific amenities
+            $iconMap = [
+              // Bed types
+              'double size bed' => 'ri-hotel-bed-line',
+              'two double beds' => 'ri-hotel-bed-line',
+              'three single beds' => 'ri-hotel-bed-line',
+              'king size bed' => 'ri-hotel-bed-line',
+              'bunk beds' => 'ri-hotel-bed-line',
+
+              // Bathroom
+              'shower bathroom' => 'ri-drop-line',
+              'bathroom' => 'ri-door-line',
+
+              // Entertainment
+              'flat-screen tv' => 'ri-tv-line',
+              'tv' => 'ri-tv-line',
+
+              // Internet
+              'wi-fi access' => 'ri-wifi-line',
+              'wifi' => 'ri-wifi-line',
+
+              // Climate
+              'air conditioning' => 'ri-temp-cold-line',
+              'air purifier' => 'ri-contrast-drop-2-line',
+
+              // Room amenities
+              'work desk' => 'ri-table-2',
+              'desk' => 'ri-table-2',
+              'mini fridge' => 'ri-fridge-line',
+              'fridge' => 'ri-fridge-line',
+
+              // Spaces
+              'living room' => 'ri-sofa-line',
+
+              // View
+              'relaxing view' => 'ri-landscape-line',
+              'view' => 'ri-landscape-line'
+            ];
+
+            // Categorize each amenity
+            foreach ($amenities as $amenity) {
+              $amenityLower = strtolower($amenity);
+
+              // Categorization based on your actual amenities
+              if (preg_match('/(bed|beds)/i', $amenityLower)) {
+                $categorized['Bedroom'][] = $amenity;
+              }
+              elseif (preg_match('/(shower|bathroom)/i', $amenityLower)) {
+                $categorized['Bathroom'][] = $amenity;
+              }
+              elseif (preg_match('/(tv|television|screen)/i', $amenityLower)) {
+                $categorized['Entertainment'][] = $amenity;
+              }
+              elseif (preg_match('/(wi-fi|wifi|internet)/i', $amenityLower)) {
+                $categorized['Internet and connectivity'][] = $amenity;
+              }
+              elseif (preg_match('/(air conditioning|air purifier|climate)/i', $amenityLower)) {
+                $categorized['Climate control'][] = $amenity;
+              }
+              elseif (preg_match('/(desk|fridge|mini)/i', $amenityLower)) {
+                $categorized['Room amenities'][] = $amenity;
+              }
+              elseif (preg_match('/(living room|lounge|sitting)/i', $amenityLower)) {
+                $categorized['Spaces'][] = $amenity;
+              }
+              elseif (preg_match('/(view|scenic|relaxing)/i', $amenityLower)) {
+                $categorized['View'][] = $amenity;
+              }
+            }
+
+            // Function to get icon for amenity
+            function getAmenityIcon($amenity, $iconMap) {
+              $amenityLower = strtolower($amenity);
+
+              // Direct match
+              if (isset($iconMap[$amenityLower])) {
+                return $iconMap[$amenityLower];
+              }
+
+              // Partial match
+              foreach ($iconMap as $keyword => $icon) {
+                if (strpos($amenityLower, $keyword) !== false) {
+                  return $icon;
+                }
+              }
+
+              return 'ri-checkbox-circle-line'; // default icon
+            }
+          @endphp
+
+          @foreach($categorized as $category => $items)
+            @if(count($items) > 0)
+              <div class="amenity-section">
+                <h3 class="amenity-section-title">{{ $category }}</h3>
+                <div class="amenity-list">
+                  @foreach($items as $amenity)
+                    <div class="amenity-list-item">
+                      <i class="{{ getAmenityIcon($amenity, $iconMap) }}"></i>
+                      <span>{{ $amenity }}</span>
+                    </div>
+                  @endforeach
+                </div>
+              </div>
+            @endif
+          @endforeach
+        @else
+          <!-- Default display if no amenities in database -->
+          <div class="amenity-section">
+            <h3 class="amenity-section-title">Standard amenities</h3>
+            <div class="amenity-list">
+              <div class="amenity-list-item">
+                <i class="ri-hotel-bed-line"></i>
+                <span>Comfortable bed</span>
+              </div>
+              <div class="amenity-list-item">
+                <i class="ri-drop-line"></i>
+                <span>Private bathroom</span>
+              </div>
+              <div class="amenity-list-item">
+                <i class="ri-wifi-line"></i>
+                <span>Free Wi-Fi</span>
+              </div>
+              <div class="amenity-list-item">
+                <i class="ri-temp-cold-line"></i>
+                <span>Air conditioning</span>
+              </div>
+            </div>
+          </div>
+        @endif
+      </div>
+    </div>
+  </div>
+
   <!-- Mobile Sticky Footer -->
   <div class="mobile-booking-footer">
     <div class="mobile-booking-content">
@@ -434,6 +585,7 @@
 
 @section('vendor-script')
   <!-- Leaflet JS -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
   <!-- FullCalendar JS -->
