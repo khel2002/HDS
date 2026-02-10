@@ -17,6 +17,9 @@ class Payment extends Model
         'amount',
         'payment_date',
         'payment_status',
+        'stripe_session_id',      // NEW: Stripe checkout session ID
+        'stripe_payment_intent',  // NEW: Stripe payment intent ID
+        'paid_at',               // NEW: Timestamp when payment was completed
     ];
 
     public $timestamps = false;
@@ -24,6 +27,7 @@ class Payment extends Model
     protected $casts = [
         'amount' => 'decimal:2',
         'payment_date' => 'datetime',
+        'paid_at' => 'datetime',  // NEW: Cast paid_at to datetime
     ];
 
     // Relationships
@@ -77,5 +81,35 @@ class Payment extends Model
     public function scopeThisYear($query)
     {
         return $query->whereYear('payment_date', now()->year);
+    }
+
+    // NEW: Scope for Stripe payments
+    public function scopeStripe($query)
+    {
+        return $query->whereNotNull('stripe_session_id');
+    }
+
+    // NEW: Scope for paid payments
+    public function scopePaid($query)
+    {
+        return $query->whereNotNull('paid_at');
+    }
+
+    // NEW: Check if payment was made via Stripe
+    public function isStripePayment()
+    {
+        return !empty($this->stripe_session_id);
+    }
+
+    // NEW: Check if payment has been completed
+    public function isPaid()
+    {
+        return !is_null($this->paid_at);
+    }
+
+    // NEW: Get payment provider name
+    public function getProviderAttribute()
+    {
+        return $this->isStripePayment() ? 'Stripe' : 'Cash';
     }
 }

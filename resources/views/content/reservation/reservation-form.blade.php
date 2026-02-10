@@ -318,6 +318,172 @@
               </ul>
             </div>
           </div>
+          <!-- Step 4: Confirmation -->
+          <div class="step-content" id="step4">
+            @if(session('payment_success'))
+              <div class="success-header" style="text-align: center; padding: 3rem 2rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 16px; color: white; margin-bottom: 2rem;">
+                <div class="success-icon" style="font-size: 4rem; margin-bottom: 1rem;">
+                  <i class="ri-checkbox-circle-fill"></i>
+                </div>
+                <h2 class="success-title" style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">Reservation Confirmed!</h2>
+                <p class="success-subtitle" style="font-size: 1.125rem; opacity: 0.95;">
+                  @if(session('payment_method') === 'online')
+                    Your payment has been processed successfully
+                  @else
+                    Your reservation has been created successfully
+                  @endif
+                </p>
+              </div>
+
+              @if(session('reservation_data'))
+                @php
+                  $reservationData = session('reservation_data');
+                  $credentials = session('temp_credentials');
+                @endphp
+
+                <!-- Reservation Details -->
+                <div class="info-card" style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); margin-bottom: 1.5rem;">
+                  <div class="info-card-title" style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ri-file-list-3-line"></i>
+                    Reservation Details
+                  </div>
+
+                  <div class="info-row" style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid #e2e8f0;">
+                    <span style="color: #64748b; font-weight: 500;">Reservation ID</span>
+                    <span style="color: #1e293b; font-weight: 600;">#{{ $reservationData['reservation_id'] }}</span>
+                  </div>
+
+                  <div class="info-row" style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid #e2e8f0;">
+                    <span style="color: #64748b; font-weight: 500;">Room Type</span>
+                    <span style="color: #1e293b; font-weight: 600;">{{ $reservationData['room_type_name'] }}</span>
+                  </div>
+
+                  <div class="info-row" style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid #e2e8f0;">
+                    <span style="color: #64748b; font-weight: 500;">Room Number</span>
+                    <span style="color: #1e293b; font-weight: 600;">{{ $reservationData['room_number'] }}</span>
+                  </div>
+
+                  <div class="info-row" style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid #e2e8f0;">
+                    <span style="color: #64748b; font-weight: 500;">Check-in</span>
+                    <span style="color: #1e293b; font-weight: 600;">{{ date('F d, Y', strtotime($reservationData['arrival_date'])) }}</span>
+                  </div>
+
+                  <div class="info-row" style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid #e2e8f0;">
+                    <span style="color: #64748b; font-weight: 500;">Check-out</span>
+                    <span style="color: #1e293b; font-weight: 600;">{{ date('F d, Y', strtotime($reservationData['departure_date'])) }}</span>
+                  </div>
+
+                  <div class="info-row" style="display: flex; justify-content: space-between; padding: 1rem 0;">
+                    <span style="color: #64748b; font-weight: 500;">Number of Nights</span>
+                    <span style="color: #1e293b; font-weight: 600;">{{ $reservationData['no_nights'] }} night{{ $reservationData['no_nights'] > 1 ? 's' : '' }}</span>
+                  </div>
+                </div>
+
+                <!-- Payment Information -->
+                <div class="info-card" style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); margin-bottom: 1.5rem;">
+                  <div class="info-card-title" style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ri-money-dollar-circle-line"></i>
+                    Payment Information
+                  </div>
+
+                  <div class="info-row" style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid #e2e8f0;">
+                    <span style="color: #64748b; font-weight: 500;">Payment Method</span>
+                    <span style="color: #1e293b; font-weight: 600;">
+                      @if(session('payment_method') === 'online')
+                        <span style="background: #dcfce7; color: #166534; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem;">
+                          <i class="ri-bank-card-line"></i> Online Payment
+                        </span>
+                      @else
+                        <span style="background: #fef3c7; color: #92400e; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem;">
+                          <i class="ri-cash-line"></i> Cash on Arrival
+                        </span>
+                      @endif
+                    </span>
+                  </div>
+
+                  <div class="info-row" style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid #e2e8f0;">
+                    <span style="color: #64748b; font-weight: 500;">Total Amount</span>
+                    <span style="color: #1e293b; font-weight: 600;">₱{{ number_format($reservationData['total_amount'], 2) }}</span>
+                  </div>
+
+                  <div class="info-row" style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid #e2e8f0;">
+                    <span style="color: #64748b; font-weight: 500;">
+                      @if(session('payment_method') === 'online')
+                        Paid (Reservation Fee)
+                      @else
+                        Reservation Fee (Pay on Arrival)
+                      @endif
+                    </span>
+                    <span style="color: #10b981; font-weight: 600;">₱500.00</span>
+                  </div>
+
+                  <div class="info-row" style="display: flex; justify-content: space-between; padding: 1rem 0;">
+                    <span style="color: #64748b; font-weight: 500;">Remaining Balance</span>
+                    <span style="color: #f59e0b; font-weight: 600;">₱{{ number_format($reservationData['balance'], 2) }}</span>
+                  </div>
+                </div>
+
+                <!-- Account Credentials -->
+                @if($credentials)
+                  <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem;">
+                    <div style="color: #856404; font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                      <i class="ri-lock-password-line"></i>
+                      Your Temporary Account
+                    </div>
+                    <p style="margin-bottom: 1.5rem; color: #856404;">
+                      <i class="ri-mail-send-line"></i>
+                      A confirmation email has been sent to <strong>{{ $credentials['email'] }}</strong> with your login credentials.
+                    </p>
+
+                    <div style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                      <div style="font-size: 0.75rem; color: #856404; text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem;">Email / Username</div>
+                      <div style="font-size: 1.125rem; color: #1e293b; font-weight: 700;">{{ $credentials['email'] }}</div>
+                    </div>
+
+                    <div style="background: white; padding: 1rem; border-radius: 8px;">
+                      <div style="font-size: 0.75rem; color: #856404; text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem;">Temporary Password</div>
+                      <div style="font-size: 1.125rem; color: #1e293b; font-weight: 700; word-break: break-all;">{{ $credentials['password'] }}</div>
+                    </div>
+                  </div>
+                @endif
+
+                <!-- Important Notice -->
+                <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                  <strong style="color: #991b1b;"><i class="ri-alert-line"></i> Important:</strong> Please change your password after your first login for security purposes.
+                </div>
+
+                <!-- Additional Information -->
+                <div class="info-card" style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); margin-bottom: 1.5rem;">
+                  <div class="info-card-title" style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ri-information-line"></i>
+                    Important Information
+                  </div>
+                  <ul style="color: #64748b; line-height: 1.8; margin: 0; padding-left: 1.5rem;">
+                    <li>Check-in time: 2:00 PM</li>
+                    <li>Check-out time: 12:00 PM</li>
+                    <li>Please bring a valid ID upon check-in</li>
+                    @if(session('payment_method') === 'cash')
+                      <li>Reservation fee of ₱500 must be paid upon check-in</li>
+                    @endif
+                    <li>Remaining balance of ₱{{ number_format($reservationData['balance'], 2) }} must be paid during your stay</li>
+                    <li>Cancellation must be made at least 24 hours before check-in</li>
+                  </ul>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                  <a href="{{ route('login') }}" class="btn btn-primary" style="flex: 1; padding: 1rem 2rem; border-radius: 8px; font-weight: 600; text-align: center; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white;">
+                    <i class="ri-login-box-line"></i>
+                    Login to Your Account
+                  </a>
+                  <a href="{{ route('frontpage.index') }}" class="btn btn-secondary" style="flex: 1; padding: 1rem 2rem; border-radius: 8px; font-weight: 600; text-align: center; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: white; color: #64748b; border: 2px solid #e2e8f0;">
+                    <i class="ri-home-line"></i>
+                    Back to Home
+                  </a>
+                </div>
+              @endif
+            @endif
+          </div>
 
           <!-- Form Actions - Aligned with sidebar button -->
           <div class="form-actions">

@@ -15,7 +15,7 @@ class ReservationController extends Controller
     public function showReservationForm($room_id)
     {
         try {
-
+            // Fetch room data with room type
             $roomData = DB::table('rooms')
                 ->join('room_types', 'rooms.room_type_id', '=', 'room_types.room_type_id')
                 ->where('rooms.room_id', $room_id)
@@ -38,7 +38,7 @@ class ReservationController extends Controller
                     ->with('error', 'Room not found or not available');
             }
 
-
+            // Structure room object
             $room = (object) [
                 'room_id' => $roomData->room_id,
                 'room_type_id' => $roomData->room_type_id,
@@ -65,7 +65,7 @@ class ReservationController extends Controller
 
     public function store(Request $request)
     {
-
+        // Validate input
         $validated = $request->validate([
             'room_id' => 'required|exists:rooms,room_id',
             'first_name' => 'required|string|max:45',
@@ -85,7 +85,7 @@ class ReservationController extends Controller
         DB::beginTransaction();
 
         try {
-
+            // Verify room availability
             $room = DB::table('rooms')
                 ->where('room_id', $validated['room_id'])
                 ->where('status', 'available')
@@ -95,7 +95,7 @@ class ReservationController extends Controller
                 return back()->with('error', 'Room is no longer available')->withInput();
             }
 
-
+            // Check for date overlaps
             $hasOverlap = DB::table('reservations')
                 ->join('guest_details', 'reservations.guest_details_id', '=', 'guest_details.guest_details_id')
                 ->where('reservations.room_id', $validated['room_id'])
@@ -115,31 +115,30 @@ class ReservationController extends Controller
                 return back()->with('error', 'Room is already booked for the selected dates')->withInput();
             }
 
-
+            // Get room type for pricing
             $roomType = DB::table('room_types')
                 ->where('room_type_id', $room->room_type_id)
                 ->first();
 
-
+            // Calculate nights and pricing
             $arrival = new \DateTime($validated['arrival_date']);
             $departure = new \DateTime($validated['departure_date']);
             $nights = $arrival->diff($departure)->days;
-
 
             $subtotal = $roomType->rate_per_night * $nights;
             $reservationFee = 500;
             $totalAmount = $subtotal + $reservationFee;
             $balance = $totalAmount - $reservationFee;
 
-
+            // Generate temporary password
             $temporaryPassword = Str::random(12);
 
-
+            // Get guest role ID
             $guestRoleId = DB::table('roles')
                 ->where('role_name', 'guest')
                 ->value('role_id');
 
-
+            // Create user account
             $userId = DB::table('users')->insertGetId([
                 'role_id' => $guestRoleId,
                 'email' => $validated['email'],
@@ -149,7 +148,7 @@ class ReservationController extends Controller
                 'updated_at' => now()
             ]);
 
-
+            // Create guest details
             $guestDetailsId = DB::table('guest_details')->insertGetId([
                 'user_id' => $userId,
                 'first_name' => $validated['first_name'],
@@ -162,12 +161,12 @@ class ReservationController extends Controller
                 'created_at' => now()
             ]);
 
-
+            // Create payment record
             $paymentId = DB::table('payments')->insertGetId([
                 'payment_method' => $validated['payment_method']
             ]);
 
-
+            // Create reservation
             $reservationId = DB::table('reservations')->insertGetId([
                 'user_id' => $userId,
                 'guest_details_id' => $guestDetailsId,
@@ -187,19 +186,31 @@ class ReservationController extends Controller
 
             DB::commit();
 
-
-
-
-
+            // Store credentials and reservation data in session
             session([
                 'temp_credentials' => [
                     'email' => $validated['email'],
                     'password' => $temporaryPassword,
                     'reservation_id' => $reservationId
-                ]
+                ],
+                'reservation_data' => [
+                    'reservation_id' => $reservationId,
+                    'email' => $validated['email'],
+                    'first_name' => $validated['first_name'],
+                    'last_name' => $validated['last_name'],
+                    'room_number' => $room->room_number,
+                    'room_type_name' => $roomType->room_type_name,
+                    'arrival_date' => $validated['arrival_date'],
+                    'departure_date' => $validated['departure_date'],
+                    'total_amount' => $totalAmount,
+                    'balance' => $balance,
+                    'no_nights' => $nights
+                ],
+                'payment_success' => true,
+                'payment_method' => 'cash'
             ]);
 
-            return redirect()->route('reservation.success')
+            return redirect()->route('reservation.confirmation')
                 ->with('success', 'Reservation created successfully!');
 
         } catch (Exception $e) {
@@ -211,6 +222,26 @@ class ReservationController extends Controller
     }
 
 
+    public function confirmation()
+    {
+        $credentials = session('temp_credentials');
+        $reservationData = session('reservation_data');
+        $paymentSuccess = session('payment_success');
+        $paymentMethod = session('payment_method', 'cash');
+
+        if (!$credentials || !$reservationData) {
+            return redirect()->route('frontpage.index');
+        }
+
+        return view('content.reservation.confirmation', compact(
+            'credentials',
+            'reservationData',
+            'paymentSuccess',
+            'paymentMethod'
+        ));
+    }
+
+
     public function success()
     {
         $credentials = session('temp_credentials');
@@ -219,7 +250,7 @@ class ReservationController extends Controller
             return redirect()->route('frontpage.index');
         }
 
-
+        // Fetch reservation details
         $reservation = DB::table('reservations')
             ->join('guest_details', 'reservations.guest_details_id', '=', 'guest_details.guest_details_id')
             ->join('rooms', 'reservations.room_id', '=', 'rooms.room_id')
@@ -239,10 +270,10 @@ class ReservationController extends Controller
             )
             ->first();
 
-
+        // Clear session
         session()->forget('temp_credentials');
 
-        return view('content.reservation.reservation-success', compact('credentials', 'reservation'));
+        return view('content.reservation.confirmation', compact('credentials', 'reservation'));
     }
 
 
@@ -290,7 +321,7 @@ class ReservationController extends Controller
             )
             ->get();
 
-
+        // Format for FullCalendar
         $events = $bookedDates->map(function($booking) {
             return [
                 'start' => $booking->start,
@@ -331,14 +362,14 @@ class ReservationController extends Controller
                 return back()->with('error', 'Reservation not found');
             }
 
-
+            // Update reservation status
             DB::table('reservations')
                 ->where('reservation_id', $reservation_id)
                 ->update([
                     'reservation_status' => 'cancelled'
                 ]);
 
-
+            // Delete temporary user account
             DB::table('users')
                 ->where('user_id', $reservation->user_id)
                 ->where('temporary_act', true)

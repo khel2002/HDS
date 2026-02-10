@@ -1,20 +1,36 @@
-
-
-
 let currentStep = 1;
 const totalSteps = 4;
 
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Check if returning from successful payment
+  const urlParams = new URLSearchParams(window.location.search);
+  const paymentSuccess = urlParams.get('payment_success');
+
+  if (paymentSuccess === '1') {
+    // Jump directly to step 4 (confirmation)
+    currentStep = 4;
+  }
+
   initializeCheckout();
   setupEventListeners();
   updatePricing();
   updateStepDisplay();
+
+  // Show success message if payment completed
+  if (paymentSuccess === '1') {
+    Swal.fire({
+      icon: 'success',
+      title: 'Payment Successful!',
+      text: 'Your reservation has been confirmed. Check your email for login credentials.',
+      confirmButtonColor: '#8b5cf6'
+    });
+  }
 });
 
 
 function initializeCheckout() {
-
+  // Set initial payment method to cash
   const cashInput = document.getElementById('cashPaymentInput');
   if (cashInput) {
     cashInput.disabled = false;
@@ -27,7 +43,7 @@ function initializeCheckout() {
 
 
 function setupEventListeners() {
-
+  // Pricing updates
   const arrivalDate = document.getElementById('arrivalDate');
   const departureDate = document.getElementById('departureDate');
   const adults = document.getElementById('adults');
@@ -38,7 +54,7 @@ function setupEventListeners() {
   if (adults) adults.addEventListener('input', updatePricing);
   if (children) children.addEventListener('input', updatePricing);
 
-
+  // Payment method tabs
   document.querySelectorAll('.payment-tab').forEach(tab => {
     tab.addEventListener('click', function() {
       const paymentType = this.dataset.payment;
@@ -46,7 +62,7 @@ function setupEventListeners() {
     });
   });
 
-
+  // Guest information updates
   const guestFields = ['first_name', 'last_name', 'email', 'contact_number'];
   guestFields.forEach(field => {
     const input = document.querySelector(`input[name="${field}"]`);
@@ -56,7 +72,7 @@ function setupEventListeners() {
     }
   });
 
-
+  // Step navigation
   document.querySelectorAll('.step').forEach((step, index) => {
     step.addEventListener('click', function() {
       const stepNumber = index + 1;
@@ -66,7 +82,7 @@ function setupEventListeners() {
     });
   });
 
-
+  // Navigation buttons
   const nextBtn = document.getElementById('nextStepBtn');
   const backBtn = document.getElementById('backBtn');
 
@@ -98,14 +114,14 @@ function updatePricing() {
     const total = subtotal + reservationFee;
     const balance = total - reservationFee;
 
-
+    // Update all pricing displays
     updateElementText('priceNights', nights);
     updateElementText('subtotal', '₱' + subtotal.toLocaleString());
     updateElementText('totalAmount', '₱' + total.toLocaleString());
     updateElementText('balanceAmount', '₱' + balance.toLocaleString());
     updateElementText('balanceAmountText2', '₱' + balance.toLocaleString());
 
-
+    // Update check-in display
     const options = { month: 'short', day: 'numeric', year: 'numeric' };
     const checkInText = arrivalDate.toLocaleDateString('en-US', options);
     updateElementText('checkInDisplay', checkInText);
@@ -132,7 +148,7 @@ function updateGuestDisplay() {
 
 
 function switchPaymentMethod(method) {
-
+  // Update tabs
   document.querySelectorAll('.payment-tab').forEach(tab => {
     tab.classList.remove('active');
   });
@@ -141,7 +157,7 @@ function switchPaymentMethod(method) {
     activeTab.classList.add('active');
   }
 
-
+  // Update content
   document.querySelectorAll('.payment-content').forEach(content => {
     content.classList.remove('active');
   });
@@ -150,14 +166,14 @@ function switchPaymentMethod(method) {
     activeContent.classList.add('active');
   }
 
-
+  // Enable/disable hidden inputs
   const cashInput = document.getElementById('cashPaymentInput');
   const onlineInput = document.getElementById('onlinePaymentInput');
 
   if (cashInput) cashInput.disabled = method !== 'cash';
   if (onlineInput) onlineInput.disabled = method !== 'online';
 
-
+  // Update payment method text
   const paymentText = method === 'cash' ? 'upon check-in' : 'online through your account';
   updateElementText('paymentMethodText', paymentText);
 }
@@ -165,7 +181,7 @@ function switchPaymentMethod(method) {
 
 function nextStep() {
   if (currentStep < totalSteps) {
-
+    // Validate current step
     if (!validateStep(currentStep)) {
       return;
     }
@@ -173,11 +189,8 @@ function nextStep() {
     currentStep++;
     updateStepDisplay();
   } else {
-
-    const form = document.getElementById('reservationForm');
-    if (form) {
-      form.submit();
-    }
+    // Step 4 - Final submission
+    handleFinalSubmission();
   }
 }
 
@@ -200,7 +213,7 @@ function goToStep(step) {
 
 function validateStep(step) {
   if (step === 1) {
-
+    // Validate dates and guests
     const arrival = document.getElementById('arrivalDate')?.value;
     const departure = document.getElementById('departureDate')?.value;
     const adults = parseInt(document.getElementById('adults')?.value) || 0;
@@ -223,7 +236,7 @@ function validateStep(step) {
       return false;
     }
 
-
+    // Check max pax
     const children = parseInt(document.getElementById('children')?.value) || 0;
     const totalGuests = adults + children;
 
@@ -233,7 +246,7 @@ function validateStep(step) {
     }
 
   } else if (step === 2) {
-
+    // Validate guest details
     const requiredFields = [
       { name: 'first_name', label: 'First Name' },
       { name: 'last_name', label: 'Last Name' },
@@ -251,7 +264,7 @@ function validateStep(step) {
       }
     }
 
-
+    // Validate email format
     const emailInput = document.querySelector('input[name="email"]');
     if (emailInput && !isValidEmail(emailInput.value)) {
       showAlert('warning', 'Invalid Email', 'Please enter a valid email address');
@@ -260,14 +273,99 @@ function validateStep(step) {
     }
 
     updateGuestDisplay();
+  } else if (step === 3) {
+    // Validate payment method selection
+    const activePaymentMethod = document.querySelector('.payment-tab.active')?.dataset.payment;
+
+    if (!activePaymentMethod) {
+      showAlert('warning', 'Payment Required', 'Please select a payment method');
+      return false;
+    }
+
+    // If online payment, initiate Stripe checkout
+    if (activePaymentMethod === 'online') {
+      initiateStripePayment();
+      return false; // Don't proceed to next step yet
+    }
   }
 
   return true;
 }
 
 
-function updateStepDisplay() {
+async function initiateStripePayment() {
+  try {
+    // Show loading
+    Swal.fire({
+      title: 'Processing...',
+      text: 'Redirecting to secure payment',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
 
+    // Gather reservation data
+    const reservationData = {
+      room_id: window.reservationData.roomId,
+      first_name: document.querySelector('input[name="first_name"]').value,
+      middle_name: document.querySelector('input[name="middle_name"]')?.value || '',
+      last_name: document.querySelector('input[name="last_name"]').value,
+      email: document.querySelector('input[name="email"]').value,
+      contact_number: document.querySelector('input[name="contact_number"]').value,
+      dob: document.querySelector('input[name="dob"]').value,
+      arrival_date: document.getElementById('arrivalDate').value,
+      departure_date: document.getElementById('departureDate').value,
+      adults: parseInt(document.getElementById('adults').value),
+      children: parseInt(document.getElementById('children').value),
+      purpose: document.querySelector('textarea[name="purpose"]')?.value || '',
+      room_type_name: document.querySelector('.room-name')?.textContent || 'Room'
+    };
+
+    // Create checkout session
+    const response = await fetch('/payment/create-checkout-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': window.reservationData.csrfToken
+      },
+      body: JSON.stringify({
+        reservation_data: reservationData,
+        amount: 500 // Reservation fee
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
+    // Redirect to Stripe Checkout
+    window.location.href = data.url;
+
+  } catch (error) {
+    console.error('Payment error:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Payment Error',
+      text: 'Failed to process payment. Please try again.',
+      confirmButtonColor: '#8b5cf6'
+    });
+  }
+}
+
+
+function handleFinalSubmission() {
+  const form = document.getElementById('reservationForm');
+  if (form) {
+    form.submit();
+  }
+}
+
+
+function updateStepDisplay() {
+  // Update step indicators
   document.querySelectorAll('.step').forEach((step, index) => {
     const stepNumber = index + 1;
     step.classList.remove('active', 'completed', 'clickable');
@@ -279,7 +377,7 @@ function updateStepDisplay() {
     }
   });
 
-
+  // Update step content
   document.querySelectorAll('.step-content').forEach((content, index) => {
     content.classList.remove('active');
     if (index + 1 === currentStep) {
@@ -287,7 +385,7 @@ function updateStepDisplay() {
     }
   });
 
-
+  // Update navigation buttons
   const backBtn = document.getElementById('backBtn');
   const nextBtn = document.getElementById('nextStepBtn');
 
@@ -297,13 +395,20 @@ function updateStepDisplay() {
 
   if (nextBtn) {
     if (currentStep === 3) {
-      nextBtn.innerHTML = '<i class="ri-check-line"></i> Confirm Reservation';
+      const activePayment = document.querySelector('.payment-tab.active')?.dataset.payment;
+      if (activePayment === 'online') {
+        nextBtn.innerHTML = '<i class="ri-secure-payment-line"></i> Proceed to Payment';
+      } else {
+        nextBtn.innerHTML = 'Continue <i class="ri-arrow-right-line"></i>';
+      }
+    } else if (currentStep === 4) {
+      nextBtn.style.display = 'none'; // Hide on confirmation page
     } else {
       nextBtn.innerHTML = 'Continue <i class="ri-arrow-right-line"></i>';
     }
   }
 
-
+  // Show/hide sidebar sections
   const deliveryEstimate = document.getElementById('deliveryEstimate');
   const guestAddressDisplay = document.getElementById('guestAddressDisplay');
 
@@ -315,7 +420,7 @@ function updateStepDisplay() {
     guestAddressDisplay.style.display = currentStep >= 3 ? 'block' : 'none';
   }
 
-
+  // Scroll to top
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -376,7 +481,6 @@ function calculateNights(startDate, endDate) {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return diffDays;
 }
-
 
 window.nextStep = nextStep;
 window.prevStep = prevStep;
