@@ -53,43 +53,44 @@ Route::prefix('payment')->name('payment.')->group(function () {
     Route::get('/success', [PaymentController::class, 'paymentSuccess'])->name('success');
     Route::get('/cancel', [PaymentController::class, 'paymentCancel'])->name('cancel');
 });
-Route::get('/debug-session', function() {
-    return [
-        'all_session_data' => session()->all(),
-        'has_pending_reservation' => session()->has('pending_reservation'),
-        'pending_reservation' => session('pending_reservation'),
-        'has_temp_credentials' => session()->has('temp_credentials'),
-        'temp_credentials' => session('temp_credentials'),
-        'has_reservation_data' => session()->has('reservation_data'),
-        'reservation_data' => session('reservation_data'),
-        'payment_success' => session('payment_success'),
-        'payment_method' => session('payment_method'),
-    ];
-})->name('debug.session');
 
-// Test route to simulate payment success
-Route::get('/test-payment-success', function() {
-    // Simulate reservation data
-    session([
-        'pending_reservation' => [
-            'room_id' => 1,
-            'first_name' => 'Test',
-            'middle_name' => '',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-            'contact_number' => '+639123456789',
-            'dob' => '1990-01-01',
-            'arrival_date' => '2026-02-15',
-            'departure_date' => '2026-02-17',
-            'adults' => 2,
-            'children' => 0,
-            'purpose' => 'Vacation',
-            'room_type_name' => 'Standard Double'
-        ]
-    ]);
+// Route::get('/debug-session', function() {
+//     return [
+//         'all_session_data' => session()->all(),
+//         'has_pending_reservation' => session()->has('pending_reservation'),
+//         'pending_reservation' => session('pending_reservation'),
+//         'has_temp_credentials' => session()->has('temp_credentials'),
+//         'temp_credentials' => session('temp_credentials'),
+//         'has_reservation_data' => session()->has('reservation_data'),
+//         'reservation_data' => session('reservation_data'),
+//         'payment_success' => session('payment_success'),
+//         'payment_method' => session('payment_method'),
+//     ];
+// })->name('debug.session');
 
-    return 'Session data set. Now visit: /payment/success?session_id=test_session_id';
-})->name('test.payment');
+// // Test route to simulate payment success
+// Route::get('/test-payment-success', function() {
+//     // Simulate reservation data
+//     session([
+//         'pending_reservation' => [
+//             'room_id' => 1,
+//             'first_name' => 'Test',
+//             'middle_name' => '',
+//             'last_name' => 'User',
+//             'email' => 'test@example.com',
+//             'contact_number' => '+639123456789',
+//             'dob' => '1990-01-01',
+//             'arrival_date' => '2026-02-15',
+//             'departure_date' => '2026-02-17',
+//             'adults' => 2,
+//             'children' => 0,
+//             'purpose' => 'Vacation',
+//             'room_type_name' => 'Standard Double'
+//         ]
+//     ]);
+
+//     return 'Session data set. Now visit: /payment/success?session_id=test_session_id';
+// })->name('test.payment');
 
 // Authenticated reservation actions
 Route::middleware(['auth'])->prefix('reservation')->name('reservation.')->group(function () {
