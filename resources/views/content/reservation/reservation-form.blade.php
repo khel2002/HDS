@@ -254,18 +254,6 @@
 
           <!-- Step 3: Payment -->
           <div class="step-content" id="step3">
-            <div class="offers-banner">
-              <button type="button" class="close-btn" onclick="this.parentElement.style.display='none'">×</button>
-              <div class="offers-title">
-                <i class="ri-percent-line"></i>
-                Available Offers
-              </div>
-              <ul class="offers-list">
-                <li>10% Instant Discount on select payment methods</li>
-                <li>25% Cashback Voucher up to ₱60 on first reservation</li>
-              </ul>
-            </div>
-
             <h2 class="section-title">Payment Method</h2>
 
             <div class="payment-tabs">
