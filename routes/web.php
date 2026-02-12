@@ -46,6 +46,8 @@ Route::prefix('reservation')->name('reservation.')->group(function () {
 
   Route::post('/check-availability', [ReservationController::class, 'checkAvailability'])->name('check-availability');
   Route::get('/booked-dates/{room_id}', [ReservationController::class, 'getBookedDates'])->name('booked-dates');
+  Route::post('/get-available-rooms', [ReservationController::class, 'getAvailableRooms'])
+    ->name('get-available-rooms');
 });
 
 // Payment routes
