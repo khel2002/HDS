@@ -1,18 +1,36 @@
 <?php
+<<<<<<< Updated upstream
 
 use App\Http\Controllers\admin\accounts\AdminAccountManagementController;
 use App\Http\Controllers\admin\accounts\GuestAccountManagementController;
 use App\Http\Controllers\admin\AdminDashboardController;
+=======
+>>>>>>> Stashed changes
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\dashboard\Analytics;
-use App\Http\Controllers\SuperAdmin\SuperAdminDashboardController;
-use App\Http\Controllers\SuperAdmin\RoomController;
-use App\Http\Controllers\SuperAdmin\RoomTypeController;
-use App\Http\Controllers\SuperAdmin\AmenitiesController;
+use App\Http\Controllers\admin\{
+  AdminAccountManagementController,
+  AdminDashboardController
+};
 
-use App\Http\Controllers\FrontpageController;
-use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\dashboard\Analytics;
+
+use App\Http\Controllers\SuperAdmin\{
+  SuperAdminDashboardController,
+  ReservationController as SuperAdminReservationController,
+  RoomController,
+  RoomTypeController,
+  AmenitiesController
+};
+
+
+use App\Http\Controllers\{
+  FrontpageController,
+  PaymentController,
+  GoogleAuthController,
+  ReservationController
+
+};
 
 use App\Http\Controllers\pages\{
   AccountSettingsAccount,
@@ -25,8 +43,7 @@ use App\Http\Controllers\authentications\{
   RegisterBasic,
   ForgotPasswordBasic
 };
-use App\Http\Controllers\GoogleAuthController;
-use App\Http\Controllers\ReservationController;
+
 
 // Landing pages
 Route::get('/landing', [FrontpageController::class, 'index'])->name('frontpage.index');
@@ -37,6 +54,8 @@ Route::get('/sample-landing', [FrontpageController::class, 'sampleLanding'])->na
 Route::prefix('reservation')->name('reservation.')->group(function () {
   Route::get('/create/{room_id}', [ReservationController::class, 'showReservationForm'])->name('create');
   Route::post('/store', [ReservationController::class, 'store'])->name('store');
+  Route::post('/get-available-rooms', [ReservationController::class, 'getAvailableRooms'])
+    ->name('get-available-rooms');
 
   // New confirmation route
   Route::get('/confirmation', [ReservationController::class, 'confirmation'])->name('confirmation');
@@ -92,6 +111,7 @@ Route::prefix('payment')->name('payment.')->group(function () {
 
 //     return 'Session data set. Now visit: /payment/success?session_id=test_session_id';
 // })->name('test.payment');
+<<<<<<< Updated upstream
 
 Route::get('/debug-session', function () {
   return [
@@ -131,6 +151,8 @@ Route::get('/test-payment-success', function () {
   return 'Session data set. Now visit: /payment/success?session_id=test_session_id';
 })->name('test.payment');
 
+=======
+>>>>>>> Stashed changes
 
 // Authenticated reservation actions
 Route::middleware(['auth'])->prefix('reservation')->name('reservation.')->group(function () {
@@ -230,6 +252,19 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super_a
     Route::put('/{id}', [AmenitiesController::class, 'update'])->name('update');
     Route::delete('/{id}', [AmenitiesController::class, 'destroy'])->name('destroy');
   });
+
+  Route::prefix('reservations')->name('reservations.')->group(function () {
+    Route::get('/all', [SuperAdminReservationController::class, 'index'])->name('index');
+    Route::post('/all', [SuperAdminReservationController::class, 'store'])->name('store');
+    Route::get('/{id}', [SuperAdminReservationController::class, 'show'])->name('show');
+    Route::put('/{id}', [SuperAdminReservationController::class, 'update'])->name('update');
+    Route::delete('/{id}', [SuperAdminReservationController::class, 'destroy'])->name('destroy');
+    
+    // Status management
+    Route::post('/{id}/approve', [SuperAdminReservationController::class, 'approve'])->name('approve');
+    Route::post('/{id}/reject', [SuperAdminReservationController::class, 'reject'])->name('reject');
+    Route::post('/{id}/cancel', [SuperAdminReservationController::class, 'cancel'])->name('cancel');
+  });
 });
 
 // System routes
@@ -237,3 +272,100 @@ Route::prefix('system')->group(function () {
   Route::get('/error', [MiscError::class, 'index'])->name('system.error');
   Route::get('/maintenance', [MiscUnderMaintenance::class, 'index'])->name('system.maintenance');
 });
+// Route::get('/test-guest-data', function() {
+//     $userId = 20; // Replace with auth()->id() or your actual user ID
+    
+//     echo "<h1>Guest Name Debugging</h1>";
+//     echo "<hr>";
+    
+//     // Test 1: Check User Model
+//     echo "<h2>1. User Table Data</h2>";
+//     $user = \App\Models\User::find($userId);
+//     if ($user) {
+//         echo "✓ User found<br>";
+//         echo "- email: " . $user->email . "<br>";
+//         echo "- first_name: " . ($user->first_name ?? '<span style="color:red">NULL</span>') . "<br>";
+//         echo "- last_name: " . ($user->last_name ?? '<span style="color:red">NULL</span>') . "<br>";
+//     } else {
+//         echo "✗ User not found<br>";
+//     }
+    
+//     echo "<hr>";
+    
+//     // Test 2: Check GuestDetail Model
+//     echo "<h2>2. Guest Details Table Data</h2>";
+//     $guestDetail = \App\Models\GuestDetail::where('user_id', $userId)->first();
+//     if ($guestDetail) {
+//         echo "✓ Guest details record found<br>";
+//         echo "- guest_details_id: " . $guestDetail->guest_details_id . "<br>";
+//         echo "- first_name: " . ($guestDetail->first_name ?? '<span style="color:red">NULL</span>') . "<br>";
+//         echo "- middle_name: " . ($guestDetail->middle_name ?? '<span style="color:red">NULL</span>') . "<br>";
+//         echo "- last_name: " . ($guestDetail->last_name ?? '<span style="color:red">NULL</span>') . "<br>";
+//         echo "- <strong>full_name accessor: " . $guestDetail->full_name . "</strong><br>";
+//     } else {
+//         echo "✗ Guest details record NOT found<br>";
+//     }
+    
+//     echo "<hr>";
+    
+//     // Test 3: Check Raw Database Query
+//     echo "<h2>3. Raw Database Query</h2>";
+//     $rawData = DB::table('guest_details')->where('user_id', $userId)->first();
+//     if ($rawData) {
+//         echo "✓ Raw query found data<br>";
+//         echo "<pre>";
+//         print_r($rawData);
+//         echo "</pre>";
+//     } else {
+//         echo "✗ Raw query found nothing<br>";
+//     }
+    
+//     echo "<hr>";
+    
+//     // Test 4: Simulate Controller Logic
+//     echo "<h2>4. Simulating Controller getGuestInfo()</h2>";
+    
+//     $guestDetails = \App\Models\GuestDetail::where('user_id', $userId)->first();
+    
+//     $guestName = 'Guest'; // Default fallback
+//     if ($guestDetails) {
+//         echo "✓ Guest details exists<br>";
+        
+//         // Check if the accessor method exists
+//         if (method_exists($guestDetails, 'getFullNameAttribute')) {
+//             echo "✓ getFullNameAttribute method exists<br>";
+//             $guestName = $guestDetails->full_name;
+//             echo "✓ Using accessor: <strong style='color:green'>" . $guestName . "</strong><br>";
+//         } else {
+//             echo "✗ getFullNameAttribute method NOT found<br>";
+//             // Manual construction
+//             $parts = array_filter([
+//                 $guestDetails->first_name,
+//                 $guestDetails->middle_name,
+//                 $guestDetails->last_name,
+//             ]);
+//             $guestName = implode(' ', $parts);
+//             echo "✓ Manual construction: <strong style='color:blue'>" . $guestName . "</strong><br>";
+//         }
+        
+//         // Check if empty
+//         if (empty(trim($guestName))) {
+//             echo "✗ Guest name is EMPTY after construction<br>";
+//             $guestName = 'Guest';
+//         } else {
+//             echo "✓ Guest name has content: '" . $guestName . "'<br>";
+//         }
+//     } else {
+//         echo "✗ No guest details found<br>";
+//     }
+    
+//     echo "<br><h3>Final Result: <span style='color:green; font-size:24px'>" . $guestName . "</span></h3>";
+    
+//     echo "<hr>";
+//     echo "<h2>5. What the Blade Template Sees</h2>";
+//     echo "<p>In your blade template, the variable would be:</p>";
+//     echo "<code>\$guestInfo['guest_name'] = '" . $guestName . "'</code><br>";
+//     echo "<p>And it would display as: <strong>" . $guestName . "</strong></p>";
+    
+//     return '';
+// });

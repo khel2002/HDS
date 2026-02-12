@@ -1,6 +1,9 @@
 /.phpunit.cache
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 .env
 .env.backup
 .env.production
