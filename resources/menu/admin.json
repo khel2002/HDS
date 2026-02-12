@@ -296,14 +296,14 @@
       "slug": "admin",
       "submenu": [
         {
-          "url": "admin/account-management",
+          "url": "/admin/account-management",
           "name": "All Users",
           "slug": "admin.accounts-management"
         },
         {
-          "url": "/admin/users/guests",
+          "url": "/admin/guest-accounts",
           "name": "Guest Users",
-          "slug": "guest-users"
+          "slug": "admin.guest-management"
         }
       ]
     },

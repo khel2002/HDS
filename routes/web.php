@@ -1,6 +1,7 @@
 <?php
 
-use App\Http\Controllers\admin\AdminAccountManagementController;
+use App\Http\Controllers\admin\accounts\AdminAccountManagementController;
+use App\Http\Controllers\admin\accounts\GuestAccountManagementController;
 use App\Http\Controllers\admin\AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -53,7 +54,6 @@ Route::prefix('payment')->name('payment.')->group(function () {
   Route::get('/success', [PaymentController::class, 'paymentSuccess'])->name('success');
   Route::get('/cancel', [PaymentController::class, 'paymentCancel'])->name('cancel');
 });
-<<<<<<< Updated upstream
 
 // Route::get('/debug-session', function() {
 //     return [
@@ -92,7 +92,7 @@ Route::prefix('payment')->name('payment.')->group(function () {
 
 //     return 'Session data set. Now visit: /payment/success?session_id=test_session_id';
 // })->name('test.payment');
-=======
+
 Route::get('/debug-session', function () {
   return [
     'all_session_data' => session()->all(),
@@ -130,7 +130,7 @@ Route::get('/test-payment-success', function () {
 
   return 'Session data set. Now visit: /payment/success?session_id=test_session_id';
 })->name('test.payment');
->>>>>>> Stashed changes
+
 
 // Authenticated reservation actions
 Route::middleware(['auth'])->prefix('reservation')->name('reservation.')->group(function () {
@@ -195,6 +195,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
   Route::post('/users/{id}/update', [AdminAccountManagementController::class, 'update'])->name('users.update');   // Changed
   Route::post('/users/{id}/status', [AdminAccountManagementController::class, 'updateStatus'])->name('users.status'); // Changed to POST
   Route::post('/users/{id}/delete', [AdminAccountManagementController::class, 'destroy'])->name('users.destroy'); // Changed
+  // guest
+  Route::get('/guest-accounts', [GuestAccountManagementController::class, 'index'])->name('guest-management');
 });
 
 // Super Admin dashboard
