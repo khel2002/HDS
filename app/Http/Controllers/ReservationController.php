@@ -63,81 +63,11 @@ class ReservationController extends Controller
     }
 
 
-    public function getAvailableRooms(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'arrival_date' => 'required|date|after_or_equal:today',
-                'departure_date' => 'required|date|after:arrival_date',
-                'exclude_room_ids' => 'array'
-            ]);
-
-            // Get all available rooms
-            $availableRooms = DB::table('rooms')
-                ->join('room_types', 'rooms.room_type_id', '=', 'room_types.room_type_id')
-                ->where('rooms.status', 'available')
-                ->select(
-                    'rooms.room_id',
-                    'rooms.room_number',
-                    'rooms.image_path',
-                    'room_types.room_type_name',
-                    'room_types.description',
-                    'room_types.rate_per_night',
-                    'room_types.max_pax'
-                )
-                ->get();
-
-            // Filter out already selected rooms
-            if (isset($validated['exclude_room_ids'])) {
-                $availableRooms = $availableRooms->whereNotIn('room_id', $validated['exclude_room_ids']);
-            }
-
-            // Check for date conflicts for each room
-            $filteredRooms = $availableRooms->filter(function($room) use ($validated) {
-                $hasOverlap = DB::table('reservations')
-                    ->join('guest_details', 'reservations.guest_details_id', '=', 'guest_details.guest_details_id')
-                    ->where('reservations.room_id', $room->room_id)
-                    ->where('reservations.reservation_status', '!=', 'cancelled')
-                    ->where('reservations.reservation_status', '!=', 'rejected')
-                    ->where(function($query) use ($validated) {
-                        $query->whereBetween('guest_details.arrival_date', [$validated['arrival_date'], $validated['departure_date']])
-                              ->orWhereBetween('guest_details.departure_date', [$validated['arrival_date'], $validated['departure_date']])
-                              ->orWhere(function($q) use ($validated) {
-                                  $q->where('guest_details.arrival_date', '<=', $validated['arrival_date'])
-                                    ->where('guest_details.departure_date', '>=', $validated['departure_date']);
-                              });
-                    })
-                    ->exists();
-
-                return !$hasOverlap;
-            })->values();
-
-            // Add full image path
-            $filteredRooms = $filteredRooms->map(function($room) {
-                $room->image_path = asset('storage/' . $room->image_path);
-                return $room;
-            });
-
-            return response()->json([
-                'success' => true,
-                'rooms' => $filteredRooms
-            ]);
-
-        } catch (Exception $e) {
-            \Log::error('Error fetching available rooms: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to fetch available rooms'
-            ], 500);
-        }
-    }
-
-
     public function store(Request $request)
     {
         // Validate input
         $validated = $request->validate([
-            'rooms' => 'required|json',
+            'room_id' => 'required|exists:rooms,room_id',
             'first_name' => 'required|string|max:45',
             'middle_name' => 'nullable|string|max:45',
             'last_name' => 'required|string|max:45',
@@ -155,66 +85,50 @@ class ReservationController extends Controller
         DB::beginTransaction();
 
         try {
-            // Parse rooms data
-            $roomsData = json_decode($validated['rooms'], true);
-            
-            if (empty($roomsData)) {
-                return back()->with('error', 'No rooms selected')->withInput();
-            }
-
-            $roomIds = array_column($roomsData, 'room_id');
-
-            // Verify all rooms are available
-            $rooms = DB::table('rooms')
-                ->whereIn('room_id', $roomIds)
+            // Verify room availability
+            $room = DB::table('rooms')
+                ->where('room_id', $validated['room_id'])
                 ->where('status', 'available')
-                ->get();
+                ->first();
 
-            if ($rooms->count() !== count($roomIds)) {
-                return back()->with('error', 'One or more rooms are no longer available')->withInput();
+            if (!$room) {
+                return back()->with('error', 'Room is no longer available')->withInput();
             }
 
-            // Check for date overlaps for all rooms
-            foreach ($roomIds as $roomId) {
-                $hasOverlap = DB::table('reservations')
-                    ->join('guest_details', 'reservations.guest_details_id', '=', 'guest_details.guest_details_id')
-                    ->where('reservations.room_id', $roomId)
-                    ->where('reservations.reservation_status', '!=', 'cancelled')
-                    ->where('reservations.reservation_status', '!=', 'rejected')
-                    ->where(function($query) use ($validated) {
-                        $query->whereBetween('guest_details.arrival_date', [$validated['arrival_date'], $validated['departure_date']])
-                              ->orWhereBetween('guest_details.departure_date', [$validated['arrival_date'], $validated['departure_date']])
-                              ->orWhere(function($q) use ($validated) {
-                                  $q->where('guest_details.arrival_date', '<=', $validated['arrival_date'])
-                                    ->where('guest_details.departure_date', '>=', $validated['departure_date']);
-                              });
-                    })
-                    ->exists();
+            // Check for date overlaps
+            $hasOverlap = DB::table('reservations')
+                ->join('guest_details', 'reservations.guest_details_id', '=', 'guest_details.guest_details_id')
+                ->where('reservations.room_id', $validated['room_id'])
+                ->where('reservations.reservation_status', '!=', 'cancelled')
+                ->where('reservations.reservation_status', '!=', 'rejected')
+                ->where(function($query) use ($validated) {
+                    $query->whereBetween('guest_details.arrival_date', [$validated['arrival_date'], $validated['departure_date']])
+                          ->orWhereBetween('guest_details.departure_date', [$validated['arrival_date'], $validated['departure_date']])
+                          ->orWhere(function($q) use ($validated) {
+                              $q->where('guest_details.arrival_date', '<=', $validated['arrival_date'])
+                                ->where('guest_details.departure_date', '>=', $validated['departure_date']);
+                          });
+                })
+                ->exists();
 
-                if ($hasOverlap) {
-                    return back()->with('error', 'One or more rooms are already booked for the selected dates')->withInput();
-                }
+            if ($hasOverlap) {
+                return back()->with('error', 'Room is already booked for the selected dates')->withInput();
             }
 
-            // Get room types for pricing
-            $roomTypes = DB::table('room_types')
-                ->join('rooms', 'room_types.room_type_id', '=', 'rooms.room_type_id')
-                ->whereIn('rooms.room_id', $roomIds)
-                ->select('rooms.room_id', 'room_types.rate_per_night', 'room_types.room_type_name', 'rooms.room_number')
-                ->get()
-                ->keyBy('room_id');
+            // Get room type for pricing
+            $roomType = DB::table('room_types')
+                ->where('room_type_id', $room->room_type_id)
+                ->first();
 
             // Calculate nights and pricing
             $arrival = new \DateTime($validated['arrival_date']);
             $departure = new \DateTime($validated['departure_date']);
             $nights = $arrival->diff($departure)->days;
 
-            $totalRoomCost = $roomTypes->sum('rate_per_night');
-            $subtotal = $totalRoomCost * $nights;
-            $reservationFeePerRoom = 500;
-            $totalReservationFee = $reservationFeePerRoom * count($roomIds);
-            $totalAmount = $subtotal + $totalReservationFee;
-            $balance = $totalAmount - $totalReservationFee;
+            $subtotal = $roomType->rate_per_night * $nights;
+            $reservationFee = 500;
+            $totalAmount = $subtotal + $reservationFee;
+            $balance = $totalAmount - $reservationFee;
 
             // Generate temporary password
             $temporaryPassword = Str::random(12);
@@ -252,67 +166,45 @@ class ReservationController extends Controller
                 'payment_method' => $validated['payment_method']
             ]);
 
-            // Create reservations for each room
-            $reservationIds = [];
-            foreach ($roomIds as $index => $roomId) {
-                $roomRate = $roomTypes[$roomId]->rate_per_night;
-                $roomSubtotal = $roomRate * $nights;
-                $roomTotal = $roomSubtotal + $reservationFeePerRoom;
-                $roomBalance = $roomTotal - $reservationFeePerRoom;
-
-                $reservationId = DB::table('reservations')->insertGetId([
-                    'user_id' => $userId,
-                    'guest_details_id' => $guestDetailsId,
-                    'payment_id' => $paymentId,
-                    'room_id' => $roomId,
-                    'reservation_fee' => $reservationFeePerRoom,
-                    'purpose' => $validated['purpose'],
-                    'total_amount' => $roomTotal,
-                    'balance' => $roomBalance,
-                    'reservation_status' => 'pending',
-                    'booking_date' => now()->toDateString(),
-                    'adults' => $validated['adults'],
-                    'children' => $validated['children'],
-                    'no_nights' => $nights,
-                    'created_at' => now()
-                ]);
-
-                $reservationIds[] = $reservationId;
-            }
+            // Create reservation
+            $reservationId = DB::table('reservations')->insertGetId([
+                'user_id' => $userId,
+                'guest_details_id' => $guestDetailsId,
+                'payment_id' => $paymentId,
+                'room_id' => $validated['room_id'],
+                'reservation_fee' => $reservationFee,
+                'purpose' => $validated['purpose'],
+                'total_amount' => $totalAmount,
+                'balance' => $balance,
+                'reservation_status' => 'pending',
+                'booking_date' => now()->toDateString(),
+                'adults' => $validated['adults'],
+                'children' => $validated['children'],
+                'no_nights' => $nights,
+                'created_at' => now()
+            ]);
 
             DB::commit();
-
-            // Prepare room details for session
-            $roomDetails = [];
-            foreach ($roomIds as $roomId) {
-                $roomDetails[] = [
-                    'room_number' => $roomTypes[$roomId]->room_number,
-                    'room_type_name' => $roomTypes[$roomId]->room_type_name
-                ];
-            }
 
             // Store credentials and reservation data in session
             session([
                 'temp_credentials' => [
                     'email' => $validated['email'],
                     'password' => $temporaryPassword,
-                    'reservation_ids' => $reservationIds
+                    'reservation_id' => $reservationId
                 ],
                 'reservation_data' => [
-                    'reservation_id' => $reservationIds[0], // Primary reservation ID
+                    'reservation_id' => $reservationId,
                     'email' => $validated['email'],
                     'first_name' => $validated['first_name'],
                     'last_name' => $validated['last_name'],
-                    'rooms' => $roomDetails,
-                    'room_count' => count($roomIds),
-                    'room_number' => $roomTypes[$roomIds[0]]->room_number, // First room number
-                    'room_type_name' => $roomTypes[$roomIds[0]]->room_type_name, // First room type
+                    'room_number' => $room->room_number,
+                    'room_type_name' => $roomType->room_type_name,
                     'arrival_date' => $validated['arrival_date'],
                     'departure_date' => $validated['departure_date'],
                     'total_amount' => $totalAmount,
                     'balance' => $balance,
-                    'no_nights' => $nights,
-                    'reservation_fee' => $totalReservationFee
+                    'no_nights' => $nights
                 ],
                 'payment_success' => true,
                 'payment_method' => 'cash'
@@ -364,7 +256,7 @@ class ReservationController extends Controller
             ->join('rooms', 'reservations.room_id', '=', 'rooms.room_id')
             ->join('room_types', 'rooms.room_type_id', '=', 'room_types.room_type_id')
             ->join('payments', 'reservations.payment_id', '=', 'payments.payment_id')
-            ->where('reservations.reservation_id', $credentials['reservation_ids'][0])
+            ->where('reservations.reservation_id', $credentials['reservation_id'])
             ->select(
                 'reservations.*',
                 'guest_details.first_name',
