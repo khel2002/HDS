@@ -1,66 +1,62 @@
 {
   "menu": [
     {
-      "url": "/",
-      "name": "Dashboard",
+      "url": "/guest/dashboard",
+      "name": "My Stay",
       "icon": "menu-icon icon-base ri ri-home-smile-line",
       "slug": "dashboard"
     },
-
     {
-      "url": "/landing",
-      "name": "Landing Page",
-      "icon": "menu-icon icon-base ri ri-file-copy-line",
-      "slug": "landing"
-    },
-     {
-      "url": "/sample-landing",
-      "name": "Sample Landing Page",
-      "icon": "menu-icon icon-base ri ri-file-copy-line",
-      "slug": "sample-landing"
+      "menuHeader": "Services"
     },
     {
-      "menuHeader": "Account"
-    },
-
-    {
-      "name": "Account Settings",
-      "icon": "menu-icon icon-base ri ri-user-settings-line",
-      "slug": "account",
+      "name": "Breakfast",
+      "icon": "menu-icon icon-base ri ri-restaurant-2-line",
+      "slug": "breakfast",
       "submenu": [
         {
-          "url": "/account/settings",
-          "name": "Profile",
-          "slug": "account-settings"
+          "url": "/guest/breakfast/menu",
+          "name": "View Menu",
+          "slug": "breakfast-menu"
+        },
+        {
+          "url": "/guest/breakfast/order",
+          "name": "Order Breakfast",
+          "slug": "order-breakfast"
+        },
+        {
+          "url": "/guest/breakfast/my-orders",
+          "name": "My Orders",
+          "slug": "my-breakfast-orders"
         }
       ]
     },
-
     {
-      "menuHeader": "Authentication"
+      "url": "/guest/room-service",
+      "name": "Room Service",
+      "icon": "menu-icon icon-base ri ri-customer-service-2-line",
+      "slug": "room-service"
     },
-
     {
-      "name": "Authentication",
-      "icon": "menu-icon icon-base ri ri-shield-keyhole-line",
-      "slug": "auth",
-      "submenu": [
-        {
-          "url": "/auth/login",
-          "name": "Login",
-          "slug": "login"
-        },
-        {
-          "url": "/auth/register",
-          "name": "Register",
-          "slug": "register"
-        },
-        {
-          "url": "/auth/forgot-password",
-          "name": "Forgot Password",
-          "slug": "forgot-password"
-        }
-      ]
+      "url": "/guest/my-requests",
+      "name": "My Requests",
+      "icon": "menu-icon icon-base ri ri-file-list-line",
+      "slug": "my-requests"
+    },
+    {
+      "menuHeader": "Information"
+    },
+    {
+      "url": "/guest/checkout-info",
+      "name": "Check-out Information",
+      "icon": "menu-icon icon-base ri ri-information-line",
+      "slug": "checkout-info"
+    },
+    {
+      "url": "/guest/help",
+      "name": "Help & Contact",
+      "icon": "menu-icon icon-base ri ri-customer-service-line",
+      "slug": "help"
     }
   ]
 }

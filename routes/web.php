@@ -6,10 +6,14 @@ use App\Http\Controllers\admin\AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\dashboard\Analytics;
-use App\Http\Controllers\SuperAdmin\SuperAdminDashboardController;
-use App\Http\Controllers\SuperAdmin\RoomController;
-use App\Http\Controllers\SuperAdmin\RoomTypeController;
-use App\Http\Controllers\SuperAdmin\AmenitiesController;
+
+use App\Http\Controllers\SuperAdmin\{
+    SuperAdminDashboardController,
+    RoomController,
+    RoomTypeController,
+    AmenitiesController,
+    ReservationController as SuperAdminReservationController
+};
 
 use App\Http\Controllers\FrontpageController;
 use App\Http\Controllers\PaymentController;
@@ -214,6 +218,18 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super_a
     Route::delete('/{id}', [RoomController::class, 'destroy'])->name('destroy');
     Route::patch('/{id}/status', [RoomController::class, 'updateStatus'])->name('update-status');
   });
+ Route::prefix('reservations')->name('reservations.')->group(function () {
+    Route::get('/', [SuperAdminReservationController::class, 'index'])->name('index');
+    Route::post('/', [SuperAdminReservationController::class, 'store'])->name('store');
+    Route::get('/{id}', [SuperAdminReservationController::class, 'show'])->name('show');
+    Route::put('/{id}', [SuperAdminReservationController::class, 'update'])->name('update');
+    Route::delete('/{id}', [SuperAdminReservationController::class, 'destroy'])->name('destroy');
+    
+    // Status management
+    Route::post('/{id}/approve', [SuperAdminReservationController::class, 'approve'])->name('approve');
+    Route::post('/{id}/reject', [SuperAdminReservationController::class, 'reject'])->name('reject');
+    Route::post('/{id}/cancel', [SuperAdminReservationController::class, 'cancel'])->name('cancel');
+});
 
   // Room types management
   Route::prefix('room-types')->name('room-types.')->group(function () {

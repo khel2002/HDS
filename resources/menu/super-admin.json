@@ -15,7 +15,7 @@
       "slug": "reservations",
       "submenu": [
         {
-          "url": "/super-admin/reservations/all",
+          "url": "/super-admin/reservations",
           "name": "All Reservations",
           "slug": "all-reservations"
         }
