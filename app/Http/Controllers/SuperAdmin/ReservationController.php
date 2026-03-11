@@ -3,440 +3,344 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Reservation;
-use App\Models\GuestDetail;
-use App\Models\Room;
-use App\Models\RoomType;
-use App\Models\User;
-use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
 
 class ReservationController extends Controller
 {
-    /**
-     * Display a listing of reservations
-     *
-     * @return \Illuminate\View\View
-     */
+    
+    
+    
     public function index()
     {
-        // Get all reservations with related data
-        $reservations = DB::table('reservations as r')
-            ->join('guest_details as gd', 'r.guest_details_id', '=', 'gd.guest_details_id')
-            ->join('users as u', 'r.user_id', '=', 'u.user_id')
-            ->leftJoin('rooms as rm', 'r.room_id', '=', 'rm.room_id')
-            ->leftJoin('room_types as rt', 'rm.room_type_id', '=', 'rt.room_type_id')
-            ->select(
-                'r.*',
-                'gd.first_name as guest_first_name',
-                'gd.middle_name as guest_middle_name',
-                'gd.last_name as guest_last_name',
-                'gd.contact_number as guest_contact',
-                'gd.dob as guest_dob',
-                'u.email as guest_email',
-                'rm.room_number',
-                'rt.room_type_name',
-                'rt.room_type_id'
-            )
-            ->orderBy('r.created_at', 'desc')
-            ->get();
-
-        // Get statistics
-        $stats = [
-            'total_reservations' => Reservation::count(),
-            'pending_reservations' => Reservation::where('reservation_status', 'pending')->count(),
-            'approved_reservations' => Reservation::where('reservation_status', 'approved')->count(),
-            'total_revenue' => Reservation::whereIn('reservation_status', ['approved'])->sum('total_amount')
-        ];
-
-        // Get available rooms
-        $rooms = DB::table('rooms as r')
-            ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
-            ->where('r.status', 'available')
-            ->select(
-                'r.room_id',
-                'r.room_number',
-                'rt.room_type_name',
-                'rt.rate_per_night'
-            )
-            ->get();
-
-        // Get room types for filter
-        $roomTypes = RoomType::all();
-
-        return view('content.super-admin.reservation.index', compact(
-            'reservations',
-            'stats',
-            'rooms',
-            'roomTypes'
-        ));
-    }
-
-    /**
-     * Store a newly created reservation
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'first_name' => 'required|string|max:45',
-            'middle_name' => 'nullable|string|max:45',
-            'last_name' => 'required|string|max:45',
-            'email' => 'required|email|max:100',
-            'contact_number' => 'required|string|max:45',
-            'dob' => 'nullable|date',
-            'room_id' => 'required|exists:rooms,room_id',
-            'check_in_date' => 'required|date|after_or_equal:today',
-            'check_out_date' => 'required|date|after:check_in_date',
-            'adults' => 'required|integer|min:1',
-            'children' => 'nullable|integer|min:0',
-            'purpose' => 'nullable|string|max:255'
-        ]);
-
-        DB::beginTransaction();
         
-        try {
-            // Check if user exists with this email
-            $user = User::where('email', $request->email)->first();
+        $rows = DB::table('reservations as r')
+            ->join('guest_details as g',   'r.guest_details_id', '=', 'g.guest_details_id')
+            ->join('users as u',           'r.user_id',           '=', 'u.user_id')
+            ->leftJoin('rooms as rm',      'r.room_id',           '=', 'rm.room_id')
+            ->leftJoin('room_types as rt', 'rm.room_type_id',     '=', 'rt.room_type_id')
+            ->leftJoin('payments as p',    'r.payment_id',        '=', 'p.payment_id')
+            ->select([
+                'r.reservation_id',
+                'r.user_id',
+                'r.guest_details_id',
+                'r.payment_id',
+                'r.reservation_status',
+                'r.booking_date',
+                'r.check_in_date',
+                'r.check_out_date',
+                'r.no_nights',
+                'r.adults',
+                'r.children',
+                'r.no_of_pax',
+                'r.total_amount',
+                'r.balance',
+                'r.reservation_fee',
+                'r.reservation_fee_paid',
+                'r.purpose',
+                'g.first_name',
+                'g.last_name',
+                'g.middle_name',
+                'g.contact_number',
+                'g.dob',
+                'u.email',
+                'rm.room_id',
+                'rm.room_number',
+                'rm.image_path as room_image',
+                'rt.room_type_name',
+                'rt.rate_per_night',
+                'rt.max_pax',
+                'p.payment_status',
+                'p.payment_method',
+                'p.amount as paid_amount',
+            ])
+            ->orderByDesc('r.created_at')
+            ->get();
+
+        
+        
+        $grouped = $rows->groupBy(function ($row) {
+            return $row->payment_id
+                ? 'p_' . $row->payment_id
+                : 'u_' . $row->user_id . '_' . $row->booking_date;
+        });
+
+        
+        $bookings = $grouped->map(function ($groupRows) {
+            $first = $groupRows->first();
+
             
-            if (!$user) {
-                // Create new guest user
-                $user = User::create([
-                    'email' => $request->email,
-                    'password' => Hash::make(uniqid()), // Random password
-                    'role_id' => 4, // Guest role
-                    'temporary_act' => 1,
-                    'STATUS' => 'active'
-                ]);
-            }
+            $totalAmount      = $groupRows->sum('total_amount');
+            $totalBalance     = $groupRows->sum('balance');
+            $totalResFee      = $groupRows->sum('reservation_fee');
+            $allFeePaid       = $groupRows->every(fn($r) => $r->reservation_fee_paid);
 
-            // Create guest details
-            $guestDetails = GuestDetail::create([
-                'user_id' => $user->user_id,
-                'first_name' => $request->first_name,
-                'middle_name' => $request->middle_name,
-                'last_name' => $request->last_name,
-                'contact_number' => $request->contact_number,
-                'dob' => $request->dob,
-                'arrival_date' => $request->check_in_date,
-                'departure_date' => $request->check_out_date
-            ]);
+            
+            $rooms = $groupRows->map(fn($r) => (object)[
+                'reservation_id'     => $r->reservation_id,
+                'reservation_status' => $r->reservation_status,
+                'room_id'            => $r->room_id,
+                'room_number'        => $r->room_number,
+                'room_image'         => $r->room_image,
+                'room_type_name'     => $r->room_type_name,
+                'rate_per_night'     => $r->rate_per_night,
+                'max_pax'            => $r->max_pax,
+                'check_in_date'      => $r->check_in_date,
+                'check_out_date'     => $r->check_out_date,
+                'no_nights'          => $r->no_nights,
+                'adults'             => $r->adults,
+                'children'           => $r->children,
+                'no_of_pax'          => $r->no_of_pax,
+                'total_amount'       => $r->total_amount,
+                'balance'            => $r->balance,
+                'reservation_fee'    => $r->reservation_fee,
+                'reservation_fee_paid' => $r->reservation_fee_paid,
+                'purpose'            => $r->purpose,
+            ])->values();
 
-            // Calculate nights and total amount
-            $checkIn = Carbon::parse($request->check_in_date);
-            $checkOut = Carbon::parse($request->check_out_date);
-            $nights = $checkIn->diffInDays($checkOut);
+            
+            
+            $statuses  = $rooms->pluck('reservation_status')->unique()->values();
+            $overallStatus = $statuses->count() === 1
+                ? $statuses->first()
+                : ($statuses->contains('approved') ? 'approved' : $statuses->first());
 
-            $room = Room::with('roomType')->find($request->room_id);
-            $totalAmount = $nights * $room->roomType->rate_per_night;
-            $reservationFee = 500; // Fixed reservation fee
-            $balance = $totalAmount - $reservationFee;
+            return (object)[
+                'booking_key'          => $first->payment_id ? 'p_' . $first->payment_id : 'u_' . $first->user_id . '_' . $first->booking_date,
+                'payment_id'           => $first->payment_id,
+                'user_id'              => $first->user_id,
+                'guest_details_id'     => $first->guest_details_id,
+                
+                'first_name'           => $first->first_name,
+                'middle_name'          => $first->middle_name,
+                'last_name'            => $first->last_name,
+                'contact_number'       => $first->contact_number,
+                'dob'                  => $first->dob,
+                'email'                => $first->email,
+                
+                'booking_date'         => $first->booking_date,
+                'check_in_date'        => $first->check_in_date,
+                'check_out_date'       => $first->check_out_date,
+                
+                'payment_status'       => $first->payment_status,
+                'payment_method'       => $first->payment_method,
+                'paid_amount'          => $first->paid_amount,
+                
+                'overall_status'       => $overallStatus,
+                'room_count'           => $rooms->count(),
+                'total_amount'         => $totalAmount,
+                'total_balance'        => $totalBalance,
+                'total_reservation_fee'=> $totalResFee,
+                'all_fee_paid'         => $allFeePaid,
+                
+                'rooms'                => $rooms,
+                
+                'reservation_ids'      => $rooms->pluck('reservation_id')->toArray(),
+                
+                'primary_reservation_id' => $first->reservation_id,
+            ];
+        })->values();
 
-            // Create reservation
-            $reservation = Reservation::create([
-                'user_id' => $user->user_id,
-                'guest_details_id' => $guestDetails->guest_details_id,
-                'room_id' => $request->room_id,
-                'check_in_date' => $request->check_in_date,
-                'check_out_date' => $request->check_out_date,
-                'adults' => $request->adults,
-                'children' => $request->children ?? 0,
-                'no_nights' => $nights,
-                'purpose' => $request->purpose,
-                'total_amount' => $totalAmount,
-                'balance' => $balance,
-                'reservation_fee' => $reservationFee,
-                'reservation_status' => 'approved', // Auto-approve for admin-created
-                'booking_date' => now(),
-                'reservation_fee_paid' => 0
-            ]);
+        $stats = $this->buildStats();
 
-            DB::commit();
-
-            return redirect()->route('super_admin.reservation.index')
-                ->with('success', 'Reservation created successfully!');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()
-                ->with('error', 'Failed to create reservation: ' . $e->getMessage())
-                ->withInput();
-        }
+        return view('content.super-admin.reservation.index', compact('bookings', 'stats'));
     }
 
-    /**
-     * Display the specified reservation
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
+    
+    
+    
     public function show($id)
     {
-        $reservation = DB::table('reservations as r')
-            ->join('guest_details as gd', 'r.guest_details_id', '=', 'gd.guest_details_id')
-            ->join('users as u', 'r.user_id', '=', 'u.user_id')
-            ->leftJoin('rooms as rm', 'r.room_id', '=', 'rm.room_id')
-            ->leftJoin('room_types as rt', 'rm.room_type_id', '=', 'rt.room_type_id')
-            ->where('r.reservation_id', $id)
-            ->select(
-                'r.*',
-                'gd.first_name as guest_first_name',
-                'gd.middle_name as guest_middle_name',
-                'gd.last_name as guest_last_name',
-                'gd.contact_number as guest_contact',
-                'gd.dob as guest_dob',
-                'u.email as guest_email',
-                'rm.room_number',
-                'rt.room_type_name'
-            )
-            ->first();
-
-        if (!$reservation) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Reservation not found'
-            ], 404);
+        $row = DB::table('reservations')->where('reservation_id', $id)->first();
+        if (!$row) {
+            return response()->json(['message' => 'Reservation not found.'], 404);
         }
+
+        
+        $siblings = $row->payment_id
+            ? DB::table('reservations')->where('payment_id', $row->payment_id)->pluck('reservation_id')
+            : collect([$id]);
+
+        $rows = DB::table('reservations as r')
+            ->join('guest_details as g',   'r.guest_details_id', '=', 'g.guest_details_id')
+            ->join('users as u',           'r.user_id',           '=', 'u.user_id')
+            ->leftJoin('rooms as rm',      'r.room_id',           '=', 'rm.room_id')
+            ->leftJoin('room_types as rt', 'rm.room_type_id',     '=', 'rt.room_type_id')
+            ->leftJoin('payments as p',    'r.payment_id',        '=', 'p.payment_id')
+            ->whereIn('r.reservation_id', $siblings)
+            ->select([
+                'r.reservation_id', 'r.user_id', 'r.payment_id', 'r.guest_details_id',
+                'r.reservation_status', 'r.booking_date',
+                'r.check_in_date', 'r.check_out_date', 'r.no_nights',
+                'r.adults', 'r.children', 'r.no_of_pax',
+                'r.total_amount', 'r.balance', 'r.reservation_fee',
+                'r.reservation_fee_paid', 'r.purpose',
+                'g.first_name', 'g.last_name', 'g.middle_name',
+                'g.contact_number', 'g.dob',
+                'u.email',
+                'rm.room_id', 'rm.room_number', 'rm.image_path as room_image',
+                'rt.room_type_name', 'rt.rate_per_night', 'rt.max_pax',
+                'rt.description as room_description',
+                'p.payment_status', 'p.payment_method', 'p.amount as paid_amount',
+            ])
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return response()->json(['message' => 'Reservation not found.'], 404);
+        }
+
+        $first = $rows->first();
+
+        $booking = [
+            'primary_reservation_id' => $first->reservation_id,
+            'payment_id'             => $first->payment_id,
+            'user_id'                => $first->user_id,
+            'guest'                  => [
+                'first_name'     => $first->first_name,
+                'middle_name'    => $first->middle_name,
+                'last_name'      => $first->last_name,
+                'email'          => $first->email,
+                'contact_number' => $first->contact_number,
+                'dob'            => $first->dob,
+            ],
+            'booking_date'    => $first->booking_date,
+            'payment_method'  => $first->payment_method,
+            'payment_status'  => $first->payment_status,
+            'paid_amount'     => $first->paid_amount,
+            'total_amount'    => $rows->sum('total_amount'),
+            'total_balance'   => $rows->sum('balance'),
+            'total_res_fee'   => $rows->sum('reservation_fee'),
+            'all_fee_paid'    => $rows->every(fn($r) => $r->reservation_fee_paid),
+            'room_count'      => $rows->count(),
+            'rooms'           => $rows->map(fn($r) => [
+                'reservation_id'       => $r->reservation_id,
+                'reservation_status'   => $r->reservation_status,
+                'room_id'              => $r->room_id,
+                'room_number'          => $r->room_number,
+                'room_type_name'       => $r->room_type_name,
+                'room_description'     => $r->room_description,
+                'room_image'           => $r->room_image ? asset('storage/' . $r->room_image) : null,
+                'rate_per_night'       => $r->rate_per_night,
+                'max_pax'              => $r->max_pax,
+                'check_in_date'        => $r->check_in_date,
+                'check_out_date'       => $r->check_out_date,
+                'no_nights'            => $r->no_nights,
+                'adults'               => $r->adults,
+                'children'             => $r->children,
+                'no_of_pax'            => $r->no_of_pax,
+                'total_amount'         => $r->total_amount,
+                'balance'              => $r->balance,
+                'reservation_fee'      => $r->reservation_fee,
+                'reservation_fee_paid' => (bool) $r->reservation_fee_paid,
+                'purpose'              => $r->purpose,
+            ])->values()->toArray(),
+        ];
+
+        return response()->json(['booking' => $booking]);
+    }
+
+    
+    
+    
+    public function approve($id) { return $this->changeStatus($id, 'approved',  'Reservation approved.'); }
+    public function reject($id)  { return $this->changeStatus($id, 'rejected',  'Reservation rejected.'); }
+    public function cancel($id)  { return $this->changeStatus($id, 'cancelled', 'Reservation cancelled.'); }
+
+    
+    public function approveBooking($paymentId) { return $this->changeBookingStatus($paymentId, 'approved',  'All rooms approved.'); }
+    public function rejectBooking($paymentId)  { return $this->changeBookingStatus($paymentId, 'rejected',  'All rooms rejected.'); }
+    public function cancelBooking($paymentId)  { return $this->changeBookingStatus($paymentId, 'cancelled', 'All rooms cancelled.'); }
+
+    
+    
+        
+    public function destroy($id)
+{
+    $r = DB::table('reservations')->where('reservation_id', $id)->first();
+    if (!$r) {
+        return response()->json(['message' => 'Reservation not found.'], 404);
+    }
+    if ($r->reservation_status === 'approved') {
+        return response()->json(['message' => 'Cannot delete an approved reservation. Cancel it first.'], 422);
+    }
+
+    DB::transaction(function () use ($id) {
+        // 1. Delete service requests tied to registrations (if any)
+        $registrationIds = DB::table('registrations')
+            ->where('reservation_id', $id)
+            ->pluck('registration_id');
+
+        if ($registrationIds->isNotEmpty()) {
+            DB::table('service_breakfast_orders')
+                ->whereIn('service_request_id', function ($q) use ($registrationIds) {
+                    $q->select('service_request_id')
+                      ->from('service_requests')
+                      ->whereIn('registration_id', $registrationIds);
+                })->delete();
+
+            DB::table('service_requests')
+                ->whereIn('registration_id', $registrationIds)
+                ->delete();
+
+            // 2. Delete registrations
+            DB::table('registrations')->where('reservation_id', $id)->delete();
+        }
+
+        // 3. Null out the circular FK on the reservation
+        DB::table('reservations')
+            ->where('reservation_id', $id)
+            ->update(['guest_details_id' => null, 'payment_id' => null]);
+
+        // 4. Delete the reservation
+        DB::table('reservations')->where('reservation_id', $id)->delete();
+    });
+
+    return response()->json(['stats' => $this->buildStats(), 'message' => 'Deleted successfully.']);
+}
+
+    
+    
+    
+    private function changeStatus($id, string $status, string $message)
+    {
+        if (!DB::table('reservations')->where('reservation_id', $id)->exists()) {
+            return response()->json(['message' => 'Reservation not found.'], 404);
+        }
+        DB::table('reservations')->where('reservation_id', $id)->update(['reservation_status' => $status]);
 
         return response()->json([
-            'success' => true,
-            'data' => $reservation
+            'reservation_id' => (int) $id,
+            'new_status'     => $status,
+            'stats'          => $this->buildStats(),
+            'message'        => $message,
         ]);
     }
 
-    /**
-     * Update the specified reservation
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function update(Request $request, $id)
+    private function changeBookingStatus($paymentId, string $status, string $message)
     {
-        $request->validate([
-            'first_name' => 'required|string|max:45',
-            'middle_name' => 'nullable|string|max:45',
-            'last_name' => 'required|string|max:45',
-            'email' => 'nullable|email|max:100',
-            'contact_number' => 'nullable|string|max:45',
-            'room_id' => 'nullable|exists:rooms,room_id',
-            'check_in_date' => 'required|date',
-            'check_out_date' => 'required|date|after:check_in_date',
-            'adults' => 'required|integer|min:1',
-            'children' => 'nullable|integer|min:0',
-            'reservation_status' => 'required|in:pending,approved,rejected,cancelled',
-            'purpose' => 'nullable|string|max:255'
+        $ids = DB::table('reservations')->where('payment_id', $paymentId)->pluck('reservation_id');
+        if ($ids->isEmpty()) {
+            return response()->json(['message' => 'Booking not found.'], 404);
+        }
+        DB::table('reservations')->where('payment_id', $paymentId)->update(['reservation_status' => $status]);
+
+        return response()->json([
+            'payment_id'  => $paymentId,
+            'new_status'  => $status,
+            'stats'       => $this->buildStats(),
+            'message'     => $message,
         ]);
-
-        DB::beginTransaction();
-        
-        try {
-            $reservation = Reservation::findOrFail($id);
-
-            // Update guest details
-            $guestDetails = GuestDetail::find($reservation->guest_details_id);
-            $guestDetails->update([
-                'first_name' => $request->first_name,
-                'middle_name' => $request->middle_name,
-                'last_name' => $request->last_name,
-                'contact_number' => $request->contact_number,
-                'arrival_date' => $request->check_in_date,
-                'departure_date' => $request->check_out_date
-            ]);
-
-            // Update user email if provided
-            if ($request->email) {
-                $user = User::find($reservation->user_id);
-                $user->update(['email' => $request->email]);
-            }
-
-            // Recalculate if dates changed
-            $checkIn = Carbon::parse($request->check_in_date);
-            $checkOut = Carbon::parse($request->check_out_date);
-            $nights = $checkIn->diffInDays($checkOut);
-
-            $updateData = [
-                'room_id' => $request->room_id,
-                'check_in_date' => $request->check_in_date,
-                'check_out_date' => $request->check_out_date,
-                'adults' => $request->adults,
-                'children' => $request->children ?? 0,
-                'no_nights' => $nights,
-                'purpose' => $request->purpose,
-                'reservation_status' => $request->reservation_status
-            ];
-
-            // Recalculate total if room changed
-            if ($request->room_id != $reservation->room_id && $request->room_id) {
-                $room = Room::with('roomType')->find($request->room_id);
-                $totalAmount = $nights * $room->roomType->rate_per_night;
-                $updateData['total_amount'] = $totalAmount;
-                $updateData['balance'] = $totalAmount - $reservation->reservation_fee;
-            }
-
-            $reservation->update($updateData);
-
-            DB::commit();
-
-            return redirect()->route('super_admin.reservation.index')
-                ->with('success', 'Reservation updated successfully!');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()
-                ->with('error', 'Failed to update reservation: ' . $e->getMessage())
-                ->withInput();
-        }
     }
 
-    /**
-     * Approve a reservation
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function approve($id)
+    private function buildStats(): array
     {
-        try {
-            $reservation = Reservation::findOrFail($id);
-            
-            if ($reservation->reservation_status !== 'pending') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only pending reservations can be approved'
-                ], 400);
-            }
-
-            $reservation->update([
-                'reservation_status' => 'approved'
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Reservation approved successfully'
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to approve reservation: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Reject a reservation
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function reject(Request $request, $id)
-    {
-        try {
-            $reservation = Reservation::findOrFail($id);
-            
-            if ($reservation->reservation_status !== 'pending') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only pending reservations can be rejected'
-                ], 400);
-            }
-
-            $reservation->update([
-                'reservation_status' => 'rejected'
-            ]);
-
-            // TODO: Send notification email to guest with reason
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Reservation rejected successfully'
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to reject reservation: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Cancel a reservation
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function cancel(Request $request, $id)
-    {
-        try {
-            $reservation = Reservation::findOrFail($id);
-            
-            if ($reservation->reservation_status === 'cancelled') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Reservation is already cancelled'
-                ], 400);
-            }
-
-            $reservation->update([
-                'reservation_status' => 'cancelled'
-            ]);
-
-            // TODO: Process refund if applicable
-            // TODO: Send cancellation email to guest
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Reservation cancelled successfully'
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to cancel reservation: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Remove the specified reservation
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function destroy($id)
-    {
-        try {
-            $reservation = Reservation::findOrFail($id);
-            
-            // Only allow deletion of cancelled or rejected reservations
-            if (!in_array($reservation->reservation_status, ['cancelled', 'rejected'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only cancelled or rejected reservations can be deleted'
-                ], 400);
-            }
-
-            $reservation->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Reservation deleted successfully'
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to delete reservation: ' . $e->getMessage()
-            ], 500);
-        }
+        $all = DB::table('reservations')->select('reservation_status')->get();
+        return [
+            'total'     => $all->count(),
+            'pending'   => $all->where('reservation_status', 'pending')->count(),
+            'approved'  => $all->where('reservation_status', 'approved')->count(),
+            'rejected'  => $all->where('reservation_status', 'rejected')->count(),
+            'cancelled' => $all->where('reservation_status', 'cancelled')->count(),
+        ];
     }
 }

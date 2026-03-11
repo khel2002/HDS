@@ -25,37 +25,28 @@
       "menuHeader": "Guest Management"
     },
     {
-      "name": "Registration",
-      "icon": "menu-icon icon-base ri ri-door-open-line",
-      "slug": "registration",
-      "submenu": [
-        {
-          "url": "/super-admin/registration/check-in",
-          "name": "Check-in Guest",
-          "slug": "check-in"
-        },
-        {
-          "url": "/super-admin/registration/check-out",
-          "name": "Check-out Guest",
-          "slug": "check-out"
-        },
-        {
-          "url": "/super-admin/registration/active",
-          "name": "Active Registrations",
-          "slug": "active-registrations"
-        },
-        {
-          "url": "/super-admin/registration/all",
-          "name": "All Registrations",
-          "slug": "all-registrations"
-        },
-        {
-          "url": "/super-admin/registration/history",
-          "name": "Registration History",
-          "slug": "registration-history"
-        }
-      ]
+    "name": "Registration",
+    "icon": "menu-icon icon-base ri ri-door-open-line",
+    "slug": "registration",
+    "submenu": [
+      {
+        "url": "/super-admin/registration/check-in",
+        "name": "Check-in",
+        "slug": "check-in"
+      },
+      {
+        "url": "/super-admin/registration/check-out",
+        "name": "Check-out",
+        "slug": "check-out"
+      },
+      {
+        "url": "/super-admin/registration/all",
+        "name": "All Registrations",
+        "slug": "all-registrations"
+      }
+    ]
     },
+
     {
       "name": "Guest Management",
       "icon": "menu-icon icon-base ri ri-user-3-line",

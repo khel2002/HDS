@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Stripe\Stripe;
-use Stripe\Checkout\Session;
+use Stripe\Checkout\Session as StripeSession;
 use Exception;
 
 class PaymentController extends Controller
@@ -20,87 +20,84 @@ class PaymentController extends Controller
         Stripe::setApiKey(config('services.stripe.secret'));
     }
 
-
     // ─────────────────────────────────────────────────────────────
     // CREATE STRIPE CHECKOUT SESSION
     // ─────────────────────────────────────────────────────────────
     public function createCheckoutSession(Request $request)
     {
-        \Log::info('Stripe checkout payload:', $request->all());
+        \Log::info('=== createCheckoutSession HIT ===');
 
         $validated = $request->validate([
-            'reservation_data'                          => 'required|array',
-            'reservation_data.rooms'                    => 'required|array|min:1',
-            'reservation_data.rooms.*.room_id'          => 'required|integer',
-            'reservation_data.rooms.*.arrival_date'     => 'required|date',
-            'reservation_data.rooms.*.departure_date'   => 'required|date|after:reservation_data.rooms.*.arrival_date',
-            'reservation_data.rooms.*.number_of_guests' => 'required|integer|min:1',
-            'reservation_data.rooms.*.special_requests' => 'nullable|string',
-            'reservation_data.first_name'               => 'required|string|max:45',
-            'reservation_data.middle_name'              => 'nullable|string|max:45',
-            'reservation_data.last_name'                => 'required|string|max:45',
-            'reservation_data.email'                    => 'required|email|max:100',
-            'reservation_data.contact_number'           => 'required|string|max:45',
-            'reservation_data.dob'                      => 'required|date|before:today',
-            'amount'                                    => 'required|numeric|min:500',
+            'reservation_data'                                => 'required|array',
+            'reservation_data.rooms'                          => 'required|array|min:1',
+            'reservation_data.rooms.*.room_id'                => 'required|integer',
+            'reservation_data.rooms.*.arrival_date'           => 'required|date',
+            'reservation_data.rooms.*.departure_date'         => 'required|date',
+            'reservation_data.rooms.*.number_of_guests'       => 'required|integer|min:1',
+            'reservation_data.rooms.*.special_requests'       => 'nullable|string',
+            // All guests per room (guests[0] = lead, guests[1..n] = additional)
+            'reservation_data.rooms.*.guests'                 => 'nullable|array',
+            'reservation_data.rooms.*.guests.*.first_name'    => 'nullable|string|max:45',
+            'reservation_data.rooms.*.guests.*.last_name'     => 'nullable|string|max:45',
+            'reservation_data.rooms.*.guests.*.email'         => 'nullable|email|max:100',
+            'reservation_data.rooms.*.guests.*.phone'         => 'nullable|string|max:45',
+            'reservation_data.rooms.*.guests.*.address'       => 'nullable|string|max:255',
+            'reservation_data.rooms.*.guests.*.arrival_time'  => 'nullable|string',
+            // Account holder (Section 2) — stored in users only
+            'reservation_data.first_name'                     => 'required|string|max:45',
+            'reservation_data.middle_name'                    => 'nullable|string|max:45',
+            'reservation_data.last_name'                      => 'required|string|max:45',
+            'reservation_data.email'                          => 'required|email|max:100',
+            'reservation_data.contact_number'                 => 'required|string|max:45',
+            'reservation_data.dob'                            => 'required|date|before:today',
+            'amount'                                          => 'required|numeric|min:500',
+        ]);
+
+        \Log::info('createCheckoutSession - validation passed', [
+            'email'      => $validated['reservation_data']['email'],
+            'room_count' => count($validated['reservation_data']['rooms']),
         ]);
 
         try {
-            $reservationData = $validated['reservation_data'];
-            $roomCount       = count($reservationData['rooms']);
+            $data             = $validated['reservation_data'];
+            $roomCount        = count($data['rooms']);
+            $primaryArrival   = $data['rooms'][0]['arrival_date'];
+            $primaryDeparture = $data['rooms'][0]['departure_date'];
 
-            $primaryArrival   = $reservationData['rooms'][0]['arrival_date'];
-            $primaryDeparture = $reservationData['rooms'][0]['departure_date'];
+            $cacheKey = 'res_' . Str::uuid()->toString();
+            Cache::store('file')->put($cacheKey, $data, now()->addHours(2));
+            \Log::info('createCheckoutSession - cached', ['key' => $cacheKey]);
 
-            // Store in both PHP session and file cache
-            session(['pending_reservation' => $reservationData]);
-            session()->save();
-
-            $cacheKey = 'pending_reservation_' . Str::uuid();
-            Cache::store('file')->put($cacheKey, $reservationData, now()->addHours(2));
-
-            $successUrl = route('payment.success') . '?session_id={CHECKOUT_SESSION_ID}';
-
-            $checkoutSession = Session::create([
-                'payment_method_types'  => ['card'],
-                'client_reference_id'   => $cacheKey,
-                'line_items' => [[
+            $checkoutSession = StripeSession::create([
+                'payment_method_types' => ['card'],
+                'client_reference_id'  => $cacheKey,
+                'line_items'           => [[
                     'price_data' => [
                         'currency'     => 'php',
                         'product_data' => [
                             'name'        => 'Hotel Reservation Fee',
-                            'description' => sprintf(
-                                'Reservation fee for %d room(s) - %s to %s',
-                                $roomCount,
-                                $primaryArrival,
-                                $primaryDeparture
-                            ),
+                            'description' => "$roomCount room(s) · $primaryArrival → $primaryDeparture",
                         ],
-                        'unit_amount' => (int) ($validated['amount'] * 100),
+                        'unit_amount'  => (int) round($validated['amount'] * 100),
                     ],
                     'quantity' => 1,
                 ]],
                 'mode'           => 'payment',
-                'success_url'    => $successUrl,
+                'success_url'    => route('payment.success') . '?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url'     => route('payment.cancel'),
-                'customer_email' => $reservationData['email'],
+                'customer_email' => $data['email'],
                 'metadata'       => [
-                    'customer_name'  => $reservationData['first_name'] . ' ' . $reservationData['last_name'],
-                    'email'          => $reservationData['email'],
-                    'room_count'     => (string) $roomCount,
-                    'arrival_date'   => $primaryArrival,
-                    'departure_date' => $primaryDeparture,
-                    'cache_key'      => $cacheKey,
+                    'cache_key' => $cacheKey,
+                    'email'     => $data['email'],
                 ],
             ]);
 
-            return response()->json([
-                'id'  => $checkoutSession->id,
-                'url' => $checkoutSession->url,
-            ]);
+            \Log::info('createCheckoutSession - Stripe session created', ['id' => $checkoutSession->id]);
+
+            return response()->json(['id' => $checkoutSession->id, 'url' => $checkoutSession->url]);
 
         } catch (Exception $e) {
-            \Log::error('Stripe checkout error: ' . $e->getMessage());
+            \Log::error('createCheckoutSession error: ' . $e->getMessage());
             return response()->json([
                 'error'   => 'Failed to create payment session',
                 'message' => $e->getMessage(),
@@ -108,153 +105,135 @@ class PaymentController extends Controller
         }
     }
 
-
     // ─────────────────────────────────────────────────────────────
     // PAYMENT SUCCESS CALLBACK
     // ─────────────────────────────────────────────────────────────
     public function paymentSuccess(Request $request)
     {
-        try {
-            $sessionId = $request->get('session_id');
-            if (!$sessionId) {
-                \Log::error('paymentSuccess: no session_id in request');
-                return redirect()->route('frontpage.index')->with('error', 'Invalid payment session');
-            }
+        $stripeSessionId = $request->query('session_id');
+        \Log::info('=== paymentSuccess HIT ===', ['stripe_session_id' => $stripeSessionId]);
 
-            // Verify with Stripe
-            $stripeSession = Session::retrieve($sessionId);
+        if (!$stripeSessionId) {
+            return redirect()->route('frontpage.index')->with('error', 'Invalid payment session.');
+        }
+
+        try {
+            // ── 1. Verify with Stripe ─────────────────────────────
+            $stripeSession = StripeSession::retrieve($stripeSessionId);
+            \Log::info('paymentSuccess - Stripe status', [
+                'payment_status'      => $stripeSession->payment_status,
+                'client_reference_id' => $stripeSession->client_reference_id,
+            ]);
 
             if ($stripeSession->payment_status !== 'paid') {
-                \Log::error('paymentSuccess: payment not completed', ['status' => $stripeSession->payment_status]);
-                return redirect()->route('frontpage.index')->with('error', 'Payment not completed');
+                return redirect()->route('frontpage.index')->with('error', 'Payment not completed.');
             }
 
-            // Guard against duplicate processing
-            $existingPayment = DB::table('payments')
-                ->where('stripe_session_id', $sessionId)
-                ->first();
+            // ── 2. Idempotency: check by Stripe session ID ────────
+            $alreadyProcessed = DB::table('payments')
+                ->where('stripe_session_id', $stripeSessionId)
+                ->exists();
 
-            if ($existingPayment) {
-                \Log::info('paymentSuccess: duplicate callback ignored', ['session_id' => $sessionId]);
-                // Still show confirmation if session data exists
-                if (session('payment_success')) {
-                    return redirect()->route('reservation.confirmation');
-                }
+            if ($alreadyProcessed) {
+                \Log::info('paymentSuccess - already processed', ['stripe_session_id' => $stripeSessionId]);
                 return redirect()->route('frontpage.index')
-                    ->with('error', 'This payment has already been processed. Check your email for confirmation details.');
+                    ->with('success', 'Your reservation is already confirmed. Check your email.');
             }
 
-            // Retrieve reservation data — try cache first, then PHP session
+            // ── 3. Retrieve cached reservation data ───────────────
             $cacheKey = $stripeSession->client_reference_id
-                        ?? ($stripeSession->metadata['cache_key'] ?? null);
+                     ?? ($stripeSession->metadata['cache_key'] ?? null);
 
-            $reservationData = null;
-            if ($cacheKey) {
-                $reservationData = Cache::store('file')->get($cacheKey);
-                \Log::info('paymentSuccess: cache lookup', [
-                    'cache_key' => $cacheKey,
-                    'found'     => $reservationData ? 'yes' : 'no',
-                ]);
-            }
+            $reservationData = $cacheKey ? Cache::store('file')->get($cacheKey) : null;
+            \Log::info('paymentSuccess - cache', [
+                'key'   => $cacheKey,
+                'found' => $reservationData ? 'YES' : 'NO',
+            ]);
 
             if (!$reservationData) {
-                $reservationData = session('pending_reservation');
-                \Log::info('paymentSuccess: fell back to PHP session', [
-                    'found' => $reservationData ? 'yes' : 'no',
-                ]);
-            }
-
-            if (!$reservationData) {
-                \Log::error('paymentSuccess: reservation data not found', [
-                    'session_id' => $sessionId,
-                    'cache_key'  => $cacheKey ?? 'none',
-                ]);
+                \Log::error('paymentSuccess - data not found', ['stripe_id' => $stripeSessionId]);
                 return redirect()->route('frontpage.index')
-                    ->with('error', 'Reservation data not found. Your payment was received — please contact us with Stripe session ID: ' . $sessionId);
+                    ->with('error', "Payment received but reservation data lost. Contact us with Stripe session: $stripeSessionId");
             }
 
+            // ── 4. Create reservations ────────────────────────────
             DB::beginTransaction();
-
-            $result = $this->createMultiRoomReservation(
-                $reservationData,
-                'online',
-                $sessionId,
-                $stripeSession->payment_intent
-            );
-
+            $result = $this->buildReservations($reservationData, 'online', $stripeSessionId);
             DB::commit();
 
-            // Send confirmation email (non-blocking — failure doesn't roll back)
-            $this->sendReservationEmail($result);
+            \Log::info('paymentSuccess - committed', ['reservation_ids' => $result['reservation_ids']]);
 
-            // Clear cache + session pending data
-            if ($cacheKey) {
-                Cache::store('file')->forget($cacheKey);
-            }
-            session()->forget('pending_reservation');
+            // ── 5. Email ──────────────────────────────────────────
+            $this->sendEmail($result);
 
-            // Store confirmation data in session for the confirmation view
-            session([
-                'temp_credentials' => [
-                    'email'           => $result['email'],
-                    'password'        => $result['password'],
-                    'reservation_ids' => $result['reservation_ids'],
-                ],
-                'reservation_data' => $result,
-                'payment_success'  => true,
-                'payment_method'   => 'online',
+            // ── 6. Clear cache ────────────────────────────────────
+            if ($cacheKey) Cache::store('file')->forget($cacheKey);
+
+            // ── 7. Redirect with signed URL ───────────────────────
+            $idsStr = implode(',', $result['reservation_ids']);
+            $token  = hash_hmac('sha256', $result['user_id'] . '|' . $idsStr, config('app.key'));
+
+            return redirect()->route('reservation.confirmation', [
+                'uid'   => $result['user_id'],
+                'rids'  => $idsStr,
+                'token' => $token,
+                'pm'    => 'online',
+                'pw'    => $result['password'],
             ]);
-            session()->save();
-
-            return redirect()->route('reservation.confirmation');
 
         } catch (Exception $e) {
             DB::rollBack();
-            \Log::error('Payment success handler error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+            \Log::error('paymentSuccess exception: ' . $e->getMessage(), [
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
             ]);
             return redirect()->route('frontpage.index')
-                ->with('error', 'Payment verification failed: ' . $e->getMessage());
+                ->with('error', 'Reservation processing failed: ' . $e->getMessage());
         }
     }
 
     public function paymentCancel()
     {
-        session()->forget('pending_reservation');
-        return redirect()->route('frontpage.index')->with('error', 'Payment was cancelled');
+        return redirect()->route('frontpage.index')->with('error', 'Payment was cancelled.');
     }
 
-
     // ─────────────────────────────────────────────────────────────
-    // INTERNAL — create reservations for all rooms
+    // BUILD RESERVATIONS (shared between cash & online paths)
+    //
+    // GUEST DETAILS LOGIC:
+    //   Section 2 (Account): account holder info → users table ONLY.
+    //   Section 3 (Details): ALL guests per room → guest_details table.
+    //     - guests[0] per room: is_primary = 1 (lead guest for that room)
+    //     - guests[1..n] per room: is_primary = 0 (additional guests)
+    //   reservations.guest_details_id → points to guests[0] of that room.
     // ─────────────────────────────────────────────────────────────
-    private function createMultiRoomReservation(
-        array $data,
-        string $paymentMethod,
-        ?string $stripeSessionId = null,
-        ?string $stripePaymentIntent = null
-    ): array {
+    private function buildReservations(array $data, string $paymentMethod, ?string $stripeSessionId = null): array
+    {
         $roomsPayload = $data['rooms'];
         $roomIds      = array_column($roomsPayload, 'room_id');
 
-        // Verify rooms are still available
-        $rooms = DB::table('rooms')
+        // ── Availability check ────────────────────────────────────
+        $availableIds = DB::table('rooms')
             ->whereIn('room_id', $roomIds)
             ->where('status', 'available')
-            ->get();
+            ->pluck('room_id')
+            ->toArray();
 
-        if ($rooms->count() !== count($roomIds)) {
-            throw new Exception('One or more rooms are no longer available');
-        }
-
-        // Check date overlaps per room
-        foreach ($roomsPayload as $index => $rd) {
-            if ($this->checkDateOverlap($rd['room_id'], $rd['arrival_date'], $rd['departure_date'])) {
-                throw new Exception('Room ' . ($index + 1) . ' is already booked for the selected dates');
+        foreach ($roomIds as $roomId) {
+            if (!in_array($roomId, $availableIds)) {
+                throw new Exception("Room $roomId is no longer available.");
             }
         }
 
-        // Get room/type info keyed by room_id
+        // ── Date overlap check ────────────────────────────────────
+        foreach ($roomsPayload as $i => $rd) {
+            if ($this->checkDateOverlap($rd['room_id'], $rd['arrival_date'], $rd['departure_date'])) {
+                throw new Exception('Room ' . ($i + 1) . ' is already booked for those dates.');
+            }
+        }
+
+        // ── Pricing ───────────────────────────────────────────────
         $roomTypes = DB::table('room_types')
             ->join('rooms', 'room_types.room_type_id', '=', 'rooms.room_type_id')
             ->whereIn('rooms.room_id', $roomIds)
@@ -262,159 +241,155 @@ class PaymentController extends Controller
             ->get()
             ->keyBy('room_id');
 
-        // Pricing uses room-0 dates as the "primary" stay
+        $feePerRoom       = 500;
+        $totalFee         = $feePerRoom * count($roomIds);
         $primaryArrival   = $roomsPayload[0]['arrival_date'];
         $primaryDeparture = $roomsPayload[0]['departure_date'];
-        $primaryNights    = (new \DateTime($primaryArrival))->diff(new \DateTime($primaryDeparture))->days;
+        $primaryNights    = (int)(new \DateTime($primaryArrival))->diff(new \DateTime($primaryDeparture))->days;
 
-        $reservationFeePerRoom = 500;
-        $totalReservationFee   = $reservationFeePerRoom * count($roomIds);
-        $totalRoomCost         = $roomTypes->sum('rate_per_night');
-        $subtotal              = $totalRoomCost * $primaryNights;
-        $totalAmount           = $subtotal;
-        $balance               = $totalAmount - $totalReservationFee;
-
-        // Create guest user account
-        $temporaryPassword = Str::random(12);
-        $guestRoleId = DB::table('roles')->where('role_name', 'guest')->value('role_id');
-        if (!$guestRoleId) {
-            throw new Exception('Guest role not found in database');
+        // ── Duplicate email guard ─────────────────────────────────
+        if (DB::table('users')->where('email', $data['email'])->exists()) {
+            throw new Exception('An account with this email already exists.');
         }
+
+        // ── Create user (account holder ONLY — no guest_details row) ──
+        $tempPassword = Str::random(12);
+        $guestRoleId  = DB::table('roles')->where('role_name', 'guest')->value('role_id');
+        if (!$guestRoleId) throw new Exception('Guest role not found.');
 
         $userId = DB::table('users')->insertGetId([
             'role_id'       => $guestRoleId,
             'email'         => $data['email'],
-            'password'      => Hash::make($temporaryPassword),
+            'password'      => Hash::make($tempPassword),
             'temporary_act' => true,
             'created_at'    => now(),
             'updated_at'    => now(),
         ]);
 
-        // Create guest details record
-        $guestDetailsId = DB::table('guest_details')->insertGetId([
-            'user_id'        => $userId,
-            'first_name'     => $data['first_name'],
-            'middle_name'    => $data['middle_name'] ?? null,
-            'last_name'      => $data['last_name'],
-            'contact_number' => $data['contact_number'],
-            'dob'            => $data['dob'],
-            'arrival_date'   => $primaryArrival,
-            'departure_date' => $primaryDeparture,
-            'created_at'     => now(),
-        ]);
-
-        // Create payment record
+        // ── Payment record ────────────────────────────────────────
         $paymentId = DB::table('payments')->insertGetId([
-            'payment_method'        => $paymentMethod,
-            'stripe_session_id'     => $stripeSessionId,
-            'stripe_payment_intent' => $stripePaymentIntent,
-            'paid_at'               => $paymentMethod === 'online' ? now() : null,
-            'amount'                => $totalReservationFee,
-            'payment_date'          => now(),
-            'payment_status'        => $paymentMethod === 'online' ? 'completed' : 'pending',
+            'payment_method'   => $paymentMethod,
+            'amount'           => $totalFee,
+            'payment_date'     => now(),
+            'payment_status'   => $paymentMethod === 'online' ? 'completed' : 'pending',
+            'stripe_session_id' => $stripeSessionId,
+            'paid_at'          => $paymentMethod === 'online' ? now() : null,
         ]);
 
-        // Create one reservation row per room
+        // ── Reservations + guests per room ────────────────────────
         $reservationIds = [];
-        foreach ($roomsPayload as $rd) {
-            $roomId        = $rd['room_id'];
-            $roomArrival   = $rd['arrival_date'];
-            $roomDeparture = $rd['departure_date'];
-            $roomNights    = (new \DateTime($roomArrival))->diff(new \DateTime($roomDeparture))->days;
-            $roomRate      = $roomTypes[$roomId]->rate_per_night;
-            $roomSubtotal  = $roomRate * $roomNights;
-            $roomBalance   = $roomSubtotal - $reservationFeePerRoom;
-            $guestCount    = (int) ($rd['number_of_guests'] ?? 1);
+        $totalSubtotal  = 0;
 
-            $reservationId = DB::table('reservations')->insertGetId([
+        foreach ($roomsPayload as $rd) {
+            $roomId   = $rd['room_id'];
+            $nights   = (int)(new \DateTime($rd['arrival_date']))->diff(new \DateTime($rd['departure_date']))->days;
+            $rate     = $roomTypes[$roomId]->rate_per_night;
+            $subtotal = $rate * $nights;
+            $balance  = $subtotal - $feePerRoom;
+            $totalSubtotal += $subtotal;
+
+            // a) Insert reservation with guest_details_id = null for now
+            $resId = DB::table('reservations')->insertGetId([
                 'user_id'              => $userId,
-                'guest_details_id'     => $guestDetailsId,
+                'guest_details_id'     => null,
                 'payment_id'           => $paymentId,
                 'room_id'              => $roomId,
-                'reservation_fee'      => $reservationFeePerRoom,
+                'reservation_fee'      => $feePerRoom,
                 'purpose'              => $rd['special_requests'] ?? null,
-                'total_amount'         => $roomSubtotal,
-                'balance'              => $roomBalance,
+                'total_amount'         => $subtotal,
+                'balance'              => $balance,
                 'reservation_status'   => 'pending',
                 'booking_date'         => now()->toDateString(),
-                'check_in_date'        => $roomArrival,
-                'check_out_date'       => $roomDeparture,
-                'adults'               => $guestCount,
+                'check_in_date'        => $rd['arrival_date'],
+                'check_out_date'       => $rd['departure_date'],
+                'adults'               => (int)($rd['number_of_guests'] ?? 1),
                 'children'             => 0,
-                'no_nights'            => $roomNights,
+                'no_nights'            => $nights,
                 'reservation_fee_paid' => $paymentMethod === 'online' ? 1 : 0,
                 'created_at'           => now(),
             ]);
 
-            $reservationIds[] = $reservationId;
+            $reservationIds[] = $resId;
+
+            // b) Insert ALL guests for this room
+            //    guests[0] = lead guest (is_primary = 1)
+            //    guests[1..n] = additional guests (is_primary = 0)
+            $leadGuestId = null;
+            foreach (($rd['guests'] ?? []) as $gIdx => $guest) {
+                if (empty($guest['first_name']) || empty($guest['last_name'])) continue;
+
+                $newGuestId = DB::table('guest_details')->insertGetId([
+                    'user_id'        => $userId,
+                    'reservation_id' => $resId,
+                    'first_name'     => $guest['first_name'],
+                    'middle_name'    => $guest['middle_name'] ?? null,
+                    'last_name'      => $guest['last_name'],
+                    'contact_number' => $guest['phone'] ?? null,
+                    'dob'            => null,
+                    'arrival_date'   => $rd['arrival_date'],
+                    'departure_date' => $rd['departure_date'],
+                    'is_primary'     => $gIdx === 0 ? 1 : 0,
+                    'created_at'     => now(),
+                ]);
+
+                if ($gIdx === 0) {
+                    $leadGuestId = $newGuestId;
+                }
+            }
+
+            // c) Update reservation to point to the lead guest of this room
+            if ($leadGuestId) {
+                DB::table('reservations')
+                    ->where('reservation_id', $resId)
+                    ->update(['guest_details_id' => $leadGuestId]);
+            }
         }
 
-        // Build room details array for email / session
-        $roomDetails = [];
-        foreach ($roomsPayload as $rd) {
-            $roomDetails[] = [
-                'room_number'    => $roomTypes[$rd['room_id']]->room_number,
-                'room_type_name' => $roomTypes[$rd['room_id']]->room_type_name,
-            ];
-        }
+        $roomDetails = array_map(fn($id) => [
+            'room_number'    => $roomTypes[$id]->room_number,
+            'room_type_name' => $roomTypes[$id]->room_type_name,
+        ], $roomIds);
 
         return [
-            'reservation_ids'  => $reservationIds,
-            'reservation_id'   => $reservationIds[0],
-            'email'            => $data['email'],
-            'password'         => $temporaryPassword,
-            'first_name'       => $data['first_name'],
-            'last_name'        => $data['last_name'],
-            'rooms'            => $roomDetails,
-            'room_count'       => count($roomIds),
-            'room_number'      => $roomTypes[$roomIds[0]]->room_number,
-            'room_type_name'   => $roomTypes[$roomIds[0]]->room_type_name,
-            'arrival_date'     => $primaryArrival,
-            'departure_date'   => $primaryDeparture,
-            'total_amount'     => $totalAmount,
-            'balance'          => $balance,
-            'no_nights'        => $primaryNights,
-            'reservation_fee'  => $totalReservationFee,
+            'user_id'         => $userId,
+            'reservation_ids' => $reservationIds,
+            'email'           => $data['email'],
+            'password'        => $tempPassword,
+            'first_name'      => $data['first_name'],
+            'last_name'       => $data['last_name'],
+            'rooms'           => $roomDetails,
+            'room_count'      => count($roomIds),
+            'arrival_date'    => $primaryArrival,
+            'departure_date'  => $primaryDeparture,
+            'no_nights'       => $primaryNights,
+            'total_amount'    => $totalSubtotal,
+            'reservation_fee' => $totalFee,
+            'balance'         => $totalSubtotal - $totalFee,
         ];
     }
 
-
+    // ─────────────────────────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────────────────────────
     private function checkDateOverlap($roomId, $arrivalDate, $departureDate): bool
     {
         return DB::table('reservations')
-            ->join('guest_details', 'reservations.guest_details_id', '=', 'guest_details.guest_details_id')
-            ->where('reservations.room_id', $roomId)
-            ->whereNotIn('reservations.reservation_status', ['cancelled', 'rejected'])
-            ->where(function ($query) use ($arrivalDate, $departureDate) {
-                $query->whereBetween('guest_details.arrival_date', [$arrivalDate, $departureDate])
-                      ->orWhereBetween('guest_details.departure_date', [$arrivalDate, $departureDate])
-                      ->orWhere(function ($q) use ($arrivalDate, $departureDate) {
-                          $q->where('guest_details.arrival_date', '<=', $arrivalDate)
-                            ->where('guest_details.departure_date', '>=', $departureDate);
-                      });
-            })
+            ->where('room_id', $roomId)
+            ->whereNotIn('reservation_status', ['cancelled', 'rejected'])
+            ->where('check_in_date', '<', $departureDate)
+            ->where('check_out_date', '>', $arrivalDate)
             ->exists();
     }
 
-
-    private function sendReservationEmail(array $data): void
+    private function sendEmail(array $data): void
     {
         try {
-            \Log::info('Sending reservation email to: ' . $data['email']);
-
-            Mail::send('emails.reservation-confirmation', $data, function ($message) use ($data) {
-                $message->to($data['email'], $data['first_name'] . ' ' . $data['last_name'])
-                        ->subject('Reservation Confirmation - Hotel De SLSU');
+            Mail::send('emails.reservation-confirmation', $data, function ($m) use ($data) {
+                $m->to($data['email'], ($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''))
+                  ->subject('Reservation Confirmation - Hotel De SLSU');
             });
-
-            \Log::info('Reservation email sent successfully to: ' . $data['email']);
-
         } catch (Exception $e) {
-            // Email failure must NOT roll back the reservation — just log it
-            \Log::error('Failed to send reservation email: ' . $e->getMessage(), [
-                'to'    => $data['email'],
-                'trace' => $e->getTraceAsString(),
-            ]);
+            \Log::error('Email failed: ' . $e->getMessage());
         }
     }
 }

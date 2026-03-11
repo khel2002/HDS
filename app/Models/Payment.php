@@ -14,23 +14,25 @@ class Payment extends Model
 
     protected $fillable = [
         'payment_method',
+        'payment_type',
         'amount',
         'payment_date',
         'payment_status',
-        'stripe_session_id',      // NEW: Stripe checkout session ID
-        'stripe_payment_intent',  // NEW: Stripe payment intent ID
-        'paid_at',               // NEW: Timestamp when payment was completed
+        'stripe_session_id',
+        'stripe_payment_intent',
+        'paid_at',
     ];
 
     public $timestamps = false;
 
     protected $casts = [
-        'amount' => 'decimal:2',
+        'amount'       => 'decimal:2',
         'payment_date' => 'datetime',
-        'paid_at' => 'datetime',  // NEW: Cast paid_at to datetime
+        'paid_at'      => 'datetime',
     ];
 
-    // Relationships
+    // ── Relationships ─────────────────────────────────────────
+
     public function reservations()
     {
         return $this->hasMany(Reservation::class, 'payment_id', 'payment_id');
@@ -41,7 +43,8 @@ class Payment extends Model
         return $this->hasMany(Registration::class, 'payment_id', 'payment_id');
     }
 
-    // Scopes
+    // ── Scopes ────────────────────────────────────────────────
+
     public function scopePending($query)
     {
         return $query->where('payment_status', 'pending');
@@ -67,6 +70,16 @@ class Payment extends Model
         return $query->where('payment_method', 'online');
     }
 
+    public function scopeStripe($query)
+    {
+        return $query->whereNotNull('stripe_session_id');
+    }
+
+    public function scopePaid($query)
+    {
+        return $query->whereNotNull('paid_at');
+    }
+
     public function scopeToday($query)
     {
         return $query->whereDate('payment_date', today());
@@ -83,32 +96,19 @@ class Payment extends Model
         return $query->whereYear('payment_date', now()->year);
     }
 
-    // NEW: Scope for Stripe payments
-    public function scopeStripe($query)
-    {
-        return $query->whereNotNull('stripe_session_id');
-    }
+    // ── Helpers ───────────────────────────────────────────────
 
-    // NEW: Scope for paid payments
-    public function scopePaid($query)
-    {
-        return $query->whereNotNull('paid_at');
-    }
-
-    // NEW: Check if payment was made via Stripe
-    public function isStripePayment()
+    public function isStripePayment(): bool
     {
         return !empty($this->stripe_session_id);
     }
 
-    // NEW: Check if payment has been completed
-    public function isPaid()
+    public function isPaid(): bool
     {
         return !is_null($this->paid_at);
     }
 
-    // NEW: Get payment provider name
-    public function getProviderAttribute()
+    public function getProviderAttribute(): string
     {
         return $this->isStripePayment() ? 'Stripe' : 'Cash';
     }

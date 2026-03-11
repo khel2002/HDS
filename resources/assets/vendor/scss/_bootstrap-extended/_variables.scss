@@ -69,34 +69,49 @@ $min-contrast-ratio: 1.7 !default;
 $color-contrast-light: $white !default;
 $color-contrast-dark: $pure-black !default;
 
-// scss-docs-start theme-color-variables
+// ============================================================
+// StayLux Brand Color Palette
+// ============================================================
+// Deep Navy Blue  (#0B1F5C) — Primary:  Main headings, CTA buttons, key links
+// Royal Blue      (#1E3FA8) — Secondary: Subtitles, gradients, focus rings
+// Light Blue      (#AFC8F3) — Info:      Animated blobs, accents, soft highlights
+// Leaf Green      (#2E7D32) — Success:   Accent blobs, card accents
+// Off White       (#F4F6FA) — Light/BG:  Page background, social button hovers
+// Soft Gray       (#D9DCE3) — Gray:      Borders, dividers, subtle UI elements
+// ============================================================
 
-$primary: #060E4D !default;       // Azure Primary (deep blue)
-$secondary: #013a72 !default;     // Azure Light (secondary elements)
-$success: #00b894 !default;       // Green (keep success semantic)
-$info: #00A3FF !default;          // Azure Accent (info messages)
-$warning: #ffc107 !default;       // Amber (warnings)
-$danger: #e74c3c !default;        // Red (danger)
-$light: #E6F3FF !default;         // Azure Lighter (background/light elements)
-$dark: #0a1883 !default;          // Azure Darkest (dark theme)
-$gray: #cfd8e1 !default;          // Soft gray for borders/text
-$azure-dark: #0066CC !default;    // Azure Dark
-$azure-darker: #004C99 !default;  // Azure Darker
-$azure-slsu: #0080FF !default;
+// scss-docs-start theme-color-variables
+$primary:   #0B1F5C !default;   // Deep Navy Blue  — main headings, primary CTA buttons
+$secondary: #1E3FA8 !default;   // Royal Blue      — subtitles, button gradients, focus rings
+$success:   #2E7D32 !default;   // Leaf Green      — success states, accent blobs
+$info:      #AFC8F3 !default;   // Light Blue      — informational highlights, animated blobs
+$warning:   #ffc107 !default;   // Amber           — warnings (unchanged)
+$danger:    #e74c3c !default;   // Red             — danger/error (unchanged)
+$light:     #F4F6FA !default;   // Off White       — page backgrounds, social button hovers
+$dark:      #071240 !default;   // Deep Navy Dark  — darkest shade for dark theme
+$gray:      #D9DCE3 !default;   // Soft Gray       — borders, dividers, subtle UI
+
+// Extended brand palette (C)
+$brand-deep-navy:  #0B1F5C !default; // (C) Deep Navy Blue
+$brand-royal-blue: #1E3FA8 !default; // (C) Royal Blue
+$brand-light-blue: #AFC8F3 !default; // (C) Light Blue
+$brand-leaf-green: #2E7D32 !default; // (C) Leaf Green
+$brand-off-white:  #F4F6FA !default; // (C) Off White
+$brand-soft-gray:  #D9DCE3 !default; // (C) Soft Gray
 
 // scss-docs-end theme-color-variables
 
 // scss-docs-start theme-colors-map
 $theme-colors: (
-  "primary": $primary,
+  "primary":   $primary,
   "secondary": $secondary,
-  "success": $success,
-  "info": $info,
-  "warning": $warning,
-  "danger": $danger,
-  "light": $light,
-  "dark": $dark,
-  "gray": $gray
+  "success":   $success,
+  "info":      $info,
+  "warning":   $warning,
+  "danger":    $danger,
+  "light":     $light,
+  "dark":      $dark,
+  "gray":      $gray
 ) !default;
 
 // scss-docs-end theme-colors-map
@@ -105,24 +120,24 @@ $bg-label-tint-amount: 84% !default; // (C)
 $border-subtle-amount: 70% !default; // (C)
 
 // scss-docs-start theme-bg-subtle-variables
-$primary-bg-subtle: tint-color($primary, $bg-label-tint-amount) !default;
+$primary-bg-subtle:   tint-color($primary,   $bg-label-tint-amount) !default;
 $secondary-bg-subtle: tint-color($secondary, $bg-label-tint-amount) !default;
-$success-bg-subtle: tint-color($success, $bg-label-tint-amount) !default;
-$info-bg-subtle: tint-color($info, $bg-label-tint-amount) !default;
-$warning-bg-subtle: tint-color($warning, $bg-label-tint-amount) !default;
-$danger-bg-subtle: tint-color($danger, $bg-label-tint-amount) !default;
-$dark-bg-subtle: tint-color($dark, $bg-label-tint-amount) !default;
+$success-bg-subtle:   tint-color($success,   $bg-label-tint-amount) !default;
+$info-bg-subtle:      tint-color($info,      $bg-label-tint-amount) !default;
+$warning-bg-subtle:   tint-color($warning,   $bg-label-tint-amount) !default;
+$danger-bg-subtle:    tint-color($danger,    $bg-label-tint-amount) !default;
+$dark-bg-subtle:      tint-color($dark,      $bg-label-tint-amount) !default;
 
 // scss-docs-end theme-bg-subtle-variables
 
 // scss-docs-start theme-border-subtle-variables
-$primary-border-subtle: tint-color($primary, $border-subtle-amount) !default;
+$primary-border-subtle:   tint-color($primary,   $border-subtle-amount) !default;
 $secondary-border-subtle: tint-color($secondary, $border-subtle-amount) !default;
-$success-border-subtle: tint-color($success, $border-subtle-amount) !default;
-$info-border-subtle: tint-color($info, $border-subtle-amount) !default;
-$warning-border-subtle: tint-color($warning, $border-subtle-amount) !default;
-$danger-border-subtle: tint-color($danger, $border-subtle-amount) !default;
-$dark-border-subtle: tint-color($dark, $border-subtle-amount) !default;
+$success-border-subtle:   tint-color($success,   $border-subtle-amount) !default;
+$info-border-subtle:      tint-color($info,      $border-subtle-amount) !default;
+$warning-border-subtle:   tint-color($warning,   $border-subtle-amount) !default;
+$danger-border-subtle:    tint-color($danger,    $border-subtle-amount) !default;
+$dark-border-subtle:      tint-color($dark,      $border-subtle-amount) !default;
 
 // scss-docs-end theme-border-subtle-variables
 
@@ -218,7 +233,7 @@ $icon-size-xl: 2rem !default; // (C)
 // ******************************************************************************
 
 $body-color: $gray-700 !default;
-$body-bg: #f4f5fa !default;
+$body-bg: #F4F6FA !default;             // Off White — clean, professional page background
 $body-secondary-color: $gray-400 !default;
 $body-secondary-color-hover: var(--#{$prefix}body-color) !default; // (C)
 $letter-spacing: .15px !default; // (C)
@@ -235,23 +250,19 @@ $blockquote-footer-color: var(--#{$prefix}body-color) !default;
 // Links
 // ******************************************************************************
 
-// TODO: CheckInBS6 (--#{$prefix}custom-link-color) A CSS variable was not being used, but instead, a combination of Bootstrap's to-rgb and other functions were applied. To address this, a new variable was created wherever it was used.
-$link-color: $primary !default;
+$link-color: $primary !default;          // Deep Navy Blue — base link color
 $link-decoration: none !default;
 $link-shade-percentage: 10% !default;
-$link-hover-color: shift-color($link-color, $link-shade-percentage) !default;
+$link-hover-color: $secondary !default;  // Royal Blue — link hover ("Forgot password?", "Sign up")
 $link-hover-decoration: null !default;
 
 // Paragraphs
 // ******************************************************************************
 
-// Style p element.
 $paragraph-margin-bottom: 1rem !default;
 
 // Grid
 // ******************************************************************************
-
-// Grid containers
 
 // scss-docs-start container-max-widths
 $container-max-widths: (
@@ -264,11 +275,7 @@ $container-max-widths: (
 
 // scss-docs-end container-max-widths
 
-// Grid columns - Set the number of columns and specify the width of the gutters.
-
 $grid-gutter-width: 1.5rem !default;
-
-// Container padding
 
 $container-padding-x: $grid-gutter-width !default;
 $container-padding-x-sm: 1rem !default; // (C)
@@ -279,7 +286,7 @@ $container-padding-y: $grid-gutter-width !default; // (C)
 
 // scss-docs-start border-variables
 $border-width: 1px !default;
-$border-color: color-mix(in sRGB, #{$black} 12%, #{$paper-bg}) !default;
+$border-color: #D9DCE3 !default;                          // Soft Gray — default border color
 $border-color-translucent: rgba($black, .075) !default;
 
 // scss-docs-end border-variables
@@ -305,7 +312,7 @@ $box-shadow-xl: 0 .5rem 1.75rem 0 rgba($black, .24) !default;
 // scss-docs-end box-shadow-variables
 
 $component-active-color: var(--#{$prefix}white) !default;
-$component-active-bg: var(--#{$prefix}primary) !default;
+$component-active-bg: var(--#{$prefix}primary) !default;  // Deep Navy Blue — active component bg
 
 $component-line-height: 1.375 !default; // (C)
 $component-focus-shadow-width: 0px !default; // (C)
@@ -315,7 +322,7 @@ $floating-component-shadow: 0 1px 16px 1px rgba($black, .09) !default; // (C)
 
 $focus-ring-width: .15rem !default;
 $focus-ring-opacity: .75 !default;
-$focus-ring-color: rgba($gray-700, $focus-ring-opacity) !default;
+$focus-ring-color: rgba(#1E3FA8, $focus-ring-opacity) !default;  // Royal Blue — focus ring on inputs
 
 // scss-docs-start caret-variables
 $caret-width: .55em !default;
@@ -335,9 +342,8 @@ $font-family-monospace: "SFMono-Regular", menlo, monaco, consolas, "Liberation M
 $font-family-base: var(--#{$prefix}font-sans-serif) !default;
 $font-family-code: var(--#{$prefix}font-monospace) !default;
 
-// $font-size-root effects the value of `rem`, which is used for as well font sizes, paddings and margins $font-size-base effects the font size of the body text
 $font-size-root: 16px !default;
-$font-size-base: .9375rem !default; // Assumes the browser default, typically `16px`
+$font-size-base: .9375rem !default;
 $font-size-xs: .75rem !default; // (C)
 $font-size-sm: .8125rem !default;
 $font-size-lg: 1.0625rem !default;
@@ -380,7 +386,7 @@ $h6-line-height: 1.375rem !default; // (C)
 // scss-docs-start headings-variables
 $headings-margin-bottom: $spacer !default;
 $headings-line-height: 1.375 !default;
-$headings-color: color-mix(in sRGB, #{$black} 90%, #{$paper-bg}) !default;
+$headings-color: #0B1F5C !default;   // Deep Navy Blue — "Welcome to StayLux", "Welcome back", all headings
 
 // scss-docs-end headings-variables
 
@@ -405,7 +411,7 @@ $small-font-size: .8125rem !default;
 $big-font-size: 112% !default; // (C)
 $large-font-size: 150% !default; // (C)
 $xlarge-font-size: 170% !default; // (C)
-$xxlarge-font-size: 6rem !default; // (C) This size is used for misc pages
+$xxlarge-font-size: 6rem !default; // (C)
 
 $hr-color: var(--#{$prefix}border-color) !default;
 $hr-opacity: 1 !default;
@@ -481,7 +487,7 @@ $table-border-color: var(--#{$prefix}border-color) !default;
 $table-group-separator-color: $table-border-color !default;
 
 $table-caption-color: var(--#{$prefix}secondary-color) !default;
-$table-header-bg-color: #f6f7fb !default; // (c)
+$table-header-bg-color: #F4F6FA !default; // (C) Off White — table header background
 
 // Buttons + Forms
 // ******************************************************************************
@@ -520,7 +526,6 @@ $input-btn-line-height-xl: $line-height-base !default; // (C)
 
 // Buttons
 // ******************************************************************************
-
 
 $btn-padding-y-xs: .297rem !default; // (C)
 $btn-padding-x-xs: .625rem !default; // (C)
@@ -581,7 +586,7 @@ $form-text-color: var(--#{$prefix}body-color) !default;
 $form-label-margin-bottom: .5rem !default;
 $form-label-font-weight: $font-weight-medium !default;
 $form-label-font-size: $input-btn-font-size-sm !default;
-$form-label-color: var(--#{$prefix}heading-color) !default;
+$form-label-color: #0B1F5C !default;   // Deep Navy Blue — "Email", "Password" form labels
 
 // scss-docs-end form-label-variables
 
@@ -605,16 +610,15 @@ $input-disabled-bg: color-mix(in sRGB, var(--#{$prefix}base-color) 6%, var(--#{$
 $input-disabled-border-color: color-mix(in sRGB, var(--#{$prefix}base-color) 24%, var(--#{$prefix}paper-bg)) !default;
 
 $input-color: var(--#{$prefix}heading-color) !default;
-$input-border-color: color-mix(in sRGB, var(--#{$prefix}base-color) 22%, var(--#{$prefix}paper-bg)) !default;
-$input-hover-border-color: color-mix(in sRGB, var(--#{$prefix}base-color) 30%, var(--#{$prefix}paper-bg)) !default; // (C)
+$input-border-color: #D9DCE3 !default;         // Soft Gray — default input border
+$input-hover-border-color: #AFC8F3 !default;   // Light Blue — input hover border (C)
 
 $input-focus-border-width: 2px !default; // (C)
 $input-focus-box-shadow: none !default;
-$input-focus-border-color: $component-active-bg !default;
+$input-focus-border-color: #1E3FA8 !default;   // Royal Blue — focused input border
 
 $input-plaintext-color: var(--#{$prefix}heading-color) !default;
 $input-placeholder-color: var(--#{$prefix}gray-400) !default;
-
 
 $autozise-min-height: 5.3125rem !default; // (C)
 
@@ -622,7 +626,7 @@ $autozise-min-height: 5.3125rem !default; // (C)
 
 // scss-docs-start form-check-variables
 $form-check-input-width: 1.2em !default;
-$form-datatables-check-input-size: 1.125rem !default; // (C) For datatables with checkbox- update according to $form-check-input-width
+$form-datatables-check-input-size: 1.125rem !default; // (C)
 $form-check-min-height: $font-size-base * $line-height-base * 1.067 !default;
 $form-check-padding-start: $form-check-input-width + .6em !default;
 $form-check-margin-bottom: .5rem !default;
@@ -781,7 +785,6 @@ $nav-border-color: $nav-tabs-bg !default; // (C)
 // Navbar
 // ******************************************************************************
 
-// For main navbar
 $navbar-box-shadow: 0 .25rem .5rem -.25rem rgba($black, .42) !default; // (C)
 
 $navbar-bg: rgba(var(--#{$prefix}paper-bg-rgb), .85) !default; // (C)
@@ -870,12 +873,12 @@ $pagination-border-radius-lg: $pagination-border-radius-sm !default;
 
 $card-spacer-y: $spacer * 1.25 !default;
 $card-spacer-x: $spacer * 1.25 !default;
-$card-title-color: var(--#{$prefix}heading-color) !default;
+$card-title-color: #0B1F5C !default;   // Deep Navy Blue — card titles
 $card-title-spacer-y: $spacer * .5 !default;
 $card-subtitle-color: color-mix(in sRGB, var(--#{$prefix}base-color) 55%, var(--#{$prefix}card-bg)) !default;
 $card-spacer-x-sm: $spacer !default; // (C)
 $card-border-width: 0 !default;
-$card-border-color: var(--#{$prefix}border-color) !default;
+$card-border-color: #D9DCE3 !default;  // Soft Gray — card borders
 $card-border-radius: $border-radius !default;
 $card-box-shadow: var(--#{$prefix}box-shadow) !default;
 $card-inner-border-color: $border-color-translucent !default; // (C)
@@ -917,7 +920,7 @@ $accordion-button-active-icon: $accordion-button-icon !default;
 // ******************************************************************************
 
 $tooltip-font-size: $font-size-sm !default;
-$tooltip-bg: #1a0e33 !default;
+$tooltip-bg: #0B1F5C !default;          // Deep Navy Blue — tooltip background
 $tooltip-color: var(--#{$prefix}white) !default;
 $tooltip-border-radius: $border-radius-sm !default;
 $tooltip-opacity: 1 !default;
@@ -933,7 +936,7 @@ $tooltip-arrow-height: .375rem !default;
 // ******************************************************************************
 
 $popover-bg: var(--#{$prefix}paper-bg) !default;
-$popover-border-color: var(--#{$prefix}gray-100) !default;
+$popover-border-color: #D9DCE3 !default;   // Soft Gray — popover borders
 $popover-box-shadow: var(--#{$prefix}box-shadow) !default;
 
 $popover-header-bg: $popover-bg !default;
@@ -953,7 +956,7 @@ $toast-font-size: $font-size-base !default;
 $toast-color: var(--#{$prefix}body-color) !default;
 $toast-background-color: rgba(var(--#{$prefix}paper-bg-rgb), .85) !default;
 $toast-border-width: 0rem !default;
-$toast-border-color: var(--#{$prefix}gray-100) !default;
+$toast-border-color: #D9DCE3 !default;   // Soft Gray — toast borders
 
 $toast-box-shadow: var(--#{$prefix}box-shadow) !default;
 $toast-spacing: 1rem !default;
@@ -988,7 +991,7 @@ $modal-inner-padding: 1.25rem !default;
 $modal-footer-margin-between: 1rem !default;
 $modal-content-color: var(--#{$prefix}body-color) !default;
 $modal-content-bg: var(--#{$prefix}paper-bg) !default;
-$modal-content-border-color: var(--#{$prefix}border-color) !default;
+$modal-content-border-color: #D9DCE3 !default;  // Soft Gray — modal borders
 $modal-content-border-width: 0 !default;
 $modal-content-border-radius: $border-radius-lg !default;
 $modal-content-box-shadow-xs: var(--#{$prefix}box-shadow-xl) !default;
@@ -1037,7 +1040,7 @@ $progress-bar-color: var(--#{$prefix}white) !default;
 // scss-docs-start list-group-variables
 $list-group-color: var(--#{$prefix}heading-color) !default;
 $list-group-bg: transparent !default;
-$list-group-border-color: var(--#{$prefix}border-color) !default;
+$list-group-border-color: #D9DCE3 !default;  // Soft Gray — list group borders
 $list-group-border-radius: $border-radius-sm !default;
 
 $list-group-item-padding-y: .5rem !default;

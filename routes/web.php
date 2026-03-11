@@ -12,7 +12,9 @@ use App\Http\Controllers\SuperAdmin\{
     RoomController,
     RoomTypeController,
     AmenitiesController,
-    ReservationController as SuperAdminReservationController
+    ReservationController as SuperAdminReservationController,
+    BreakfastController,
+    RegistrationController
 };
 
 use App\Http\Controllers\FrontpageController;
@@ -36,30 +38,28 @@ use App\Http\Controllers\ReservationController;
 Route::get('/landing', [FrontpageController::class, 'index'])->name('frontpage.index');
 Route::get('/room/{room_id}', [FrontpageController::class, 'roomDetails'])->name('frontpage.room-details');
 Route::get('/sample-landing', [FrontpageController::class, 'sampleLanding'])->name('frontpage.sample');
-
+Route::get('/rooms', [FrontpageController::class, 'availableRooms'])->name('frontpage.available-rooms');
 // Reservation routes
 Route::prefix('reservation')->name('reservation.')->group(function () {
-  Route::get('/create/{room_id}', [ReservationController::class, 'showReservationForm'])->name('create');
-  Route::post('/store', [ReservationController::class, 'store'])->name('store');
+    Route::get('/create/{room_id}', [ReservationController::class, 'showReservationForm'])->name('create');
+    Route::post('/store',           [ReservationController::class, 'store'])->name('store');
 
-  // New confirmation route
-  Route::get('/confirmation', [ReservationController::class, 'confirmation'])->name('confirmation');
+    // Confirmation: reads from DB via signed URL params — no session required
+    // Params: uid, rids, token, pm, pw
+    Route::get('/confirmation',     [ReservationController::class, 'confirmation'])->name('confirmation');
 
-  // Legacy success route (can be removed if not used elsewhere)
-  Route::get('/success', [ReservationController::class, 'success'])->name('success');
-
-  Route::post('/check-availability', [ReservationController::class, 'checkAvailability'])->name('check-availability');
-  Route::get('/booked-dates/{room_id}', [ReservationController::class, 'getBookedDates'])->name('booked-dates');
-  Route::post('/get-available-rooms', [ReservationController::class, 'getAvailableRooms'])
-    ->name('get-available-rooms');
+    Route::post('/check-availability',    [ReservationController::class, 'checkAvailability'])->name('check-availability');
+    Route::get('/booked-dates/{room_id}', [ReservationController::class, 'getBookedDates'])->name('booked-dates');
+    Route::post('/get-available-rooms',   [ReservationController::class, 'getAvailableRooms'])->name('get-available-rooms');
 });
 
 // Payment routes
 Route::prefix('payment')->name('payment.')->group(function () {
-  Route::post('/create-checkout-session', [PaymentController::class, 'createCheckoutSession'])->name('create-checkout');
-  Route::get('/success', [PaymentController::class, 'paymentSuccess'])->name('success');
-  Route::get('/cancel', [PaymentController::class, 'paymentCancel'])->name('cancel');
+    Route::post('/create-checkout-session', [PaymentController::class, 'createCheckoutSession'])->name('create-checkout');
+    Route::get('/success',                  [PaymentController::class, 'paymentSuccess'])->name('success');
+    Route::get('/cancel',                   [PaymentController::class, 'paymentCancel'])->name('cancel');
 });
+
 
 // Route::get('/debug-session', function() {
 //     return [
@@ -218,17 +218,34 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super_a
     Route::delete('/{id}', [RoomController::class, 'destroy'])->name('destroy');
     Route::patch('/{id}/status', [RoomController::class, 'updateStatus'])->name('update-status');
   });
- Route::prefix('reservations')->name('reservations.')->group(function () {
-    Route::get('/', [SuperAdminReservationController::class, 'index'])->name('index');
-    Route::post('/', [SuperAdminReservationController::class, 'store'])->name('store');
-    Route::get('/{id}', [SuperAdminReservationController::class, 'show'])->name('show');
-    Route::put('/{id}', [SuperAdminReservationController::class, 'update'])->name('update');
-    Route::delete('/{id}', [SuperAdminReservationController::class, 'destroy'])->name('destroy');
-    
-    // Status management
-    Route::post('/{id}/approve', [SuperAdminReservationController::class, 'approve'])->name('approve');
-    Route::post('/{id}/reject', [SuperAdminReservationController::class, 'reject'])->name('reject');
-    Route::post('/{id}/cancel', [SuperAdminReservationController::class, 'cancel'])->name('cancel');
+Route::prefix('reservations')->name('reservations.')->group(function () {
+    Route::get('/',[SuperAdminReservationController::class, 'index'])->name('index');
+    Route::post('/',[SuperAdminReservationController::class, 'store'])->name('store');
+    Route::get('/{id}',[SuperAdminReservationController::class, 'show'])->name('show');
+    Route::put('/{id}',[SuperAdminReservationController::class, 'update'])->name('update');
+    Route::delete('/{id}',[SuperAdminReservationController::class, 'destroy'])->name('destroy');
+
+    // Single-room status actions
+    Route::post('/{id}/approve',[SuperAdminReservationController::class, 'approve'])->name('approve');
+    Route::post('/{id}/reject',[SuperAdminReservationController::class, 'reject'])->name('reject');
+    Route::post('/{id}/cancel',[SuperAdminReservationController::class, 'cancel'])->name('cancel');
+
+    // Bulk booking (all rooms) status actions — keyed by payment_id
+    Route::post('/booking/{paymentId}/approve',[SuperAdminReservationController::class, 'approveBooking']) ->name('booking.approve');
+    Route::post('/booking/{paymentId}/reject',[SuperAdminReservationController::class, 'rejectBooking'])  ->name('booking.reject');
+    Route::post('/booking/{paymentId}/cancel',[SuperAdminReservationController::class, 'cancelBooking'])  ->name('booking.cancel');
+});
+Route::prefix('registration')->name('registration.')->group(function () {
+
+    // Pages
+    Route::get('/check-in',  [RegistrationController::class, 'checkIn'])->name('check-in');
+    Route::get('/check-out', [RegistrationController::class, 'checkOut'])->name('check-out');
+    Route::get('/all',       [RegistrationController::class, 'all'])->name('all');
+    Route::get('/{id}',      [RegistrationController::class, 'show'])->name('show');
+
+    // Actions
+    Route::post('/check-in/{reservation_id}',   [RegistrationController::class, 'processCheckIn'])->name('process-check-in');
+    Route::post('/check-out/{registration_id}',  [RegistrationController::class, 'processCheckOut'])->name('process-check-out');
 });
 
   // Room types management
@@ -247,6 +264,13 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super_a
     Route::get('/{id}', [AmenitiesController::class, 'show'])->name('show');
     Route::put('/{id}', [AmenitiesController::class, 'update'])->name('update');
     Route::delete('/{id}', [AmenitiesController::class, 'destroy'])->name('destroy');
+  });
+  Route::prefix('breakfast')->name('breakfast.')->group(function () {
+    Route::get('/menu',[BreakfastController::class, 'index'])->name('menu');
+    Route::post('/menu', [BreakfastController::class, 'store'])->name('menu.store');
+    Route::put('/menu/{id}',[BreakfastController::class, 'update'])->name('menu.update');
+    Route::patch('/menu/{id}/toggle',[BreakfastController::class, 'toggleAvailability'])->name('menu.toggle');
+    Route::delete('/menu/{id}',[BreakfastController::class, 'destroy'])->name('menu.destroy');
   });
 });
 

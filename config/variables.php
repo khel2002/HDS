@@ -3,7 +3,7 @@
 return [
   "creatorName" => "ThemeSelection",
   "creatorUrl" => "https://themeselection.com",
-  "templateName" => "Materio",
+  "templateName" => "Hotel De SLSU",
   "templateSuffix" => "Materio Bootstrap 5 HTML + Laravel Admin Template",
   "templateVersion" => "2.0.0",
   "templateFree" => true,

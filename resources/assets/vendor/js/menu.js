@@ -1,5 +1,4 @@
 const TRANSITION_EVENTS = ['transitionend', 'webkitTransitionEnd', 'oTransitionEnd']
-// const TRANSITION_PROPERTIES = ['transition', 'MozTransition', 'webkitTransition', 'WebkitTransition', 'OTransition']
 
 class Menu {
   constructor(el, config = {}, _PS = null) {
@@ -17,9 +16,14 @@ class Menu {
     this._topParent = null
     this._menuBgClass = null
 
-    el.classList.add('menu')
-    el.classList[this._animate ? 'remove' : 'add']('menu-no-animation') // check
+    // ── Collapse/hover state ──────────────────────────────────
+    // "collapsed"  = sidebar is in icon-only mode (user pinned it closed)
+    // "hover"      = sidebar is temporarily expanded because the mouse is over it
+    this._collapsed = false
+    this._hovered   = false
 
+    el.classList.add('menu')
+    el.classList[this._animate ? 'remove' : 'add']('menu-no-animation')
     el.classList.add('menu-vertical')
 
     const PerfectScrollbarLib = _PS || window.PerfectScrollbar
@@ -35,9 +39,8 @@ class Menu {
       el.querySelector('.menu-inner').classList.add('overflow-auto')
     }
 
-    // Add data attribute for bg color class of menu
+    // Detect and store bg-color class
     const menuClassList = el.classList
-
     for (let i = 0; i < menuClassList.length; i++) {
       if (menuClassList[i].startsWith('bg-')) {
         this._menuBgClass = menuClassList[i]
@@ -45,37 +48,173 @@ class Menu {
     }
     el.setAttribute('data-bg-class', this._menuBgClass)
 
+    // Restore persisted collapse state before binding events
+    this._restoreCollapseState()
+
     this._bindEvents()
 
-    // Link menu instance to element
     el.menuInstance = this
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // COLLAPSE / HOVER / TOGGLE
+  // ─────────────────────────────────────────────────────────────
+
+  /**
+   * Collapse the sidebar to icon-only mode and persist choice.
+   */
+  collapseMenu() {
+    this._collapsed = true
+    this._hovered   = false
+
+    const root = window.Helpers.ROOT_EL
+    root.classList.add('layout-menu-collapsed')
+    root.classList.remove('layout-menu-hover')
+
+    this._el.setAttribute('data-collapsed', 'true')
+    this._saveCollapseState(true)
+
+    // Rotate the toggle icon
+    const toggleIcon = this._el.querySelector('.layout-menu-toggle i')
+    if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)'
+
+    this._updateScrollbar()
+  }
+
+  /**
+   * Expand the sidebar to full mode and persist choice.
+   */
+  expandMenu() {
+    this._collapsed = false
+    this._hovered   = false
+
+    const root = window.Helpers.ROOT_EL
+    root.classList.remove('layout-menu-collapsed')
+    root.classList.remove('layout-menu-hover')
+
+    this._el.removeAttribute('data-collapsed')
+    this._saveCollapseState(false)
+
+    // Reset toggle icon
+    const toggleIcon = this._el.querySelector('.layout-menu-toggle i')
+    if (toggleIcon) toggleIcon.style.transform = ''
+
+    this._updateScrollbar()
+  }
+
+  /**
+   * Toggle between collapsed and expanded.
+   * Called when the user clicks `.layout-menu-toggle`.
+   */
+  toggleCollapse() {
+    if (this._collapsed) {
+      this.expandMenu()
+    } else {
+      this.collapseMenu()
+    }
+  }
+
+  /**
+   * Temporarily expand the sidebar on mouse-enter (hover mode).
+   * Only active while the menu is in the collapsed state.
+   */
+  _onMenuMouseEnter() {
+    if (!this._collapsed) return
+
+    this._hovered = true
+    window.Helpers.ROOT_EL.classList.add('layout-menu-hover')
+    this._updateScrollbar()
+  }
+
+  /**
+   * Collapse back to icon-only on mouse-leave (end hover mode).
+   */
+  _onMenuMouseLeave() {
+    if (!this._collapsed) return
+
+    this._hovered = false
+    window.Helpers.ROOT_EL.classList.remove('layout-menu-hover')
+    this._updateScrollbar()
+  }
+
+  _saveCollapseState(collapsed) {
+    try {
+      localStorage.setItem('layoutMenuCollapsed', collapsed ? '1' : '0')
+    } catch (_) { /* storage unavailable */ }
+  }
+
+  _restoreCollapseState() {
+    try {
+      const stored = localStorage.getItem('layoutMenuCollapsed')
+      if (stored === '1') {
+        // Apply collapsed state immediately (before first paint)
+        this._collapsed = true
+        window.Helpers.ROOT_EL.classList.add('layout-menu-collapsed')
+        this._el.setAttribute('data-collapsed', 'true')
+
+        const toggleIcon = this._el.querySelector('.layout-menu-toggle i')
+        if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)'
+      }
+    } catch (_) { /* storage unavailable */ }
+  }
+
+  _updateScrollbar() {
+    if (this._scrollbar) {
+      // Delay slightly so CSS transition has time to start
+      setTimeout(() => this._scrollbar.update(), 300)
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // EVENTS
+  // ─────────────────────────────────────────────────────────────
+
   _bindEvents() {
-    // Click Event
+    // ── Submenu toggle (click on .menu-toggle links) ──────────
     this._evntElClick = e => {
-      // Find top parent element
+      // Track top-level parent for potential use by consumers
       if (e.target.closest('ul') && e.target.closest('ul').classList.contains('menu-inner')) {
         const menuItem = Menu._findParent(e.target, 'menu-item', false)
-
-        // eslint-disable-next-line prefer-destructuring
         if (menuItem) this._topParent = menuItem.childNodes[0]
       }
 
+      // Handle sidebar collapse toggle button
+      const sidebarToggle = e.target.closest('.layout-menu-toggle')
+      if (sidebarToggle) {
+        e.preventDefault()
+        this.toggleCollapse()
+        return
+      }
+
+      // Handle submenu toggles
       const toggleLink = e.target.classList.contains('menu-toggle')
         ? e.target
         : Menu._findParent(e.target, 'menu-toggle', false)
 
       if (toggleLink) {
         e.preventDefault()
-
         if (toggleLink.getAttribute('data-hover') !== 'true') {
           this.toggle(toggleLink)
         }
       }
     }
-    if (window.Helpers.isMobileDevice) this._el.addEventListener('click', this._evntElClick)
 
+    // On mobile, listen for all clicks on the menu element
+    if (window.Helpers.isMobileDevice) {
+      this._el.addEventListener('click', this._evntElClick)
+    } else {
+      // On desktop, always listen so the toggle button works
+      this._el.addEventListener('click', this._evntElClick)
+    }
+
+    // ── Hover expand / collapse ───────────────────────────────
+    this._evntElMouseEnter = () => this._onMenuMouseEnter()
+    this._evntElMouseLeave = () => this._onMenuMouseLeave()
+
+    this._el.addEventListener('mouseenter', this._evntElMouseEnter)
+    this._el.addEventListener('mouseleave', this._evntElMouseLeave)
+
+    // ── Window resize ─────────────────────────────────────────
     this._evntWindowResize = () => {
       this.update()
       if (this._lastWidth !== window.innerWidth) {
@@ -89,8 +228,7 @@ class Menu {
     window.addEventListener('resize', this._evntWindowResize)
   }
 
-  static childOf(/* child node */ c, /* parent node */ p) {
-    // returns boolean
+  static childOf(c, p) {
     if (c.parentNode) {
       while ((c = c.parentNode) && c !== p);
       return !!c
@@ -102,6 +240,16 @@ class Menu {
     if (this._evntElClick) {
       this._el.removeEventListener('click', this._evntElClick)
       this._evntElClick = null
+    }
+
+    if (this._evntElMouseEnter) {
+      this._el.removeEventListener('mouseenter', this._evntElMouseEnter)
+      this._evntElMouseEnter = null
+    }
+
+    if (this._evntElMouseLeave) {
+      this._el.removeEventListener('mouseleave', this._evntElMouseLeave)
+      this._evntElMouseLeave = null
     }
 
     if (this._evntElMouseOver) {
@@ -125,15 +273,19 @@ class Menu {
     }
 
     if (this._evntInnerMousemove) {
-      this._inner.removeEventListener('mousemove', this._evntInnerMousemove)
+      this._inner && this._inner.removeEventListener('mousemove', this._evntInnerMousemove)
       this._evntInnerMousemove = null
     }
 
     if (this._evntInnerMouseleave) {
-      this._inner.removeEventListener('mouseleave', this._evntInnerMouseleave)
+      this._inner && this._inner.removeEventListener('mouseleave', this._evntInnerMouseleave)
       this._evntInnerMouseleave = null
     }
   }
+
+  // ─────────────────────────────────────────────────────────────
+  // STATIC HELPERS  (unchanged from original)
+  // ─────────────────────────────────────────────────────────────
 
   static _isRoot(item) {
     return !Menu._findParent(item, 'menu-item', false)
@@ -160,11 +312,9 @@ class Menu {
     for (let i = 0, l = items.length; i < l; i++) {
       if (items[i].classList) {
         let passed = 0
-
         for (let j = 0; j < cls.length; j++) {
           if (items[i].classList.contains(cls[j])) passed += 1
         }
-
         if (cls.length === passed) found.push(items[i])
       }
     }
@@ -186,16 +336,17 @@ class Menu {
     return menu
   }
 
-  // Has class
   static _hasClass(cls, el = window.Helpers.ROOT_EL) {
     let result = false
-
     cls.split(' ').forEach(c => {
       if (el.classList.contains(c)) result = true
     })
-
     return result
   }
+
+  // ─────────────────────────────────────────────────────────────
+  // OPEN / CLOSE / TOGGLE  (unchanged from original)
+  // ─────────────────────────────────────────────────────────────
 
   open(el, closeChildren = this._closeChildren) {
     const item = this._findUnopenedParent(Menu._getItem(el, true), closeChildren)
@@ -211,16 +362,13 @@ class Menu {
             window.requestAnimationFrame(() => this._toggleAnimation(true, item, false))
             if (this._accordion) this._closeOther(item, closeChildren)
           } else if (this._animate) {
-            // eslint-disable-next-line no-unused-expressions
             this._onOpened && this._onOpened(this, item, toggleLink, Menu._findMenu(item))
           } else {
             item.classList.add('open')
-            // eslint-disable-next-line no-unused-expressions
             this._onOpened && this._onOpened(this, item, toggleLink, Menu._findMenu(item))
             if (this._accordion) this._closeOther(item, closeChildren)
           }
         } else {
-          // eslint-disable-next-line no-unused-expressions
           this._onOpened && this._onOpened(this, item, toggleLink, Menu._findMenu(item))
         }
       })
@@ -246,11 +394,9 @@ class Menu {
               for (let i = 0, l = opened.length; i < l; i++) opened[i].classList.remove('open')
             }
 
-            // eslint-disable-next-line no-unused-expressions
             this._onClosed && this._onClosed(this, item, toggleLink, Menu._findMenu(item))
           }
         } else {
-          // eslint-disable-next-line no-unused-expressions
           this._onClosed && this._onClosed(this, item, toggleLink, Menu._findMenu(item))
         }
       })
@@ -259,7 +405,6 @@ class Menu {
 
   _closeOther(item, closeChildren) {
     const opened = Menu._findChild(item.parentNode, ['menu-item', 'open'])
-
     for (let i = 0, l = opened.length; i < l; i++) {
       if (opened[i] !== item) this.close(opened[i], closeChildren)
     }
@@ -267,7 +412,6 @@ class Menu {
 
   toggle(el, closeChildren = this._closeChildren) {
     const item = Menu._getItem(el, true)
-
     if (item.classList.contains('open')) this.close(item, closeChildren)
     else this.open(item, closeChildren)
   }
@@ -282,9 +426,7 @@ class Menu {
       item = el.parentNode.classList.contains('menu-item') ? el.parentNode : null
     }
 
-    if (!item) {
-      throw new Error(`${toggle ? 'Toggable ' : ''}\`.menu-item\` element not found.`)
-    }
+    if (!item) throw new Error(`${toggle ? 'Toggable ' : ''}\`.menu-item\` element not found.`)
 
     return item
   }
@@ -313,7 +455,6 @@ class Menu {
         if (!item.classList.contains('open')) parentItem = item
         tree.push(item)
       }
-
       item = Menu._findParent(item, 'menu-item', false)
     }
 
@@ -346,6 +487,10 @@ class Menu {
     return parentItem
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // ANIMATION  (unchanged from original)
+  // ─────────────────────────────────────────────────────────────
+
   _toggleAnimation(open, item, closeChildren) {
     const toggleLink = Menu._getLink(item, true)
     const menu = Menu._findMenu(item)
@@ -361,7 +506,6 @@ class Menu {
       item.classList.remove('menu-item-closing')
       item.style.overflow = null
       item.style.height = null
-
       this.update()
     }
 
@@ -419,54 +563,6 @@ class Menu {
     }, duration + 50)
   }
 
-  _getItemOffset(item) {
-    let curItem = this._inner.childNodes[0]
-    let left = 0
-
-    while (curItem !== item) {
-      if (curItem.tagName) {
-        left += Math.round(curItem.getBoundingClientRect().width)
-      }
-
-      curItem = curItem.nextSibling
-    }
-
-    return left
-  }
-
-  static _promisify(fn, ...args) {
-    const result = fn(...args)
-    if (result instanceof Promise) {
-      return result
-    }
-    if (result === false) {
-      return Promise.reject()
-    }
-    return Promise.resolve()
-  }
-
-  get _innerWidth() {
-    const items = this._inner.childNodes
-    let width = 0
-
-    for (let i = 0, l = items.length; i < l; i++) {
-      if (items[i].tagName) {
-        width += Math.round(items[i].getBoundingClientRect().width)
-      }
-    }
-
-    return width
-  }
-
-  get _innerPosition() {
-    return parseInt(this._inner.style[this._rtl ? 'marginRight' : 'marginLeft'] || '0px', 10)
-  }
-
-  set _innerPosition(value) {
-    this._inner.style[this._rtl ? 'marginRight' : 'marginLeft'] = `${value}px`
-    return value
-  }
-
   static _unbindAnimationEndEvent(el) {
     const cb = el._menuAnimationEndEventCb
 
@@ -481,9 +577,49 @@ class Menu {
     el._menuAnimationEndEventCb = null
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // MISC  (unchanged from original)
+  // ─────────────────────────────────────────────────────────────
+
+  _getItemOffset(item) {
+    let curItem = this._inner.childNodes[0]
+    let left = 0
+
+    while (curItem !== item) {
+      if (curItem.tagName) left += Math.round(curItem.getBoundingClientRect().width)
+      curItem = curItem.nextSibling
+    }
+
+    return left
+  }
+
+  static _promisify(fn, ...args) {
+    const result = fn(...args)
+    if (result instanceof Promise) return result
+    if (result === false) return Promise.reject()
+    return Promise.resolve()
+  }
+
+  get _innerWidth() {
+    const items = this._inner.childNodes
+    let width = 0
+    for (let i = 0, l = items.length; i < l; i++) {
+      if (items[i].tagName) width += Math.round(items[i].getBoundingClientRect().width)
+    }
+    return width
+  }
+
+  get _innerPosition() {
+    return parseInt(this._inner.style[this._rtl ? 'marginRight' : 'marginLeft'] || '0px', 10)
+  }
+
+  set _innerPosition(value) {
+    this._inner.style[this._rtl ? 'marginRight' : 'marginLeft'] = `${value}px`
+    return value
+  }
+
   closeAll(closeChildren = this._closeChildren) {
     const opened = this._el.querySelectorAll('.menu-inner > .menu-item.open')
-
     for (let i = 0, l = opened.length; i < l; i++) this.close(opened[i], closeChildren)
   }
 
@@ -491,22 +627,12 @@ class Menu {
     Menu._getItem(el, false).classList[disabled ? 'add' : 'remove']('disabled')
   }
 
-  static isActive(el) {
-    return Menu._getItem(el, false).classList.contains('active')
-  }
-
-  static isOpened(el) {
-    return Menu._getItem(el, false).classList.contains('open')
-  }
-
-  static isDisabled(el) {
-    return Menu._getItem(el, false).classList.contains('disabled')
-  }
+  static isActive(el)    { return Menu._getItem(el, false).classList.contains('active') }
+  static isOpened(el)    { return Menu._getItem(el, false).classList.contains('open') }
+  static isDisabled(el)  { return Menu._getItem(el, false).classList.contains('disabled') }
 
   update() {
-    if (this._scrollbar) {
-      this._scrollbar.update()
-    }
+    if (this._scrollbar) this._scrollbar.update()
   }
 
   manageScroll() {
@@ -562,22 +688,29 @@ class Menu {
       this._inner.style.marginRight = null
     }
 
+    // Clean up collapse state from DOM
+    window.Helpers.ROOT_EL.classList.remove('layout-menu-collapsed', 'layout-menu-hover')
+
     this._el.menuInstance = null
     delete this._el.menuInstance
 
-    this._el = null
-    this._animate = null
-    this._accordion = null
+    this._el           = null
+    this._animate      = null
+    this._accordion    = null
     this._closeChildren = null
-    this._onOpen = null
-    this._onOpened = null
-    this._onClose = null
-    this._onClosed = null
+    this._onOpen       = null
+    this._onOpened     = null
+    this._onClose      = null
+    this._onClosed     = null
+    this._collapsed    = null
+    this._hovered      = null
+
     if (this._scrollbar) {
       this._scrollbar.destroy()
       this._scrollbar = null
     }
-    this._inner = null
+
+    this._inner   = null
     this._prevBtn = null
     this._wrapper = null
     this._nextBtn = null

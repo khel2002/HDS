@@ -1,8 +1,15 @@
 {{-- Room Card Component --}}
 @php
+  $room_id = $room_id ?? null;
   $title = $title ?? ($room_type_name ?? 'Room Title');
   $description = $description ?? 'Spacious room with modern comfort and amenities.';
   $image = $image ?? 'assets/img/frontpages/img/test.jpg';
+  $price = $price ?? null;
+  $rating = $rating ?? null;
+  $size = $size ?? null;
+  $bed = $bed ?? null;
+  $capacity = $capacity ?? null;
+  $tags = $tags ?? [];
 @endphp
 
 <style>
@@ -24,7 +31,6 @@
     padding: 0;
   }
 
-  /* Image Container */
   .room-card-image-container {
     position: relative;
     overflow: hidden;
@@ -38,7 +44,6 @@
     box-shadow: 0 12px 40px rgba(36, 123, 160, 0.3);
   }
 
-  /* Gradient Overlays */
   .room-card-image-container::before {
     content: '';
     position: absolute;
@@ -75,7 +80,6 @@
     opacity: 1;
   }
 
-  /* Room Image */
   .room-card-img {
     height: 280px;
     object-fit: cover;
@@ -89,7 +93,6 @@
     transform: scale(1.08);
   }
 
-  /* Room Title */
   .room-card-title {
     position: absolute;
     bottom: 1.5rem;
@@ -116,7 +119,6 @@
       0 0 20px rgba(56, 145, 166, 0.4);
   }
 
-  /* Room Description */
   .room-card-description {
     color: #64748b;
     font-size: clamp(0.9375rem, 1.5vw, 1rem);
@@ -132,7 +134,6 @@
     color: #475569;
   }
 
-  /* Optional Badge */
   .room-card-badge {
     position: absolute;
     top: 1rem;
@@ -158,9 +159,6 @@
     transform: translateY(0);
   }
 
-  /* ==================== CAROUSEL CONFIGURATION ==================== */
-
-  /* Fixed Carousel Heights - Desktop */
   #roomsCarouselDesktop .carousel-inner {
     min-height: 480px;
   }
@@ -169,7 +167,6 @@
     min-height: 480px;
   }
 
-  /* Fixed Carousel Heights - Mobile */
   #roomsCarouselMobile .carousel-inner {
     min-height: 520px;
   }
@@ -178,25 +175,21 @@
     min-height: 520px;
   }
 
-  /* Ensure rows maintain consistent height */
   .carousel-item .row {
     min-height: 100%;
     display: flex;
     align-items: stretch;
   }
 
-  /* Make columns fill height */
   .carousel-item [class*="col-"] {
     display: flex;
   }
 
-  /* ==================== ANIMATIONS ==================== */
   @keyframes fadeInUp {
     from {
       opacity: 0;
       transform: translateY(20px);
     }
-
     to {
       opacity: 1;
       transform: translateY(0);
@@ -207,147 +200,60 @@
     animation: fadeInUp 0.6s ease-out backwards;
   }
 
-  /* Stagger animation for multiple cards */
-  .carousel-item .room-card-wrapper:nth-child(1) {
-    animation-delay: 0.1s;
-  }
+  .carousel-item .room-card-wrapper:nth-child(1) { animation-delay: 0.1s; }
+  .carousel-item .room-card-wrapper:nth-child(2) { animation-delay: 0.2s; }
+  .carousel-item .room-card-wrapper:nth-child(3) { animation-delay: 0.3s; }
 
-  .carousel-item .room-card-wrapper:nth-child(2) {
-    animation-delay: 0.2s;
-  }
-
-  .carousel-item .room-card-wrapper:nth-child(3) {
-    animation-delay: 0.3s;
-  }
-
-  /* ==================== RESPONSIVE BREAKPOINTS ==================== */
-
-  /* Large Desktop */
   @media (min-width: 1400px) {
-    .room-card-img {
-      height: 300px;
-    }
-
+    .room-card-img { height: 300px; }
     #roomsCarouselDesktop .carousel-inner,
-    #roomsCarouselDesktop .carousel-item {
-      min-height: 500px;
-    }
+    #roomsCarouselDesktop .carousel-item { min-height: 500px; }
   }
 
-  /* Desktop */
   @media (min-width: 1200px) and (max-width: 1399.98px) {
-    .room-card-img {
-      height: 280px;
-    }
+    .room-card-img { height: 280px; }
   }
 
-  /* Tablets and Small Desktop */
   @media (max-width: 1199.98px) {
-    .room-card-img {
-      height: 260px;
-    }
-
+    .room-card-img { height: 260px; }
     #roomsCarouselDesktop .carousel-inner,
-    #roomsCarouselDesktop .carousel-item {
-      min-height: 460px;
-    }
+    #roomsCarouselDesktop .carousel-item { min-height: 460px; }
   }
 
-  /* Tablets */
   @media (max-width: 991.98px) {
-    .room-card-img {
-      height: 240px;
-    }
-
-    .room-card-title {
-      font-size: 1.375rem;
-      bottom: 1.25rem;
-    }
-
-    .room-card-description {
-      margin-top: 1.25rem;
-    }
-
+    .room-card-img { height: 240px; }
+    .room-card-title { font-size: 1.375rem; bottom: 1.25rem; }
+    .room-card-description { margin-top: 1.25rem; }
     #roomsCarouselMobile .carousel-inner,
-    #roomsCarouselMobile .carousel-item {
-      min-height: 480px;
-    }
+    #roomsCarouselMobile .carousel-item { min-height: 480px; }
   }
 
-  /* Large Mobile */
   @media (max-width: 767.98px) {
-    .room-card-img {
-      height: 260px;
-    }
-
-    .room-card-title {
-      font-size: 1.25rem;
-      width: 85%;
-    }
-
-    .room-card-description {
-      font-size: 0.9375rem;
-      margin-top: 1rem;
-    }
-
+    .room-card-img { height: 260px; }
+    .room-card-title { font-size: 1.25rem; width: 85%; }
+    .room-card-description { font-size: 0.9375rem; margin-top: 1rem; }
     #roomsCarouselMobile .carousel-inner,
-    #roomsCarouselMobile .carousel-item {
-      min-height: 500px;
-    }
+    #roomsCarouselMobile .carousel-item { min-height: 500px; }
   }
 
-  /* Standard Mobile */
   @media (max-width: 575.98px) {
-    .room-card-img {
-      height: 240px;
-    }
-
-    .room-card-title {
-      font-size: 1.125rem;
-      width: 80%;
-      bottom: 1rem;
-    }
-
-    .room-card-description {
-      font-size: 0.875rem;
-      margin-top: 1rem;
-      min-height: 2.5rem;
-    }
-
+    .room-card-img { height: 240px; }
+    .room-card-title { font-size: 1.125rem; width: 80%; bottom: 1rem; }
+    .room-card-description { font-size: 0.875rem; margin-top: 1rem; min-height: 2.5rem; }
     #roomsCarouselMobile .carousel-inner,
-    #roomsCarouselMobile .carousel-item {
-      min-height: 480px;
-    }
-
-    .room-card-badge {
-      font-size: 0.6875rem;
-      padding: 0.375rem 0.75rem;
-    }
+    #roomsCarouselMobile .carousel-item { min-height: 480px; }
+    .room-card-badge { font-size: 0.6875rem; padding: 0.375rem 0.75rem; }
   }
 
-  /* Small Mobile */
   @media (max-width: 374.98px) {
-    .room-card-img {
-      height: 220px;
-    }
-
-    .room-card-title {
-      font-size: 1rem;
-    }
-
-    .room-card-description {
-      font-size: 0.8125rem;
-    }
-
+    .room-card-img { height: 220px; }
+    .room-card-title { font-size: 1rem; }
+    .room-card-description { font-size: 0.8125rem; }
     #roomsCarouselMobile .carousel-inner,
-    #roomsCarouselMobile .carousel-item {
-      min-height: 460px;
-    }
+    #roomsCarouselMobile .carousel-item { min-height: 460px; }
   }
 
-  /* Accessibility - Reduced Motion */
   @media (prefers-reduced-motion: reduce) {
-
     .room-card-wrapper,
     .room-card-img,
     .room-card-title,
@@ -355,43 +261,52 @@
       animation: none !important;
       transition: none !important;
     }
-
-    .room-card-wrapper:hover {
-      transform: none;
-    }
-
-    .room-card-wrapper:hover .room-card-img {
-      transform: none;
-    }
+    .room-card-wrapper:hover { transform: none; }
+    .room-card-wrapper:hover .room-card-img { transform: none; }
   }
 
-  /* Print Styles */
   @media print {
-    .room-card-badge {
-      opacity: 1 !important;
-    }
-
+    .room-card-badge { opacity: 1 !important; }
     .room-card-image-container::before,
-    .room-card-image-container::after {
-      display: none;
-    }
+    .room-card-image-container::after { display: none; }
   }
 </style>
 
-<a href="{{ route('frontpage.room-details', ['room_id' => $room->room_id]) }}" class="text-decoration-none">
-  <div class="card bg-transparent shadow-none room-card-wrapper">
-    <div class="card-body text-center">
-      <div class="room-card-image-container">
-        <img src="{{ asset('storage/' . $room->image_path) }}" class="card-img room-card-img" alt="{{ $title }}"
-          loading="lazy">
-
-        <div class="room-card-badge">Featured</div>
-        <h5 class="room-card-title">{{ $title }}</h5>
+<a href="{{ $room_id ? route('frontpage.room-details', ['room_id' => $room_id]) : '#' }}" class="text-decoration-none" style="display:flex; flex-direction:column; height:100%;">
+  <div class="room-card" style="flex:1;">
+    <div class="room-card-img-wrap">
+      <img src="{{ asset('storage/' . $image) }}" alt="{{ $title }}" loading="lazy">
+      @if($rating)
+      <div class="room-rating">
+        <i class="ri-star-fill"></i> {{ $rating }}
       </div>
-
-      <p class="card-text room-card-description">
-        {{ $description }}
-      </p>
+      @endif
+    </div>
+    <div class="room-card-body">
+      <h3>{{ $title }}</h3>
+      <div class="room-meta">
+        @if($size)<span>{{ $size }}</span>@endif
+        @if($bed)<span>{{ $bed }}</span>@endif
+        @if($capacity)<span>{{ $capacity }}</span>@endif
+      </div>
+      @if(count($tags))
+      <div class="room-tags">
+        @foreach($tags as $tag)
+          <span class="room-tag">{{ $tag }}</span>
+        @endforeach
+      </div>
+      @else
+      <p style="font-size:0.88rem;color:#6b7280;margin-bottom:1rem;line-height:1.5;">{{ Str::limit($description, 80) }}</p>
+      @endif
+      <div class="room-footer">
+        <div class="room-price">
+          @if($price)
+            <span class="amount">${{ $price }}</span>
+            <span class="per"> / night</span>
+          @endif
+        </div>
+        <span class="btn-book">Book Now</span>
+      </div>
     </div>
   </div>
 </a>
