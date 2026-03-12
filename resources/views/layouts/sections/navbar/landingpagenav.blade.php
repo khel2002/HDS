@@ -27,7 +27,7 @@
       {{-- CTA --}}
       <div class="nav-actions">
         @auth
-          <a href="{{ url('/dashboard') }}" class="nav-btn-outline">Dashboard</a>
+          <a href="{{ url('/') }}" class="nav-btn-outline">Dashboard</a>
         @else
           <a href="{{ route('login') }}"    class="nav-btn-outline">Sign In</a>
         @endauth
@@ -49,10 +49,9 @@
       </ul>
       <div class="nav-drawer-actions">
         @auth
-          <a href="{{ url('/dashboard') }}" class="nav-btn-solid w-full">Dashboard</a>
+          <a href="{{ url('/') }}" class="nav-btn-outline w-full">Dashboard</a>
         @else
           <a href="{{ route('login') }}"    class="nav-btn-outline w-full">Sign In</a>
-          <a href="{{ route('register') }}" class="nav-btn-solid  w-full">Book Now</a>
         @endauth
       </div>
     </div>

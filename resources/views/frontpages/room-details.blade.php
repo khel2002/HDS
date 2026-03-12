@@ -1,4 +1,4 @@
-@extends('layouts/sections/navbar/landingpagenav')
+@extends('layouts/blankLayout')
 @section('title', $room->roomType->room_type_name . ' - Hotel De SLSU')
 
 @section('vendor-style')
@@ -22,15 +22,19 @@
   <nav class="sticky-nav" id="stickyNav">
     <div class="container-airbnb">
       <div class="sticky-nav-content">
-        <div class="nav-tabs">
-          <a href="#photos" class="nav-tab active">Photos</a>
-          <a href="#amenities" class="nav-tab">Amenities</a>
-          <a href="#availability" class="nav-tab">Availability</a>
-          <a href="#location" class="nav-tab">Location</a>
-        </div>
+      <a href="{{ route('frontpage.index') }}" class="sticky-back-btn">
+        <i class="ri-arrow-left-line"></i>
+        <span>Back</span>
+      </a>
 
-        </div>
+      <div class="nav-tabs">
+        <a href="#photos" class="nav-tab active">Photos</a>
+        <a href="#amenities" class="nav-tab">Amenities</a>
+        <a href="#availability" class="nav-tab">Availability</a>
+        <a href="#location" class="nav-tab">Location</a>
       </div>
+    </div>
+
     </div>
   </nav>
 

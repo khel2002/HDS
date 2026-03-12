@@ -35,7 +35,6 @@ class PaymentController extends Controller
             'reservation_data.rooms.*.departure_date'         => 'required|date',
             'reservation_data.rooms.*.number_of_guests'       => 'required|integer|min:1',
             'reservation_data.rooms.*.special_requests'       => 'nullable|string',
-            // All guests per room (guests[0] = lead, guests[1..n] = additional)
             'reservation_data.rooms.*.guests'                 => 'nullable|array',
             'reservation_data.rooms.*.guests.*.first_name'    => 'nullable|string|max:45',
             'reservation_data.rooms.*.guests.*.last_name'     => 'nullable|string|max:45',
@@ -43,7 +42,6 @@ class PaymentController extends Controller
             'reservation_data.rooms.*.guests.*.phone'         => 'nullable|string|max:45',
             'reservation_data.rooms.*.guests.*.address'       => 'nullable|string|max:255',
             'reservation_data.rooms.*.guests.*.arrival_time'  => 'nullable|string',
-            // Account holder (Section 2) — stored in users only
             'reservation_data.first_name'                     => 'required|string|max:45',
             'reservation_data.middle_name'                    => 'nullable|string|max:45',
             'reservation_data.last_name'                      => 'required|string|max:45',
@@ -129,7 +127,7 @@ class PaymentController extends Controller
                 return redirect()->route('frontpage.index')->with('error', 'Payment not completed.');
             }
 
-            // ── 2. Idempotency: check by Stripe session ID ────────
+            // ── 2. Idempotency: check if already processed ────────
             $alreadyProcessed = DB::table('payments')
                 ->where('stripe_session_id', $stripeSessionId)
                 ->exists();
@@ -156,14 +154,14 @@ class PaymentController extends Controller
                     ->with('error', "Payment received but reservation data lost. Contact us with Stripe session: $stripeSessionId");
             }
 
-            // ── 4. Create reservations ────────────────────────────
+            // ── 4. Build reservations ─────────────────────────────
             DB::beginTransaction();
             $result = $this->buildReservations($reservationData, 'online', $stripeSessionId);
             DB::commit();
 
             \Log::info('paymentSuccess - committed', ['reservation_ids' => $result['reservation_ids']]);
 
-            // ── 5. Email ──────────────────────────────────────────
+            // ── 5. Confirmation email ─────────────────────────────
             $this->sendEmail($result);
 
             // ── 6. Clear cache ────────────────────────────────────
@@ -199,18 +197,19 @@ class PaymentController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────
-    // BUILD RESERVATIONS (shared between cash & online paths)
+    // BUILD RESERVATIONS (shared: cash & online)
     //
     // GUEST DETAILS LOGIC:
-    //   Section 2 (Account): account holder info → users table ONLY.
-    //   Section 3 (Details): ALL guests per room → guest_details table.
-    //     - guests[0] per room: is_primary = 1 (lead guest for that room)
-    //     - guests[1..n] per room: is_primary = 0 (additional guests)
-    //   reservations.guest_details_id → points to guests[0] of that room.
+    //   Section 2 (Account): account holder → users table ONLY.
+    //   Section 3 (Details): ALL guests per room → guest_details.
+    //     - guests[0] per room: is_primary = 1 (lead guest)
+    //     - guests[1..n] per room: is_primary = 0 (additional)
+    //   reservations.guest_details_id → guests[0] of that room.
     // ─────────────────────────────────────────────────────────────
     private function buildReservations(array $data, string $paymentMethod, ?string $stripeSessionId = null): array
     {
-        $roomsPayload = $data['rooms'];
+        // Re-index rooms to ensure 0-based sequential keys
+        $roomsPayload = array_values($data['rooms']);
         $roomIds      = array_column($roomsPayload, 'room_id');
 
         // ── Availability check ────────────────────────────────────
@@ -252,7 +251,7 @@ class PaymentController extends Controller
             throw new Exception('An account with this email already exists.');
         }
 
-        // ── Create user (account holder ONLY — no guest_details row) ──
+        // ── Create user (account holder only) ─────────────────────
         $tempPassword = Str::random(12);
         $guestRoleId  = DB::table('roles')->where('role_name', 'guest')->value('role_id');
         if (!$guestRoleId) throw new Exception('Guest role not found.');
@@ -261,19 +260,24 @@ class PaymentController extends Controller
             'role_id'       => $guestRoleId,
             'email'         => $data['email'],
             'password'      => Hash::make($tempPassword),
-            'temporary_act' => true,
+            'first_name'    => $data['first_name'],
+            'middle_name'   => $data['middle_name'] ?? null,
+            'last_name'     => $data['last_name'],
+            'temporary_act' => 1,
+            'STATUS'        => 'active',
             'created_at'    => now(),
             'updated_at'    => now(),
         ]);
 
         // ── Payment record ────────────────────────────────────────
         $paymentId = DB::table('payments')->insertGetId([
-            'payment_method'   => $paymentMethod,
-            'amount'           => $totalFee,
-            'payment_date'     => now(),
-            'payment_status'   => $paymentMethod === 'online' ? 'completed' : 'pending',
-            'stripe_session_id' => $stripeSessionId,
-            'paid_at'          => $paymentMethod === 'online' ? now() : null,
+            'payment_method'        => $paymentMethod,
+            'amount'                => $totalFee,
+            'payment_date'          => now(),
+            'payment_status'        => $paymentMethod === 'online' ? 'completed' : 'pending',
+            'stripe_session_id'     => $stripeSessionId,
+            'stripe_payment_intent' => null,
+            'paid_at'               => $paymentMethod === 'online' ? now() : null,
         ]);
 
         // ── Reservations + guests per room ────────────────────────
@@ -288,10 +292,10 @@ class PaymentController extends Controller
             $balance  = $subtotal - $feePerRoom;
             $totalSubtotal += $subtotal;
 
-            // a) Insert reservation with guest_details_id = null for now
+            // a) Insert reservation — guest_details_id is null until we create guests
             $resId = DB::table('reservations')->insertGetId([
                 'user_id'              => $userId,
-                'guest_details_id'     => null,
+                'guest_details_id'     => null,  // updated below
                 'payment_id'           => $paymentId,
                 'room_id'              => $roomId,
                 'reservation_fee'      => $feePerRoom,
@@ -311,9 +315,7 @@ class PaymentController extends Controller
 
             $reservationIds[] = $resId;
 
-            // b) Insert ALL guests for this room
-            //    guests[0] = lead guest (is_primary = 1)
-            //    guests[1..n] = additional guests (is_primary = 0)
+            // b) Insert all guests for this room
             $leadGuestId = null;
             foreach (($rd['guests'] ?? []) as $gIdx => $guest) {
                 if (empty($guest['first_name']) || empty($guest['last_name'])) continue;
@@ -337,7 +339,7 @@ class PaymentController extends Controller
                 }
             }
 
-            // c) Update reservation to point to the lead guest of this room
+            // c) Point reservation at the lead guest of this room
             if ($leadGuestId) {
                 DB::table('reservations')
                     ->where('reservation_id', $resId)

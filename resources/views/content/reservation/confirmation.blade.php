@@ -1,4 +1,4 @@
-@extends('layouts/sections/navbar/landingpagenav')
+@extends('layouts/landingpagenav')
 @section('title', 'Reservation Confirmed - Hotel De SLSU')
 
 @section('vendor-style')

@@ -445,9 +445,7 @@
                             placeholder="Enter your password"
                             required
                         />
-                        <button type="button" class="pw-toggle" id="togglePassword" aria-label="Toggle password visibility">
-                            <i class="ri ri-eye-off-line" id="toggleIcon" style="font-size:1.1rem;"></i>
-                        </button>
+
                     </div>
                     @error('password')
                         <div class="invalid-feedback">{{ $message }}</div>

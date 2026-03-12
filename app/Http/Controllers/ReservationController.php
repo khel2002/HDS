@@ -104,22 +104,14 @@ class ReservationController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────
-    // STORE — cash reservations
-    //
-    // GUEST DETAILS LOGIC:
-    //   Section 2 (Account): first_name/last_name/email/etc → users table ONLY.
-    //   Section 3 (Details): guests[0..n] per room → ALL go into guest_details.
-    //     - guests[0] is the lead guest for that room (is_primary = 1).
-    //     - guests[1..n] are additional guests (is_primary = 0).
-    //   reservations.guest_details_id → points to guests[0] of that room.
+    // STORE (CASH PATH)
     // ─────────────────────────────────────────────────────────────
     public function store(Request $request)
     {
         \Log::info('=== STORE HIT ===', [
-            'rooms_raw'       => $request->input('rooms'),
-            'email'           => $request->input('email'),
-            'payment_method'  => $request->input('payment_method'),
-            'rooms_data_keys' => array_keys($request->input('rooms_data', [])),
+            'rooms_raw'      => $request->input('rooms'),
+            'email'          => $request->input('email'),
+            'payment_method' => $request->input('payment_method'),
         ]);
 
         // ── 1. Top-level validation ───────────────────────────────
@@ -135,8 +127,21 @@ class ReservationController extends Controller
             'payment_method' => 'required|in:cash,online',
         ]);
 
-        // ── 2. Per-room validation ────────────────────────────────
-        $roomsData = $request->input('rooms_data', []);
+        // ── 2. Decode rooms JSON ──────────────────────────────────
+        $roomsList = json_decode($validated['rooms'], true);
+        if (empty($roomsList)) {
+            return back()->withInput()->with('error', 'No rooms selected. Please go back and select a room.');
+        }
+
+        $roomIds  = array_column($roomsList, 'room_id');
+        // Re-index to ensure 0-based sequential keys
+        $roomsData = array_values($request->input('rooms_data', []));
+
+        if (count($roomIds) !== count($roomsData)) {
+            return back()->withInput()->with('error', 'Room data mismatch. Please refresh and try again.');
+        }
+
+        // ── 3. Per-room validation ────────────────────────────────
         foreach ($roomsData as $idx => $rd) {
             $n = $idx + 1;
             if (empty($rd['arrival_date']))
@@ -147,27 +152,14 @@ class ReservationController extends Controller
                 return back()->withInput()->with('error', "Room $n: check-out must be after check-in.");
             if (empty($rd['number_of_guests']) || (int)$rd['number_of_guests'] < 1)
                 return back()->withInput()->with('error', "Room $n: number of guests is required.");
-            // guests[0] is the lead guest for this room — name required
             if (empty($rd['guests'][0]['first_name']) || empty($rd['guests'][0]['last_name']))
                 return back()->withInput()->with('error', "Room $n: lead guest name is required.");
-        }
-
-        // ── 3. Decode rooms JSON ──────────────────────────────────
-        $roomsList = json_decode($validated['rooms'], true);
-        if (empty($roomsList)) {
-            return back()->withInput()->with('error', 'No rooms selected. Please go back and select a room.');
-        }
-
-        $roomIds = array_column($roomsList, 'room_id');
-
-        if (count($roomIds) !== count($roomsData)) {
-            return back()->withInput()->with('error', 'Room data mismatch. Please refresh and try again.');
         }
 
         DB::beginTransaction();
 
         try {
-            // ── 4. Rooms available ────────────────────────────────
+            // ── 4. Confirm rooms are still available ──────────────
             $availableRoomIds = DB::table('rooms')
                 ->whereIn('room_id', $roomIds)
                 ->where('status', 'available')
@@ -203,14 +195,14 @@ class ReservationController extends Controller
                 return back()->withInput()->with('error', 'An account with this email already exists. Please use a different email.');
             }
 
-            // ── 8. Fees & dates ───────────────────────────────────
+            // ── 8. Fees & primary dates ───────────────────────────
             $feePerRoom       = 500;
             $totalFee         = $feePerRoom * count($roomIds);
             $primaryArrival   = $roomsData[0]['arrival_date'];
             $primaryDeparture = $roomsData[0]['departure_date'];
             $primaryNights    = (int)(new \DateTime($primaryArrival))->diff(new \DateTime($primaryDeparture))->days;
 
-            // ── 9. Create user (account holder only — NO guest_details row) ──
+            // ── 9. Create user account (holder only) ──────────────
             $tempPassword = Str::random(12);
             $guestRoleId  = DB::table('roles')->where('role_name', 'guest')->value('role_id');
             if (!$guestRoleId) throw new Exception('Guest role not found in the roles table.');
@@ -219,7 +211,11 @@ class ReservationController extends Controller
                 'role_id'       => $guestRoleId,
                 'email'         => $validated['email'],
                 'password'      => Hash::make($tempPassword),
-                'temporary_act' => true,
+                'first_name'    => $validated['first_name'],
+                'middle_name'   => $validated['middle_name'] ?? null,
+                'last_name'     => $validated['last_name'],
+                'temporary_act' => 1,
+                'STATUS'        => 'active',
                 'created_at'    => now(),
                 'updated_at'    => now(),
             ]);
@@ -234,25 +230,21 @@ class ReservationController extends Controller
             ]);
 
             // ── 11. Reservations + guests per room ────────────────
-            // For each room:
-            //   a) Insert reservation first (guest_details_id = null temporarily)
-            //   b) Insert all guests for this room, linking reservation_id
-            //   c) Update reservation.guest_details_id to guests[0] (lead guest)
             $reservationIds = [];
             $totalSubtotal  = 0;
 
             foreach ($roomIds as $i => $roomId) {
-                $rd      = $roomsData[$i];
-                $nights  = (int)(new \DateTime($rd['arrival_date']))->diff(new \DateTime($rd['departure_date']))->days;
-                $rate    = $roomTypes[$roomId]->rate_per_night;
+                $rd       = $roomsData[$i];
+                $nights   = (int)(new \DateTime($rd['arrival_date']))->diff(new \DateTime($rd['departure_date']))->days;
+                $rate     = $roomTypes[$roomId]->rate_per_night;
                 $subtotal = $rate * $nights;
                 $balance  = $subtotal - $feePerRoom;
                 $totalSubtotal += $subtotal;
 
-                // a) Insert reservation with guest_details_id = null for now
+                // a) Insert reservation — guest_details_id nullable until we create the guest
                 $resId = DB::table('reservations')->insertGetId([
                     'user_id'              => $userId,
-                    'guest_details_id'     => null,
+                    'guest_details_id'     => null,   // updated below after guest insert
                     'payment_id'           => $paymentId,
                     'room_id'              => $roomId,
                     'reservation_fee'      => $feePerRoom,
@@ -263,7 +255,7 @@ class ReservationController extends Controller
                     'booking_date'         => now()->toDateString(),
                     'check_in_date'        => $rd['arrival_date'],
                     'check_out_date'       => $rd['departure_date'],
-                    'adults'               => (int)$rd['number_of_guests'],
+                    'adults'               => (int)($rd['number_of_guests'] ?? 1),
                     'children'             => 0,
                     'no_nights'            => $nights,
                     'reservation_fee_paid' => 0,
@@ -273,7 +265,7 @@ class ReservationController extends Controller
                 $reservationIds[] = $resId;
                 \Log::info("STORE - reservation $resId created for room $roomId");
 
-                // b) Insert ALL guests for this room (guests[0] = lead, is_primary = 1)
+                // b) Insert all guests for this room
                 $leadGuestId = null;
                 foreach (($rd['guests'] ?? []) as $gIdx => $guest) {
                     if (empty($guest['first_name']) || empty($guest['last_name'])) continue;
@@ -292,13 +284,12 @@ class ReservationController extends Controller
                         'created_at'     => now(),
                     ]);
 
-                    // Capture lead guest ID from first guest in list
                     if ($gIdx === 0) {
                         $leadGuestId = $newGuestId;
                     }
                 }
 
-                // c) Update reservation to point to the lead guest
+                // c) Point reservation at the lead guest
                 if ($leadGuestId) {
                     DB::table('reservations')
                         ->where('reservation_id', $resId)
@@ -307,9 +298,12 @@ class ReservationController extends Controller
             }
 
             DB::commit();
-            \Log::info('STORE - committed', ['reservation_ids' => $reservationIds, 'user_id' => $userId]);
+            \Log::info('STORE - committed', [
+                'reservation_ids' => $reservationIds,
+                'user_id'         => $userId,
+            ]);
 
-            // ── 12. Email ─────────────────────────────────────────
+            // ── 12. Confirmation email ────────────────────────────
             $roomDetails = collect($roomIds)->map(fn($id) => [
                 'room_number'    => $roomTypes[$id]->room_number,
                 'room_type_name' => $roomTypes[$id]->room_type_name,
@@ -330,7 +324,7 @@ class ReservationController extends Controller
                 'balance'         => $totalSubtotal - $totalFee,
             ]);
 
-            // ── 13. Redirect ──────────────────────────────────────
+            // ── 13. Redirect to confirmation ──────────────────────
             $idsStr = implode(',', $reservationIds);
             $token  = hash_hmac('sha256', $userId . '|' . $idsStr, config('app.key'));
 
@@ -370,6 +364,7 @@ class ReservationController extends Controller
                 ->with('error', 'Invalid confirmation link. Please check your email.');
         }
 
+        // Verify signed token
         $expected = hash_hmac('sha256', $uid . '|' . $rids, config('app.key'));
         if (!hash_equals($expected, $token)) {
             return redirect()->route('frontpage.index')
@@ -407,7 +402,7 @@ class ReservationController extends Controller
         $user  = DB::table('users')->where('user_id', $uid)->first();
         $first = $reservations->first();
 
-        // Lead guest of the first reservation (for display name)
+        // Lead guest of the first reservation (for display)
         $leadGuest = DB::table('guest_details')
             ->where('reservation_id', $first->reservation_id)
             ->where('is_primary', 1)
@@ -461,7 +456,9 @@ class ReservationController extends Controller
 
         return response()->json([
             'available' => !$overlap,
-            'message'   => $overlap ? 'Room is already booked for selected dates' : 'Room is available',
+            'message'   => $overlap
+                ? 'Room is already booked for selected dates'
+                : 'Room is available',
         ]);
     }
 
@@ -500,6 +497,7 @@ class ReservationController extends Controller
                 ->where('reservation_id', $reservation_id)
                 ->update(['reservation_status' => 'cancelled']);
 
+            // If this user has no other active reservations, delete the temp account
             $otherActive = DB::table('reservations')
                 ->where('user_id', $res->user_id)
                 ->where('reservation_id', '!=', $reservation_id)
@@ -509,13 +507,14 @@ class ReservationController extends Controller
             if (!$otherActive) {
                 DB::table('users')
                     ->where('user_id', $res->user_id)
-                    ->where('temporary_act', true)
+                    ->where('temporary_act', 1)
                     ->delete();
             }
 
             DB::commit();
             return redirect()->route('frontpage.index')
                 ->with('success', 'Reservation cancelled successfully');
+
         } catch (Exception $e) {
             DB::rollBack();
             \Log::error('cancel: ' . $e->getMessage());

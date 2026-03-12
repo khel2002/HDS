@@ -1,4 +1,4 @@
-@extends('layouts/sections/navbar/landingpagenav')
+@extends('layouts/blankLayout')
 @section('title', 'Book ' . $room->roomType->room_type_name . ' - Hotel De SLSU')
 
 @section('vendor-style')
