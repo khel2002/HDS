@@ -1,211 +1,198 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reservation Confirmation - Hotel De SLSU</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 600px;
-            margin: 20px auto;
-            background: #ffffff;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .header {
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 28px;
-        }
-        .content {
-            padding: 30px;
-        }
-        .credentials-box {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        .credential-item {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
-        .credential-label {
-            font-size: 12px;
-            color: #856404;
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-        .credential-value {
-            font-size: 18px;
-            color: #1e293b;
-            font-weight: 700;
-            word-break: break-all;
-        }
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        .info-table th,
-        .info-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .info-table th {
-            color: #64748b;
-            font-weight: 500;
-        }
-        .info-table td {
-            color: #1e293b;
-            font-weight: 600;
-        }
-        .alert {
-            background: #fef2f2;
-            border-left: 4px solid #ef4444;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-        .alert strong {
-            color: #991b1b;
-        }
-        .button {
-            display: inline-block;
-            padding: 12px 30px;
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            color: white !important;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            margin: 10px 5px;
-        }
-        .footer {
-            background: #f8fafc;
-            padding: 20px;
-            text-align: center;
-            color: #64748b;
-            font-size: 14px;
-        }
-        ul {
-            line-height: 1.8;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservation Confirmation</title>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🎉 Reservation Confirmed!</h1>
-            <p style="margin: 10px 0 0 0; opacity: 0.95;">Hotel De SLSU</p>
-        </div>
+<body style="margin:0; padding:0; background:#f1f5f9; font-family:'Segoe UI',Arial,sans-serif; color:#1e293b;">
 
-        <div class="content">
-            <p>Dear {{ $first_name }} {{ $last_name }},</p>
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9; padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="620" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08); max-width:620px; width:100%;">
 
-            <p>Thank you for choosing Hotel De SLSU! Your reservation has been confirmed.</p>
+          {{-- HEADER --}}
+          <tr>
+            <td style="background:linear-gradient(135deg,#060E4D,#013a72); padding:40px 40px 32px; text-align:center;">
+              <div style="font-size:48px; margin-bottom:12px;">🏨</div>
+              <h1 style="margin:0; color:#ffffff; font-size:26px; font-weight:700; letter-spacing:-0.5px;">
+                Hotel De SLSU
+              </h1>
+              <p style="margin:6px 0 0; color:rgba(255,255,255,0.75); font-size:14px;">
+                Reservation Confirmation
+              </p>
+              <div style="display:inline-block; background:#10b981; color:#fff; font-size:13px; font-weight:700; padding:6px 20px; border-radius:20px; margin-top:16px;">
+                ✓ Booking Confirmed
+              </div>
+            </td>
+          </tr>
 
-            <h2 style="color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Reservation Details</h2>
+          {{-- GREETING --}}
+          <tr>
+            <td style="padding:32px 40px 0;">
+              <p style="margin:0 0 8px; font-size:17px;">
+                Hello, <strong style="color:#060E4D;">{{ $first_name }} {{ $last_name }}</strong>!
+              </p>
+              <p style="margin:0; color:#64748b; font-size:14px; line-height:1.7;">
+                Your reservation at Hotel De SLSU has been successfully created.
+                Below are your booking details and temporary account credentials.
+              </p>
+            </td>
+          </tr>
 
-            <table class="info-table">
+          {{-- RESERVATION DETAILS --}}
+          <tr>
+            <td style="padding:28px 40px 0;">
+              <p style="margin:0 0 12px; font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em;">
+                Reservation Details
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden;">
                 <tr>
-                    <th>Reservation ID:</th>
-                    <td>#{{ $reservation_id }}</td>
+                  <td style="padding:14px 20px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#64748b; font-weight:500; width:40%;">Room(s)</td>
+                  <td style="padding:14px 20px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#1e293b; font-weight:600; text-align:right;">
+                    @if(!empty($rooms) && count($rooms) > 0)
+                      @foreach($rooms as $r)
+                        {{ $r['room_type_name'] }} — Rm {{ $r['room_number'] }}<br>
+                      @endforeach
+                    @else
+                      —
+                    @endif
+                  </td>
                 </tr>
                 <tr>
-                    <th>Room Type:</th>
-                    <td>{{ $room_type_name }}</td>
+                  <td style="padding:14px 20px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#64748b; font-weight:500;">Check-in</td>
+                  <td style="padding:14px 20px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#1e293b; font-weight:600; text-align:right;">
+                    {{ date('F d, Y', strtotime($arrival_date)) }}
+                  </td>
                 </tr>
                 <tr>
-                    <th>Room Number:</th>
-                    <td>{{ $room_number }}</td>
+                  <td style="padding:14px 20px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#64748b; font-weight:500;">Check-out</td>
+                  <td style="padding:14px 20px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#1e293b; font-weight:600; text-align:right;">
+                    {{ date('F d, Y', strtotime($departure_date)) }}
+                  </td>
                 </tr>
                 <tr>
-                    <th>Check-in:</th>
-                    <td>{{ date('F d, Y', strtotime($arrival_date)) }}</td>
+                  <td style="padding:14px 20px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#64748b; font-weight:500;">Number of Nights</td>
+                  <td style="padding:14px 20px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#1e293b; font-weight:600; text-align:right;">
+                    {{ $no_nights }} night{{ $no_nights > 1 ? 's' : '' }}
+                  </td>
                 </tr>
                 <tr>
-                    <th>Check-out:</th>
-                    <td>{{ date('F d, Y', strtotime($departure_date)) }}</td>
+                  <td style="padding:14px 20px; font-size:13px; color:#64748b; font-weight:500;">Number of Rooms</td>
+                  <td style="padding:14px 20px; font-size:13px; color:#1e293b; font-weight:600; text-align:right;">
+                    {{ $room_count }} room{{ $room_count > 1 ? 's' : '' }}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          {{-- PAYMENT SUMMARY --}}
+          <tr>
+            <td style="padding:24px 40px 0;">
+              <p style="margin:0 0 12px; font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em;">
+                Payment Summary
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden;">
+                <tr>
+                  <td style="padding:14px 20px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#64748b; font-weight:500;">Total Amount</td>
+                  <td style="padding:14px 20px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#1e293b; font-weight:700; text-align:right;">
+                    ₱{{ number_format($total_amount, 2) }}
+                  </td>
                 </tr>
                 <tr>
-                    <th>Number of Nights:</th>
-                    <td>{{ $no_nights }} night{{ $no_nights > 1 ? 's' : '' }}</td>
+                  <td style="padding:14px 20px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#64748b; font-weight:500;">Reservation Fee (Pay Now)</td>
+                  <td style="padding:14px 20px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#10b981; font-weight:700; text-align:right;">
+                    ₱{{ number_format($reservation_fee, 2) }}
+                  </td>
                 </tr>
                 <tr>
-                    <th>Total Amount:</th>
-                    <td>₱{{ number_format($total_amount, 2) }}</td>
+                  <td style="padding:14px 20px; font-size:13px; color:#64748b; font-weight:500;">Remaining Balance</td>
+                  <td style="padding:14px 20px; font-size:13px; color:#f59e0b; font-weight:700; text-align:right;">
+                    ₱{{ number_format($balance, 2) }}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          {{-- TEMPORARY CREDENTIALS --}}
+          <tr>
+            <td style="padding:24px 40px 0;">
+              <p style="margin:0 0 12px; font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em;">
+                Your Temporary Account
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb; border:2px solid #fbbf24; border-radius:10px; overflow:hidden;">
+                <tr>
+                  <td style="padding:16px 20px; border-bottom:1px solid #fde68a;">
+                    <p style="margin:0 0 4px; font-size:11px; font-weight:700; color:#92400e; text-transform:uppercase; letter-spacing:0.06em;">Email / Username</p>
+                    <p style="margin:0; font-size:15px; font-weight:700; color:#1e293b;">{{ $email ?? '' }}</p>
+                  </td>
                 </tr>
                 <tr>
-                    <th>Remaining Balance:</th>
-                    <td style="color: #f59e0b;">₱{{ number_format($balance, 2) }}</td>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0 0 4px; font-size:11px; font-weight:700; color:#92400e; text-transform:uppercase; letter-spacing:0.06em;">Temporary Password</p>
+                    <p style="margin:0; font-size:15px; font-weight:700; color:#1e293b; word-break:break-all; font-family:monospace;">{{ $password ?? '' }}</p>
+                  </td>
                 </tr>
-            </table>
+              </table>
+              <p style="margin:10px 0 0; font-size:12px; color:#ef4444; font-weight:600;">
+                ⚠ Please change your password immediately after your first login.
+              </p>
+            </td>
+          </tr>
 
-            <div class="credentials-box">
-                <h3 style="color: #856404; margin-top: 0;">Your Account Credentials</h3>
-                <p style="color: #856404;">Use these credentials to log in and manage your reservation:</p>
+          {{-- IMPORTANT NOTES --}}
+          <tr>
+            <td style="padding:24px 40px 0;">
+              <p style="margin:0 0 12px; font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em;">
+                Important Information
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0; font-size:13px; color:#166534; line-height:2.2;">
+                      🕑 <strong>Check-in time:</strong> 2:00 PM<br>
+                      🕛 <strong>Check-out time:</strong> 12:00 PM<br>
+                      🪪 <strong>Bring a valid ID</strong> upon check-in<br>
+                      💵 <strong>Reservation fee of ₱{{ number_format($reservation_fee, 2) }}</strong> must be paid upon check-in<br>
+                      💳 <strong>Remaining balance of ₱{{ number_format($balance, 2) }}</strong> must be paid during your stay<br>
+                      ❌ <strong>Cancellations</strong> must be made at least 24 hours before check-in
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-                <div class="credential-item">
-                    <div class="credential-label">Email / Username</div>
-                    <div class="credential-value">{{ $email }}</div>
-                </div>
+          {{-- CTA BUTTON --}}
+          <tr>
+            <td style="padding:32px 40px;" align="center">
+              <a href="{{ route('login') }}"
+                 style="display:inline-block; background:linear-gradient(135deg,#060E4D,#013a72); color:#ffffff;
+                        font-size:15px; font-weight:700; padding:14px 40px; border-radius:8px;
+                        text-decoration:none; letter-spacing:0.02em;">
+                Login to Your Account →
+              </a>
+            </td>
+          </tr>
 
-                <div class="credential-item">
-                    <div class="credential-label">Temporary Password</div>
-                    <div class="credential-value">{{ $password }}</div>
-                </div>
-            </div>
+          {{-- FOOTER --}}
+          <tr>
+            <td style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:24px 40px; text-align:center;">
+              <p style="margin:0 0 4px; font-size:13px; font-weight:600; color:#475569;">Hotel De SLSU</p>
+              <p style="margin:0; font-size:12px; color:#94a3b8; line-height:1.6;">
+                This is an automated confirmation email. Please do not reply to this message.<br>
+                If you have questions, contact us directly at the hotel.
+              </p>
+            </td>
+          </tr>
 
-            <div class="alert">
-                <strong>⚠️ Important:</strong> Please change your password after your first login for security purposes.
-            </div>
+        </table>
+      </td>
+    </tr>
+  </table>
 
-            <h3 style="color: #1e293b;">Important Information</h3>
-            <ul style="color: #64748b;">
-                <li>Check-in time: 2:00 PM</li>
-                <li>Check-out time: 12:00 PM</li>
-                <li>Please bring a valid ID upon check-in</li>
-                <li>Remaining balance of ₱{{ number_format($balance, 2) }} must be paid during your stay</li>
-                <li>Cancellation must be made at least 24 hours before check-in</li>
-            </ul>
-
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="{{ config('app.url') }}/login" class="button">Login to Your Account</a>
-            </div>
-
-            <p>If you have any questions, please don't hesitate to contact us.</p>
-
-            <p>We look forward to welcoming you!</p>
-
-            <p style="margin-top: 30px;">
-                Best regards,<br>
-                <strong>Hotel De SLSU Team</strong>
-            </p>
-        </div>
-
-        <div class="footer">
-            <p>This is an automated email. Please do not reply to this message.</p>
-            <p>&copy; {{ date('Y') }} Hotel De SLSU. All rights reserved.</p>
-        </div>
-    </div>
 </body>
 </html>

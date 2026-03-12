@@ -540,10 +540,11 @@ class ReservationController extends Controller
         try {
             Mail::send('emails.reservation-confirmation', $data, function ($m) use ($data) {
                 $m->to($data['email'], ($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''))
-                  ->subject('Reservation Confirmation - Hotel De SLSU');
+                ->subject('Reservation Confirmation - Hotel De SLSU');
             });
+            \Log::info('Email sent successfully to: ' . $data['email']);
         } catch (Exception $e) {
-            \Log::error('Email failed: ' . $e->getMessage());
+            \Log::error('Email failed: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ':' . $e->getLine());
         }
     }
 
