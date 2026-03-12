@@ -12,7 +12,7 @@ class Reservation extends Model
 
     protected $table = 'reservations';
     protected $primaryKey = 'reservation_id';
-    
+
     // Disable automatic timestamp management since the table doesn't have updated_at
     public $timestamps = false;
 
@@ -29,6 +29,7 @@ class Reservation extends Model
         'booking_date',
         'adults',
         'children',
+        'no_of_pax',
         'no_nights',
         'check_in_date',
         'check_out_date',
@@ -52,7 +53,7 @@ class Reservation extends Model
     ];
 
     // Rest of your model code remains the same...
-    
+
     // Relationships
     public function user()
     {
@@ -186,19 +187,19 @@ class Reservation extends Model
 
     public function isActive()
     {
-        return in_array($this->reservation_status, ['pending', 'approved']) 
+        return in_array($this->reservation_status, ['pending', 'approved'])
                && $this->check_out_date >= today();
     }
 
     public function isUpcoming()
     {
-        return $this->check_in_date > today() 
+        return $this->check_in_date > today()
                && in_array($this->reservation_status, ['pending', 'approved']);
     }
 
     public function isCurrent()
     {
-        return $this->check_in_date <= today() 
+        return $this->check_in_date <= today()
                && $this->check_out_date >= today()
                && $this->reservation_status === 'approved';
     }

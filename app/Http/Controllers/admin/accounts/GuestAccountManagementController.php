@@ -14,18 +14,26 @@ class GuestAccountManagementController extends Controller
 {
   public function index()
   {
-
     $guests = GuestDetail::with('user')
       ->whereHas('user', function ($query) {
         $query->where('role_id', 1);
       })
       ->get();
 
-    $totalUsers     = $guests->count();
-    $activeUsers    = $guests->where('STATUS', 'active')->count();
-    $inactiveUsers  = $guests->where('STATUS', 'inactive')->count();
-    $suspendedUsers = $guests->where('STATUS', 'suspended')->count();
-    // dd($guests);
+      $totalUsers = $guests->count();
+
+      $activeUsers = $guests->filter(function ($guest) {
+          return $guest->user && strtolower($guest->user->STATUS) === 'active';
+      })->count();
+
+      $inactiveUsers = $guests->filter(function ($guest) {
+          return $guest->user && strtolower($guest->user->STATUS) === 'inactive';
+      })->count();
+
+      $suspendedUsers = $guests->filter(function ($guest) {
+          return $guest->user && strtolower($guest->user->STATUS) === 'suspended';
+      })->count();
+
     return view('content.admin.guest-accounts.guestmanagement', compact(
       'guests',
       'totalUsers',

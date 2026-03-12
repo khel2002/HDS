@@ -14,7 +14,8 @@ use App\Http\Controllers\SuperAdmin\{
     AmenitiesController,
     ReservationController as SuperAdminReservationController,
     BreakfastController,
-    RegistrationController
+    RegistrationController,
+    WalkInReservationController
 };
 
 use App\Http\Controllers\FrontpageController;
@@ -219,11 +220,20 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super_a
     Route::patch('/{id}/status', [RoomController::class, 'updateStatus'])->name('update-status');
   });
 Route::prefix('reservations')->name('reservations.')->group(function () {
+
+
+  //walk-in reservations
+    Route::get('/walk-in',[WalkInReservationController::class, 'index'])->name('walkin');
+
+    
     Route::get('/',[SuperAdminReservationController::class, 'index'])->name('index');
     Route::post('/',[SuperAdminReservationController::class, 'store'])->name('store');
     Route::get('/{id}',[SuperAdminReservationController::class, 'show'])->name('show');
     Route::put('/{id}',[SuperAdminReservationController::class, 'update'])->name('update');
     Route::delete('/{id}',[SuperAdminReservationController::class, 'destroy'])->name('destroy');
+
+
+
 
     // Single-room status actions
     Route::post('/{id}/approve',[SuperAdminReservationController::class, 'approve'])->name('approve');

@@ -67,7 +67,7 @@
                 <td class="user-contact text-center">{{ $guest->contact_number }}</td>
                 <td class="text-center align-middle">
                   <span
-                    class="badge {{ strtolower($guest->user->STATUS) === 'active' ? 'bg-success' : (strtolower($guest->user->STATUS) === 'inactive' ? 'bg-warning' : 'bg-danger') }}">
+                    class="badge {{ strtolower($guest->user->STATUS) === 'asd' ? 'bg-success' : (strtolower($guest->user->STATUS) === 'inactive' ? 'bg-warning' : 'bg-danger')  }}">
                     {{ ucfirst(strtolower($guest->user->STATUS)) }}
                   </span>
                 </td>
@@ -146,11 +146,11 @@
   </div>
 
   {{-- Include all modals --}}
-  {{-- @include('content.admin.guest-accounts.add-new-guest-modal')
-  @include('content.admin.guest-accounts.view_guest_account-modal')
-  @include('content.admin.guest-accounts.edit_guest_account-modal')
-  @include('content.admin.guest-accounts.change_guest_status-modal')
-  @include('content.admin.guest-accounts.delete_guest-modal') --}}
+  {{-- @include('content.admin.guest-accounts.add-new-guest-modal') --}}
+  @include('content.admin.guest-accounts.view_guest_account')
+  @include('content.admin.guest-accounts.edit_guest_account')
+  @include('content.admin.guest-accounts.change_guest_status')
+  @include('content.admin.guest-accounts.delete_guest')
 @endsection
 
 @section('page-script')

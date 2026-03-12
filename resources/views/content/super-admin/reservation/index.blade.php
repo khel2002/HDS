@@ -18,14 +18,23 @@
       <div class="card">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
+
             <div>
               <h4 class="mb-1">Reservation Management</h4>
               <p class="mb-0">View, review and manage all guest bookings across all rooms</p>
             </div>
+
+            <a href="{{ route('super_admin.reservations.walkin') }}" class="btn btn-primary" type="button">
+              <i class="ri ri-add-line me-1"></i>
+              walk-in reservation
+            </a>
+
           </div>
         </div>
       </div>
     </div>
+
+
 
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     {{--  STAT CARDS                                                           --}}

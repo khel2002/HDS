@@ -87,19 +87,47 @@ document.addEventListener('DOMContentLoaded', function () {
   // View User Details
   // ========================================
   window.viewUser = function (userId, firstName, middleName, lastName, email, role, status, createdAt, updatedAt) {
+    // Populate header section
+    const fullName = `${firstName} ${middleName ? middleName + ' ' : ''}${lastName}`;
+    document.getElementById('viewUserFullName').textContent = fullName;
+    document.getElementById('viewUserEmailHeader').textContent = email || '-';
+
+    // Status badge in header
+    const statusBadge = document.getElementById('viewUserStatusBadge');
+    const statusLower = status.toLowerCase();
+    let badgeClass = 'bg-success';
+
+    if (statusLower === 'inactive') {
+      badgeClass = 'bg-warning';
+    } else if (statusLower === 'suspended') {
+      badgeClass = 'bg-danger';
+    }
+
+    statusBadge.className = `badge rounded-pill ${badgeClass}`;
+    statusBadge.textContent = status;
+
+    // Avatar initials
+    const initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+    document.getElementById('viewUserAvatar').textContent = initials;
+
+    // Populate details section
     document.getElementById('viewFirstName').textContent = firstName || '-';
     document.getElementById('viewMiddleName').textContent = middleName || '-';
     document.getElementById('viewLastName').textContent = lastName || '-';
     document.getElementById('viewEmail').textContent = email || '-';
     document.getElementById('viewRole').textContent = role || '-';
+
+    // Status with badge in details
+    const statusContainer = document.getElementById('viewStatus');
+    const statusClass = statusLower === 'active' ? 'bg-success' : statusLower === 'inactive' ? 'bg-warning' : 'bg-danger';
+    statusContainer.innerHTML = `<span class="badge ${statusClass}">${status}</span>`;
+
     document.getElementById('viewJoinedDate').textContent = createdAt || '-';
     document.getElementById('viewUpdatedDate').textContent = updatedAt || '-';
 
-    document.getElementById('viewStatus').innerHTML = `<span class="badge ${getStatusClass(status)}">${status}</span>`;
-
-    document.getElementById('viewUserAvatar').textContent = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
-
-    new bootstrap.Modal(document.getElementById('viewUserModal')).show();
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('viewUserModal'));
+    modal.show();
   };
 
   // ========================================

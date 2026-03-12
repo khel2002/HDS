@@ -13,12 +13,16 @@ class AdminAccountManagementController extends Controller
 {
   public function index()
   {
-    $users     = User::all();
+    $users = User::where('role_id', '!=', 1)
+        ->with('role')
+        ->orderBy('created_at', 'desc')
+        ->get();
 
     $totalUsers     = $users->count();
     $activeUsers    = $users->where('STATUS', 'active')->count();
     $inactiveUsers  = $users->where('STATUS', 'inactive')->count();
     $suspendedUsers = $users->where('STATUS', 'suspended')->count();
+
 
     return view('content.admin.admin-accounts.usermanagement', compact(
       'users',
