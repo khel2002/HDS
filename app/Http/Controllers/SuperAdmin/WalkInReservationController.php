@@ -9,6 +9,6 @@ class WalkInReservationController extends Controller
 {
     public function index()
     {
-      return view ('content.super-admin.reservation.walk-in');
+      return view ('content.super-admin.reservation.walk-in-reservations.walk-in');
     }
 }
