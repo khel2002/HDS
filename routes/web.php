@@ -4,8 +4,8 @@ use App\Http\Controllers\admin\accounts\AdminAccountManagementController;
 use App\Http\Controllers\admin\accounts\GuestAccountManagementController;
 use App\Http\Controllers\admin\AdminDashboardController;
 use Illuminate\Support\Facades\Route;
-
-use App\Http\Controllers\dashboard\Analytics;
+use App\Http\Controllers\guest\BreakfastController as GuestBreakfastController;
+use App\Http\Controllers\dashboard\GuestPortalController;
 
 use App\Http\Controllers\SuperAdmin\{
     SuperAdminDashboardController,
@@ -183,14 +183,23 @@ Route::middleware(['auth'])->group(function () {
   });
 });
 
-// Guest dashboard
 Route::middleware(['auth'])->prefix('guest')->name('guest.')->group(function () {
-  Route::get('/dashboard', [Analytics::class, 'index'])->name('dashboard');
+ 
+    Route::get('/dashboard', [GuestPortalController::class, 'index'])->name('dashboard');
+    Route::post('/service',  [GuestPortalController::class, 'requestService'])->name('service');
+ 
+    Route::prefix('breakfast')->name('breakfast.')->group(function () {
+        Route::get('/menu',[GuestBreakfastController::class, 'index'])->name('menu');
+        Route::get('/order',[GuestBreakfastController::class, 'index'])->name('order');
+        Route::post('/order',[GuestBreakfastController::class, 'store'])->name('store');
+        Route::get('/my-orders',[GuestBreakfastController::class, 'myOrders']) ->name('my-orders');
+        Route::get('/orders',[GuestBreakfastController::class, 'myOrdersJson'])->name('orders');
+    });
 });
 
 // Staff dashboard
 Route::middleware(['auth', 'staff'])->prefix('staff')->name('staff.')->group(function () {
-  Route::get('/dashboard', [Analytics::class, 'index'])->name('dashboard');
+  Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
 });
 
 // Admin dashboard

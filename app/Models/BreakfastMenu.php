@@ -2,13 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BreakfastMenu extends Model
 {
-    use HasFactory;
-
     protected $table      = 'breakfast_menu';
     protected $primaryKey = 'breakfast_id';
     public    $timestamps = false;
@@ -26,7 +24,9 @@ class BreakfastMenu extends Model
         'is_available' => 'boolean',
     ];
 
-    public function serviceBreakfastOrders()
+    /* ── Relationships ──────────────────────────────────────────── */
+
+    public function serviceOrders(): HasMany
     {
         return $this->hasMany(ServiceBreakfastOrder::class, 'breakfast_id', 'breakfast_id');
     }

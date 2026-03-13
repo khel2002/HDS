@@ -20,11 +20,6 @@
           "slug": "breakfast-menu"
         },
         {
-          "url": "/guest/breakfast/order",
-          "name": "Order Breakfast",
-          "slug": "order-breakfast"
-        },
-        {
           "url": "/guest/breakfast/my-orders",
           "name": "My Orders",
           "slug": "my-breakfast-orders"
