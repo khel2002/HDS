@@ -286,6 +286,43 @@
   .bm-line-qval { font-size: .8rem; font-weight: 700; min-width: 16px; text-align: center; }
   .bm-line-sub  { font-size: .82rem; font-weight: 700; color: var(--bm-primary); white-space: nowrap; }
 
+  /* ── Notes section ─────────────────────────────────────────── */
+  .bm-notes-section {
+    padding: .75rem 1.15rem;
+    border-top: 1px solid var(--bm-border);
+  }
+  .bm-notes-label {
+    display: flex; align-items: center; gap: .35rem;
+    font-size: .72rem; font-weight: 600; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--bs-secondary-color);
+    margin-bottom: .45rem;
+  }
+  .bm-notes-label i { font-size: .8rem; }
+  .bm-notes-textarea {
+    width: 100%;
+    padding: .55rem .75rem;
+    font-size: .8rem;
+    font-family: var(--bm-sans);
+    color: var(--bs-body-color);
+    background: var(--bs-tertiary-bg);
+    border: 1.5px solid var(--bm-border);
+    border-radius: 10px;
+    resize: none;
+    transition: border-color .15s, box-shadow .15s;
+    line-height: 1.5;
+  }
+  .bm-notes-textarea::placeholder { color: var(--bs-secondary-color); opacity: .7; font-size: .78rem; }
+  .bm-notes-textarea:focus {
+    outline: none;
+    border-color: var(--bm-primary);
+    box-shadow: 0 0 0 3px rgba(105,108,255,.12);
+    background: var(--bm-card-bg);
+  }
+  .bm-notes-hint {
+    font-size: .68rem; color: var(--bs-secondary-color);
+    margin-top: .3rem; display: flex; justify-content: space-between;
+  }
+
   /* basket footer */
   .bm-basket-foot { padding: .85rem 1.15rem; border-top: 1px solid var(--bm-border); }
   .bm-total-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: .85rem; }
@@ -415,7 +452,6 @@
               <span class="bm-price">₱{{ number_format($item->price, 2) }}</span>
 
               @if($item->is_available && $checkedIn)
-                {{-- Add button (shows when qty = 0) --}}
                 <div class="bm-qty-ctrl" id="ctrl-{{ $item->breakfast_id }}">
                   <button type="button"
                           class="bm-qty-btn add-btn"
@@ -424,7 +460,6 @@
                           title="Add to order">
                     <i class="ri-add-line"></i>
                   </button>
-                  {{-- Qty stepper (hidden until added) --}}
                   <span class="bm-qty-ctrl" id="stepper-{{ $item->breakfast_id }}" style="display:none;">
                     <button type="button" class="bm-qty-btn minus"
                             onclick="bmDec({{ $item->breakfast_id }})">−</button>
@@ -445,19 +480,40 @@
   <div class="bm-sidebar">
     @if($checkedIn)
       <div class="bm-basket">
+
+        {{-- Basket header --}}
         <div class="bm-basket-head">
           <h6><i class="ri-shopping-basket-2-line me-1 text-primary"></i>Your Order</h6>
           <span class="bm-basket-count" id="bmCount">0 items</span>
         </div>
 
+        {{-- Line items --}}
         <div class="bm-basket-body" id="bmBasketBody">
           <div class="bm-basket-empty" id="bmEmpty">
             <i class="ri-add-circle-line"></i>
             Select items from the menu
           </div>
-          {{-- line items injected here by JS --}}
         </div>
 
+        {{-- ── Notes / Special Instructions ─────────────────────────── --}}
+        <div class="bm-notes-section" id="bmNotesSection" style="display:none;">
+          <div class="bm-notes-label">
+            <i class="ri-chat-3-line"></i> Special Instructions
+          </div>
+          <textarea
+            id="bmDescription"
+            class="bm-notes-textarea"
+            rows="3"
+            maxlength="255"
+            placeholder="e.g. No mushrooms, extra syrup, allergy info…"
+          ></textarea>
+          <div class="bm-notes-hint">
+            <span>Optional &mdash; will be seen by kitchen staff</span>
+            <span id="bmCharCount">0 / 255</span>
+          </div>
+        </div>
+
+        {{-- Basket footer (total + actions) --}}
         <div class="bm-basket-foot" id="bmFooter" style="display:none;">
           <div class="bm-total-row">
             <span class="bm-total-lbl">Total</span>
@@ -471,6 +527,7 @@
             <i class="ri-list-check me-1"></i>View My Orders
           </a>
         </div>
+
       </div>
 
     @else
@@ -521,7 +578,7 @@
 </style>
 <div id="bm-toast-wrap"></div>
 <script>
-  /* ── Toast helper (no toastr dependency) ─────────────────── */
+  /* ── Toast helper ────────────────────────────────────────── */
   const _icons = { success:'ri-checkbox-circle-line', error:'ri-error-warning-line', warning:'ri-alert-line', info:'ri-information-line' };
   function bmToast(type, msg) {
     const wrap = document.getElementById('bm-toast-wrap');
@@ -540,7 +597,18 @@
   const ORDER_URL     = '{{ route("guest.breakfast.store") }}';
   const IS_CHECKED_IN = {{ $checkedIn ? 'true' : 'false' }};
 
-  /* ── Filter buttons ─────────────────────────────────────────── */
+  /* ── Char counter for description textarea ──────────────── */
+  const descEl      = document.getElementById('bmDescription');
+  const charCountEl = document.getElementById('bmCharCount');
+  if (descEl) {
+    descEl.addEventListener('input', () => {
+      const len = descEl.value.length;
+      charCountEl.textContent = `${len} / 255`;
+      charCountEl.style.color = len >= 230 ? '#E65100' : '';
+    });
+  }
+
+  /* ── Filter buttons ─────────────────────────────────────── */
   document.querySelectorAll('.bm-filter').forEach(btn => {
     btn.addEventListener('click', function () {
       document.querySelectorAll('.bm-filter').forEach(b => b.classList.remove('active'));
@@ -556,26 +624,18 @@
     });
   });
 
-  /* ── Basket state ───────────────────────────────────────────── */
-  // basket[id] = { name, price, qty }
+  /* ── Basket state ───────────────────────────────────────── */
   const basket = {};
 
-  /* Add item (qty = 1) */
   function bmAdd(id) {
     if (!IS_CHECKED_IN) { toastr.info('Check in to place an order.'); return; }
     const card = document.getElementById('card-' + id);
     if (!card || card.dataset.available !== '1') return;
-
-    basket[id] = {
-      name:  card.dataset.name,
-      price: parseFloat(card.dataset.price),
-      qty:   1,
-    };
+    basket[id] = { name: card.dataset.name, price: parseFloat(card.dataset.price), qty: 1 };
     _syncCardUI(id);
     _renderBasket();
   }
 
-  /* Increment */
   function bmInc(id) {
     if (!basket[id]) return;
     if (basket[id].qty >= 20) { toastr.warning('Maximum 20 per item.'); return; }
@@ -584,7 +644,6 @@
     _renderBasket();
   }
 
-  /* Decrement (remove if hits 0) */
   function bmDec(id) {
     if (!basket[id]) return;
     basket[id].qty--;
@@ -597,14 +656,12 @@
     _renderBasket();
   }
 
-  /* Sync card visual state with basket */
   function _syncCardUI(id, removed = false) {
     const card    = document.getElementById('card-' + id);
     const addBtn  = document.getElementById('addbtn-' + id);
     const stepper = document.getElementById('stepper-' + id);
     const qnum    = document.getElementById('qnum-' + id);
     if (!card) return;
-
     if (removed || !basket[id]) {
       card.classList.remove('selected');
       if (addBtn)  addBtn.style.display  = '';
@@ -617,33 +674,34 @@
     }
   }
 
-  /* Render basket sidebar */
   function _renderBasket() {
-    const body    = document.getElementById('bmBasketBody');
-    const footer  = document.getElementById('bmFooter');
-    const empty   = document.getElementById('bmEmpty');
-    const countEl = document.getElementById('bmCount');
-    const totalEl = document.getElementById('bmTotal');
+    const body        = document.getElementById('bmBasketBody');
+    const footer      = document.getElementById('bmFooter');
+    const empty       = document.getElementById('bmEmpty');
+    const notesSection= document.getElementById('bmNotesSection');
+    const countEl     = document.getElementById('bmCount');
+    const totalEl     = document.getElementById('bmTotal');
     if (!body) return;
 
-    // Clear old line items
     body.querySelectorAll('.bm-line').forEach(el => el.remove());
 
-    const keys = Object.keys(basket);
+    const keys  = Object.keys(basket);
     const total = keys.reduce((s, id) => s + basket[id].price * basket[id].qty, 0);
     const count = keys.reduce((s, id) => s + basket[id].qty, 0);
 
     countEl.textContent = count + ' item' + (count !== 1 ? 's' : '');
 
     if (!keys.length) {
-      empty.style.display  = '';
-      footer.style.display = 'none';
+      empty.style.display        = '';
+      footer.style.display       = 'none';
+      notesSection.style.display = 'none';
       return;
     }
 
-    empty.style.display  = 'none';
-    footer.style.display = '';
-    totalEl.textContent  = '₱' + total.toFixed(2);
+    empty.style.display        = 'none';
+    footer.style.display       = '';
+    notesSection.style.display = '';     // ← show notes when basket has items
+    totalEl.textContent        = '₱' + total.toFixed(2);
 
     keys.forEach(id => {
       const { name, price, qty } = basket[id];
@@ -664,10 +722,13 @@
     });
   }
 
-  /* ── Submit ─────────────────────────────────────────────────── */
+  /* ── Submit ──────────────────────────────────────────────── */
   async function bmSubmit() {
     const keys = Object.keys(basket);
     if (!keys.length) { toastr.warning('Please select at least one item.'); return; }
+
+    // Grab description — fall back to generic label if blank
+    const description = (descEl?.value ?? '').trim() || 'Breakfast order';
 
     const btn = document.getElementById('bmSubmitBtn');
     btn.disabled = true;
@@ -675,18 +736,18 @@
 
     const items = keys.map(id => ({
       breakfast_id: parseInt(id),
-      quantity: basket[id].qty,
+      quantity:     basket[id].qty,
     }));
 
     try {
       const res  = await fetch(ORDER_URL, {
-        method: 'POST',
+        method:  'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRF-TOKEN': CSRF,
           'Accept':       'application/json',
         },
-        body: JSON.stringify({ service_type: 'food', description: 'Breakfast order', items }),
+        body: JSON.stringify({ service_type: 'food', description, items }),
       });
       const data = await res.json();
 

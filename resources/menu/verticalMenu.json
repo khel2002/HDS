@@ -33,7 +33,7 @@
       "slug": "room-service"
     },
     {
-      "url": "/guest/my-requests",
+      "url": "/guest/room-service/my-requests",
       "name": "My Requests",
       "icon": "menu-icon icon-base ri ri-file-list-line",
       "slug": "my-requests"

@@ -6,7 +6,7 @@ use App\Http\Controllers\admin\AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\guest\BreakfastController as GuestBreakfastController;
 use App\Http\Controllers\dashboard\GuestPortalController;
-
+use App\Http\Controllers\Guest\RoomServiceController;
 use App\Http\Controllers\SuperAdmin\{
     SuperAdminDashboardController,
     RoomController,
@@ -196,7 +196,12 @@ Route::middleware(['auth'])->prefix('guest')->name('guest.')->group(function () 
         Route::get('/orders',[GuestBreakfastController::class, 'myOrdersJson'])->name('orders');
     });
 });
-
+Route::prefix('guest/room-service')->name('guest.room-service.')->group(function () {
+    Route::get('/',              [RoomServiceController::class, 'index'])           ->name('index');
+    Route::post('/request',      [RoomServiceController::class, 'store'])           ->name('store');
+    Route::get('/my-requests',   [RoomServiceController::class, 'myRequests'])      ->name('my-requests');
+    Route::get('/requests-json', [RoomServiceController::class, 'myRequestsJson']) ->name('requests-json');
+});
 // Staff dashboard
 Route::middleware(['auth', 'staff'])->prefix('staff')->name('staff.')->group(function () {
   Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
@@ -290,6 +295,8 @@ Route::prefix('registration')->name('registration.')->group(function () {
     Route::put('/menu/{id}',[BreakfastController::class, 'update'])->name('menu.update');
     Route::patch('/menu/{id}/toggle',[BreakfastController::class, 'toggleAvailability'])->name('menu.toggle');
     Route::delete('/menu/{id}',[BreakfastController::class, 'destroy'])->name('menu.destroy');
+    Route::get('/orders', [BreakfastController::class, 'orders'])->name('orders');
+    Route::patch('/orders/{id}/status', [BreakfastController::class, 'updateOrderStatus'])->name('orders.status');
   });
 });
 

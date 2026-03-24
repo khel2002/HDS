@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\BreakfastMenu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Models\ServiceRequest;
+use Carbon\Carbon;
 
 class BreakfastController extends Controller
 {
@@ -72,7 +74,6 @@ class BreakfastController extends Controller
             ? (bool) $validated['is_available']
             : false;
 
-        // Remove image if requested
         if (!empty($validated['remove_image'])) {
             if ($item->image_path) {
                 Storage::disk('public')->delete($item->image_path);
@@ -80,7 +81,6 @@ class BreakfastController extends Controller
             $validated['image_path'] = null;
         }
 
-        // Replace image if a new one was uploaded
         if ($request->hasFile('image')) {
             if ($item->image_path) {
                 Storage::disk('public')->delete($item->image_path);
@@ -136,7 +136,72 @@ class BreakfastController extends Controller
         ]);
     }
 
-    // ─── Private helpers ─────────────────────────────────────────────────────
+    // ─── Orders ───────────────────────────────────────────────────────────
+
+    /**
+     * Display all breakfast orders.
+     */
+    public function orders()
+    {
+        $orders = ServiceRequest::with([
+                'breakfastOrders.breakfastMenu',
+                'registration.guestDetails',
+                'registration.reservation.room.roomType',
+            ])
+            ->where('service_type', 'food')
+            ->orderByRaw("FIELD(request_status, 'pending', 'in_progress', 'delivering', 'completed', 'cancelled')")
+            ->orderBy('requested_at', 'desc')
+            ->paginate(15);
+
+        $stats = $this->buildOrderStats();
+
+        return view('content.super-admin.breakfast.orders', compact('orders', 'stats'));
+    }
+
+    /**
+     * Update the status of a breakfast order (AJAX PATCH).
+     *
+     * Flow: pending → in_progress → delivering → completed
+     *       pending → cancelled
+     *       in_progress → cancelled
+     */
+    public function updateOrderStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:in_progress,delivering,completed,cancelled',
+        ]);
+
+        $order = ServiceRequest::where('service_type', 'food')->findOrFail($id);
+
+        $allowedTransitions = [
+            'pending'     => ['in_progress', 'cancelled'],
+            'in_progress' => ['delivering',  'cancelled'],
+            'delivering'  => ['completed'],
+        ];
+
+        $allowed = $allowedTransitions[$order->request_status] ?? [];
+
+        if (!in_array($request->status, $allowed)) {
+            return response()->json([
+                'message' => "Cannot transition from \"{$order->request_status}\" to \"{$request->status}\".",
+            ], 422);
+        }
+
+        $order->request_status = $request->status;
+
+        if ($request->status === 'completed') {
+            $order->completed_at = Carbon::now();
+        }
+
+        $order->save();
+
+        return response()->json([
+            'item'  => $this->orderPayload($order),
+            'stats' => $this->buildOrderStats(),
+        ]);
+    }
+
+    // ─── Private helpers ──────────────────────────────────────────────────
 
     private function itemPayload(BreakfastMenu $item): array
     {
@@ -155,6 +220,16 @@ class BreakfastController extends Controller
         ];
     }
 
+    private function orderPayload(ServiceRequest $order): array
+    {
+        return [
+            'service_request_id' => $order->service_request_id,
+            'request_status'     => $order->request_status,
+            'status_url'         => route('super_admin.breakfast.orders.status', $order->service_request_id),
+            'completed_at'       => $order->completed_at,
+        ];
+    }
+
     private function buildStats($items): array
     {
         $collection = collect($items);
@@ -164,6 +239,23 @@ class BreakfastController extends Controller
             'available_items'   => $collection->where('is_available', true)->count(),
             'unavailable_items' => $collection->where('is_available', false)->count(),
             'avg_price'         => round($collection->avg('price') ?? 0, 2),
+        ];
+    }
+
+    private function buildOrderStats(): array
+    {
+        $counts = ServiceRequest::where('service_type', 'food')
+            ->selectRaw('request_status, COUNT(*) as count')
+            ->groupBy('request_status')
+            ->pluck('count', 'request_status')
+            ->toArray();
+
+        return [
+            'pending'     => $counts['pending']     ?? 0,
+            'in_progress' => $counts['in_progress'] ?? 0,
+            'delivering'  => $counts['delivering']  ?? 0,
+            'completed'   => $counts['completed']   ?? 0,
+            'cancelled'   => $counts['cancelled']   ?? 0,
         ];
     }
 }

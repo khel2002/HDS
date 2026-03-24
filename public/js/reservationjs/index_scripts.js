@@ -85,7 +85,6 @@ function calcNights(arrival, departure) {
 }
 
 function updatePricing() {
-  // Try live date inputs from step-3 form first, then URL params
   const arrival   = document.querySelector('.room-arrival-date[data-room-idx="0"]')?.value
                     || window._prefilledArrival || '';
   const departure = document.querySelector('.room-departure-date[data-room-idx="0"]')?.value
@@ -121,6 +120,54 @@ function refreshPricingDisplay(nights) {
 }
 
 // ─────────────────────────────────────────────
+// ROOM FORM STATE  (persist across step navigation)
+// ─────────────────────────────────────────────
+
+// Stores the last saved values keyed by input[name]
+let _savedRoomFormState = {};
+// Tracks whether Step 3 has been rendered at least once
+let _step3Initialized = false;
+
+/**
+ * Snapshot every input/select/textarea inside #roomTabsForms.
+ * Call this before leaving Step 3.
+ */
+function saveRoomFormState() {
+  const container = document.getElementById('roomTabsForms');
+  if (!container) return;
+  container.querySelectorAll('input, select, textarea').forEach(el => {
+    if (el.name) _savedRoomFormState[el.name] = el.value;
+  });
+}
+
+/**
+ * Restore all saved values back into the freshly-rendered form.
+ * Call this after renderRoomForms() rebuilds the DOM.
+ */
+function restoreRoomFormState() {
+  const container = document.getElementById('roomTabsForms');
+  if (!container) return;
+
+  // First pass: restore selects (guest count) so guest blocks are rebuilt correctly
+  container.querySelectorAll('select.room-guest-count').forEach(el => {
+    if (el.name && _savedRoomFormState[el.name] !== undefined) {
+      el.value = _savedRoomFormState[el.name];
+      const roomIdx = parseInt(el.dataset.roomIdx);
+      const count   = parseInt(el.value);
+      const c = document.getElementById(`guestBlocksContainer_${roomIdx}`);
+      if (c) c.innerHTML = buildGuestBlocks(roomIdx, count);
+    }
+  });
+
+  // Second pass: restore all inputs/textareas (including newly-built guest blocks)
+  container.querySelectorAll('input, select, textarea').forEach(el => {
+    if (el.name && _savedRoomFormState[el.name] !== undefined) {
+      el.value = _savedRoomFormState[el.name];
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
 // ROOM TABS  (step 3)
 // ─────────────────────────────────────────────
 function renderRoomTabsAndForms() {
@@ -129,9 +176,20 @@ function renderRoomTabsAndForms() {
   if (activeRoomTab >= selectedRooms.length) activeRoomTab = selectedRooms.length - 1;
   switchRoomTab(activeRoomTab);
 
-  // Inject pre-filled dates after DOM settles, then re-price
   setTimeout(() => {
-    injectPrefilledDates();
+    if (_step3Initialized && Object.keys(_savedRoomFormState).length > 0) {
+      // Returning to step 3 — restore what the user already typed
+      restoreRoomFormState();
+      // Re-bind date change listeners after DOM rebuild
+      document.querySelectorAll('.room-arrival-date, .room-departure-date').forEach(input => {
+        input.addEventListener('change', updatePricing);
+      });
+    } else {
+      // First visit — inject URL pre-filled dates + account prefill
+      injectPrefilledDates();
+      prefillPrimaryGuestFromAccount();
+      _step3Initialized = true;
+    }
     updatePricing();
   }, 50);
 }
@@ -144,6 +202,30 @@ function injectPrefilledDates() {
     if (a && !a.value) a.value = window._prefilledArrival;
     if (d && !d.value) d.value = window._prefilledDeparture;
   });
+}
+
+/**
+ * ✅ Reads the Step 2 account fields and pre-fills Room 1 / Guest 1 (primary guest).
+ * Only Room 1's first guest block is auto-filled — other rooms are left blank.
+ * Fields are not overwritten if the user already typed something.
+ */
+function prefillPrimaryGuestFromAccount() {
+  const firstName = document.querySelector('input[name="first_name"]')?.value.trim()  || '';
+  const lastName  = document.querySelector('input[name="last_name"]')?.value.trim()   || '';
+  const email     = document.querySelector('input[name="email"]')?.value.trim()        || '';
+  const phone     = document.querySelector('input[name="contact_number"]')?.value.trim() || '';
+
+  // Helper: fill only if currently empty
+  function fillIfEmpty(selector, value) {
+    const el = document.querySelector(selector);
+    if (el && !el.value.trim() && value) el.value = value;
+  }
+
+  // Room index 0, Guest index 0 = Room 1, Primary Guest
+  fillIfEmpty(`input[name="rooms_data[0][guests][0][first_name]"]`, firstName);
+  fillIfEmpty(`input[name="rooms_data[0][guests][0][last_name]"]`,  lastName);
+  fillIfEmpty(`input[name="rooms_data[0][guests][0][email]"]`,      email);
+  fillIfEmpty(`input[name="rooms_data[0][guests][0][phone]"]`,      phone);
 }
 
 function renderRoomTabs() {
@@ -213,7 +295,9 @@ function renderRoomForms() {
         <div class="rsh-icon"><i class="ri-group-line"></i></div>
         <div class="rsh-text">
           <h3>Guest Details — Room ${roomIdx + 1}</h3>
-          <p>Fill in info for each guest staying in this room</p>
+          <p>${roomIdx === 0
+            ? 'Primary guest is pre-filled from your account details'
+            : 'Fill in info for each guest staying in this room'}</p>
         </div>
       </div>
 
@@ -236,7 +320,11 @@ function switchRoomTab(idx) {
 
 function onGuestCountChange(roomIdx, count) {
   const c = document.getElementById(`guestBlocksContainer_${roomIdx}`);
-  if (c) c.innerHTML = buildGuestBlocks(roomIdx, parseInt(count));
+  if (c) {
+    c.innerHTML = buildGuestBlocks(roomIdx, parseInt(count));
+    // ✅ Re-apply prefill after rebuilding guest blocks for Room 1
+    if (roomIdx === 0) prefillPrimaryGuestFromAccount();
+  }
 }
 
 function buildGuestOptions(maxPax, selected) {
@@ -248,12 +336,20 @@ function buildGuestOptions(maxPax, selected) {
 function buildGuestBlocks(roomIdx, count) {
   return Array.from({ length: count }, (_, g) => {
     const isPrimary = g === 0;
+    const isRoom1   = roomIdx === 0;
     const req       = isPrimary ? 'required' : '';
     const reqStar   = isPrimary ? ' <span class="required">*</span>' : '';
+
+    // ✅ For Room 1 / Guest 1, embed a subtle "from account" badge
+    const primaryBadge = (isPrimary && isRoom1)
+      ? `<span class="guest-prefill-badge"><i class="ri-user-settings-line"></i> From your account</span>`
+      : '';
+
     return `
       <div class="guest-block" id="guestBlock_${roomIdx}_${g}">
         <div class="guest-block-header">
           <span class="guest-block-label">Guest ${g + 1}${isPrimary ? ' (Primary)' : ''}</span>
+          ${primaryBadge}
         </div>
         <div class="guest-block-body">
           <div class="guest-form-grid">
@@ -395,6 +491,9 @@ function addRoom(roomId, roomNumber, roomTypeName, description, ratePerNight, ma
     </div>`;
 
   document.querySelectorAll('.remove-room-btn').forEach(b => b.style.display = 'flex');
+  // Room list changed — reset step 3 state so it re-initializes fresh
+  _step3Initialized = false;
+  _savedRoomFormState = {};
   if (document.getElementById('roomTabsList')) renderRoomTabsAndForms();
   updateSidebarRooms();
   updatePricing();
@@ -487,16 +586,13 @@ function updateStep4Btn(method) {
 
 // ─────────────────────────────────────────────
 // STEP NAVIGATION
-// KEY FIX: step 4 is the TERMINAL action step.
-// Cash  → submit form immediately.
-// Online → fire Stripe (validateStep returns false, so we never get here).
-// Step 5 is only ever shown after a server redirect with payment_success.
 // ─────────────────────────────────────────────
 function nextStep() {
   if (!validateStep(currentStep)) return;
 
+  if (currentStep === 3) saveRoomFormState();
+
   if (currentStep === 4) {
-    // Cash path: submit the form right now
     handleFinalSubmission();
     return;
   }
@@ -505,15 +601,19 @@ function nextStep() {
     currentStep++;
     updateStepDisplay();
   }
-  // currentStep === 5 is unreachable via this button (it's hidden on step 5)
 }
 
 function prevStep() {
+  if (currentStep === 3) saveRoomFormState();
   if (currentStep > 1) { currentStep--; updateStepDisplay(); }
 }
 
 function goToStep(n) {
-  if (n >= 1 && n <= totalSteps && n < currentStep) { currentStep = n; updateStepDisplay(); }
+  if (n >= 1 && n <= totalSteps && n < currentStep) {
+    if (currentStep === 3) saveRoomFormState();
+    currentStep = n;
+    updateStepDisplay();
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -586,10 +686,10 @@ function validateStep(step) {
       return false;
     }
     if (method === 'online') {
-      initiateStripePayment(); // handles its own flow
-      return false;            // stop nextStep() from advancing
+      initiateStripePayment();
+      return false;
     }
-    return true; // cash — falls through to handleFinalSubmission()
+    return true;
   }
 
   return true;
@@ -629,7 +729,9 @@ function updateStepDisplay() {
   if (guestBlock) guestBlock.style.display = currentStep >= 3 ? 'block' : 'none';
 
   if (currentStep === 3) {
-    activeRoomTab = 0;
+    // Save any existing state first (in case we're re-entering step 3)
+    saveRoomFormState();
+    activeRoomTab = activeRoomTab;  // keep current tab, don't reset to 0
     renderRoomTabsAndForms();
   }
 
@@ -653,11 +755,9 @@ async function initiateStripePayment() {
       number_of_guests: parseInt(
         document.querySelector(`select[name="rooms_data[${idx}][number_of_guests]"]`)?.value || '1', 10),
       special_requests: document.querySelector(`textarea[name="rooms_data[${idx}][special_requests]"]`)?.value || null,
-      // Include guest details for extra pax storage
       guests: buildGuestsPayload(idx),
     }));
 
-    // Client-side date sanity check
     for (let i = 0; i < rooms.length; i++) {
       if (!rooms[i].arrival_date || !rooms[i].departure_date) {
         Swal.close();
@@ -679,8 +779,6 @@ async function initiateStripePayment() {
       amount: fee,
     };
 
-    console.log('[Stripe] payload:', JSON.stringify(payload, null, 2));
-
     const response = await fetch('/payment/create-checkout-session', {
       method: 'POST',
       headers: {
@@ -694,8 +792,6 @@ async function initiateStripePayment() {
     let data;
     try { data = await response.json(); }
     catch { throw new Error(`Non-JSON response (HTTP ${response.status})`); }
-
-    console.log('[Stripe] response:', data);
 
     if (!response.ok) {
       if (data.errors) {
@@ -716,10 +812,6 @@ async function initiateStripePayment() {
   }
 }
 
-/**
- * Collect per-room guest form data into an array for Stripe payload.
- * This mirrors what the PHP form POST sends for the cash path.
- */
 function buildGuestsPayload(roomIdx) {
   const count = parseInt(
     document.querySelector(`select[name="rooms_data[${roomIdx}][number_of_guests]"]`)?.value || '1', 10);
@@ -739,7 +831,6 @@ function buildGuestsPayload(roomIdx) {
 
 // ─────────────────────────────────────────────
 // CASH SUBMISSION
-// KEY FIX: set hidden #roomsData, then submit form
 // ─────────────────────────────────────────────
 function handleFinalSubmission() {
   const roomsInput = document.getElementById('roomsData');
@@ -748,11 +839,7 @@ function handleFinalSubmission() {
     return;
   }
 
-  // Encode only room_id array — rooms_data fields come from the actual form inputs
   roomsInput.value = JSON.stringify(selectedRooms.map(r => ({ room_id: r.room_id })));
-  console.log('[Cash] rooms hidden value:', roomsInput.value);
-
-  // Ensure correct payment input is enabled
   setPaymentInputs('cash');
 
   const form = document.getElementById('reservationForm');
@@ -761,7 +848,6 @@ function handleFinalSubmission() {
     return;
   }
 
-  console.log('[Cash] submitting to:', form.action);
   form.submit();
 }
 
@@ -786,11 +872,28 @@ function debounce(fn, ms) {
 
 // Spin animation for loader
 const _css = document.createElement('style');
-_css.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+_css.textContent = `
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ✅ "From your account" badge on primary guest block */
+  .guest-prefill-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #4f46e5;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    margin-left: 0.5rem;
+  }
+`;
 document.head.appendChild(_css);
 
 // ─────────────────────────────────────────────
-// EXPORTS (called from inline onclick attrs)
+// EXPORTS
 // ─────────────────────────────────────────────
 window.nextStep               = nextStep;
 window.prevStep               = prevStep;
