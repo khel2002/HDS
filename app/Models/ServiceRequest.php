@@ -99,4 +99,12 @@ class ServiceRequest extends Model
             'completed_at' => now(),
         ]);
     }
+    public function roomOrderItems()
+    {
+        return $this->hasMany(
+            ServiceRoomOrderItem::class,
+            'service_request_id',
+            'service_request_id'
+        );
+    }
 }

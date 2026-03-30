@@ -42,9 +42,9 @@
   .menu-card-item.selected  { border: 2px solid #696cff; }
   @media (max-width: 991px) { .menu-card-item { flex: 0 0 calc(50% - 0.5rem); } }
   @media (max-width: 575px) { .menu-card-item { flex: 0 0 100%; } }
-  .menu-card-item img       { width: 100%; height: 160px; object-fit: cover; }
+  .menu-card-item img        { width: 100%; height: 160px; object-fit: cover; }
   .menu-card-item .menu-body { padding: 0.85rem; }
-  .menu-price               { font-weight: 600; font-size: 1.05rem; white-space: nowrap; }
+  .menu-price                { font-weight: 600; font-size: 1.05rem; white-space: nowrap; }
 
   .service-btn {
     display: flex;
@@ -58,11 +58,14 @@
     text-align: left;
     transition: all 0.2s;
     cursor: pointer;
+    text-decoration: none;
+    color: inherit;
   }
   .service-btn:hover {
     border-color: #696cff;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     transform: translateY(-2px);
+    color: inherit;
   }
   .service-icon-wrap {
     width: 48px; height: 48px;
@@ -96,12 +99,12 @@
   $s = $statusMap[$guest['status']];
 
   $services = [
-    ['key'=>'room_service','icon'=>'ri-cup-line',            'title'=>'Room Service',    'sub'=>'Order food & beverages'],
-    ['key'=>'housekeeping','icon'=>'ri-tools-line',          'title'=>'Housekeeping',    'sub'=>'Request cleaning service'],
-    ['key'=>'wifi',        'icon'=>'ri-wifi-line',           'title'=>'WiFi Access',     'sub'=>'Network: GrandHotel_5G'],
-    ['key'=>'concierge',   'icon'=>'ri-customer-service-line','title'=>'Concierge',      'sub'=>'Get assistance & recommendations'],
-    ['key'=>'laundry',     'icon'=>'ri-shirt-line',          'title'=>'Laundry Service', 'sub'=>'Schedule pickup & delivery'],
-    ['key'=>'spa',         'icon'=>'ri-mental-health-line',  'title'=>'Spa & Wellness',  'sub'=>'Book spa treatments'],
+    ['key'=>'room_service', 'icon'=>'ri-cup-line',             'title'=>'Room Service',    'sub'=>'Order food & beverages'],
+    ['key'=>'housekeeping', 'icon'=>'ri-tools-line',           'title'=>'Housekeeping',    'sub'=>'Request cleaning service'],
+    ['key'=>'wifi',         'icon'=>'ri-wifi-line',            'title'=>'WiFi Access',     'sub'=>'Network: GrandHotel_5G'],
+    ['key'=>'concierge',    'icon'=>'ri-customer-service-line','title'=>'Concierge',       'sub'=>'Get assistance & recommendations'],
+    ['key'=>'laundry',      'icon'=>'ri-shirt-line',           'title'=>'Laundry Service', 'sub'=>'Schedule pickup & delivery'],
+    ['key'=>'spa',          'icon'=>'ri-mental-health-line',   'title'=>'Spa & Wellness',  'sub'=>'Book spa treatments'],
   ];
 
   $statusBadge = [
@@ -227,9 +230,9 @@
           @if($guest['status'] === 'checked-in')
             <small class="text-muted">Tap an item to add to your order</small>
           @endif
-          <a href="{{ route('guest.breakfast.menu') }}" class="btn btn-outline-primary btn-sm">
-    <i class="ri-restaurant-line me-1"></i> View Full Menu
-</a>
+          <a href="{{ route('guest.breakfast.menu') }}" class="btn btn-outline-primary btn-sm mt-1">
+            <i class="ri-restaurant-line me-1"></i> View Full Menu
+          </a>
         </div>
         <div class="d-flex gap-2">
           <button class="btn btn-sm btn-outline-secondary" id="menuPrev">
@@ -294,7 +297,7 @@
   </div>
   @endif
 
-  {{-- Available Services --}}
+  {{-- ── Available Services ───────────────────────────────────── --}}
   <div class="col-12">
     <div class="card">
       <div class="card-header">
@@ -302,6 +305,8 @@
       </div>
       <div class="card-body">
         <div class="row g-4">
+
+          {{-- Regular service buttons --}}
           @foreach($services as $svc)
             <div class="col-12 col-sm-6 col-lg-4">
               <button class="service-btn" onclick="handleService('{{ $svc['key'] }}')">
@@ -315,6 +320,22 @@
               </button>
             </div>
           @endforeach
+
+          {{-- Check-out button — only shown when checked in, OUTSIDE the loop --}}
+          @if($guest['status'] === 'checked-in')
+            <div class="col-12 col-sm-6 col-lg-4">
+              <a href="{{ route('guest.checkout.index') }}" class="service-btn">
+                <div class="service-icon-wrap" style="background: rgba(234,84,85,.1);">
+                  <i class="icon-base ri ri-logout-box-line icon-24px" style="color:#ea5455;"></i>
+                </div>
+                <div>
+                  <h6 class="mb-0">Check-out</h6>
+                  <small class="text-muted">Request room inspection &amp; check-out</small>
+                </div>
+              </a>
+            </div>
+          @endif
+
         </div>
       </div>
     </div>
@@ -434,7 +455,7 @@
   const SERVICE_URL  = '{{ route("guest.service") }}';
   const GUEST_STATUS = '{{ $guest["status"] }}';
 
-  // ── Carousel ─────────────────────────────────────────────────────
+  // ── Carousel ──────────────────────────────────────────────────
   (function () {
     const track = document.getElementById('menuTrack');
     if (!track) return;
@@ -455,7 +476,7 @@
     });
   })();
 
-  // ── Food Basket ───────────────────────────────────────────────────
+  // ── Food Basket ───────────────────────────────────────────────
   const basket = {};
 
   function toggleMenuItem(el) {
@@ -512,7 +533,7 @@
     }
   }
 
-  // ── Service Buttons ───────────────────────────────────────────────
+  // ── Service Buttons ───────────────────────────────────────────
   function handleService(type) {
     if (type === 'wifi') { toastr.info('Password: Welcome2026', 'WiFi: GrandHotel_5G'); return; }
     if (GUEST_STATUS !== 'checked-in') { toastr.info('Services are available during your stay.'); return; }

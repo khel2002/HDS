@@ -182,26 +182,44 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/settings', [AccountSettingsAccount::class, 'index'])->name('account.settings');
   });
 });
-
 Route::middleware(['auth'])->prefix('guest')->name('guest.')->group(function () {
  
+    // ── Dashboard & service ───────────────────────────────────────
     Route::get('/dashboard', [GuestPortalController::class, 'index'])->name('dashboard');
     Route::post('/service',  [GuestPortalController::class, 'requestService'])->name('service');
  
+    // ── Notifications ─────────────────────────────────────────────
+    Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'guest'])
+        ->name('notifications');
+ 
+    // ── Breakfast ─────────────────────────────────────────────────
     Route::prefix('breakfast')->name('breakfast.')->group(function () {
-        Route::get('/menu',[GuestBreakfastController::class, 'index'])->name('menu');
-        Route::get('/order',[GuestBreakfastController::class, 'index'])->name('order');
-        Route::post('/order',[GuestBreakfastController::class, 'store'])->name('store');
-        Route::get('/my-orders',[GuestBreakfastController::class, 'myOrders']) ->name('my-orders');
-        Route::get('/orders',[GuestBreakfastController::class, 'myOrdersJson'])->name('orders');
+        Route::get('/menu',      [GuestBreakfastController::class, 'index'])->name('menu');
+        Route::get('/order',     [GuestBreakfastController::class, 'index'])->name('order');
+        Route::post('/order',    [GuestBreakfastController::class, 'store'])->name('store');
+        Route::get('/my-orders', [GuestBreakfastController::class, 'myOrders'])->name('my-orders');
+        Route::get('/orders',    [GuestBreakfastController::class, 'myOrdersJson'])->name('orders');
     });
+ 
+    // ── Checkout ──────────────────────────────────────────────────
+    // Produces: guest.checkout.index, guest.checkout.request,
+    //           guest.checkout.acknowledge, guest.checkout.status
+    Route::prefix('checkout')->name('checkout.')->group(function () {
+        Route::get('/',             [\App\Http\Controllers\Guest\CheckoutController::class, 'index'])           ->name('index');
+        Route::post('/request',     [\App\Http\Controllers\Guest\CheckoutController::class, 'requestCheckout']) ->name('request');
+        Route::post('/acknowledge', [\App\Http\Controllers\Guest\CheckoutController::class, 'acknowledgeDamage'])->name('acknowledge');
+        Route::get('/status',       [\App\Http\Controllers\Guest\CheckoutController::class, 'status'])          ->name('status');
+    });
+ 
+    Route::prefix('room-service')->name('room-service.')->group(function () {
+        Route::get('/',              [\App\Http\Controllers\Guest\RoomServiceController::class, 'index'])          ->name('index');
+        Route::post('/request',      [\App\Http\Controllers\Guest\RoomServiceController::class, 'store'])          ->name('store');
+        Route::get('/my-requests',   [\App\Http\Controllers\Guest\RoomServiceController::class, 'myRequests'])     ->name('my-requests');
+        Route::get('/requests-json', [\App\Http\Controllers\Guest\RoomServiceController::class, 'myRequestsJson']) ->name('requests-json');
+    });
+ 
 });
-Route::prefix('guest/room-service')->name('guest.room-service.')->group(function () {
-    Route::get('/',              [RoomServiceController::class, 'index'])           ->name('index');
-    Route::post('/request',      [RoomServiceController::class, 'store'])           ->name('store');
-    Route::get('/my-requests',   [RoomServiceController::class, 'myRequests'])      ->name('my-requests');
-    Route::get('/requests-json', [RoomServiceController::class, 'myRequestsJson']) ->name('requests-json');
-});
+
 // Staff dashboard
 Route::middleware(['auth', 'staff'])->prefix('staff')->name('staff.')->group(function () {
   Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
@@ -225,6 +243,8 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super_a
   Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
 
   // Rooms management
+     Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'superadmin'])
+        ->name('notifications');
   Route::prefix('rooms')->name('rooms.')->group(function () {
     Route::get('/', [RoomController::class, 'index'])->name('index');
     Route::post('/', [RoomController::class, 'store'])->name('store');
