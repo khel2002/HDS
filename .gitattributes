@@ -1,4 +1,4 @@
-* text eol=lf
+# Enforce LF for all text files
 * text=auto eol=lf
 
 *.blade.php diff=html
