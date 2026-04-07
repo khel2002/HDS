@@ -133,19 +133,33 @@
                 <th>Nights</th>
                 <th>Payment</th>
                 <th>Balance</th>
+                <th>Inspection</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="checkoutTableBody">
               @forelse($registrations as $reg)
                 @php
-                  $checkout  = \Carbon\Carbon::parse($reg->expected_checkout);
-                  $checkinAt = \Carbon\Carbon::parse($reg->check_in_at);
-                  $isOverdue = $checkout->lt($today);
-                  $isToday   = $checkout->isToday();
-                  $guestName = trim($reg->guest_first_name . ' ' . $reg->guest_last_name) ?: '—';
-                  $initials  = strtoupper(substr($reg->guest_first_name, 0, 1) . substr($reg->guest_last_name, 0, 1));
-                  $dateGroup = $isOverdue ? 'overdue' : ($isToday ? 'today' : 'staying');
+                  $checkout        = \Carbon\Carbon::parse($reg->expected_checkout);
+                  $checkinAt       = \Carbon\Carbon::parse($reg->check_in_at);
+                  $isOverdue       = $checkout->lt($today);
+                  $isToday         = $checkout->isToday();
+                  $guestName       = trim($reg->guest_first_name . ' ' . $reg->guest_last_name) ?: '—';
+                  $initials        = strtoupper(substr($reg->guest_first_name, 0, 1) . substr($reg->guest_last_name, 0, 1));
+                  $dateGroup       = $isOverdue ? 'overdue' : ($isToday ? 'today' : 'staying');
+
+                  // Gate checks for this row
+                  $inspectionOk    = isset($reg->inspection_status) && $reg->inspection_status === 'cleared';
+                  $balanceOk       = $reg->balance <= 0;
+                  $canCheckout     = $inspectionOk && $balanceOk;
+
+                  $inspectionLabel = match($reg->inspection_status ?? 'none') {
+                    'cleared'    => ['label' => 'Cleared',    'cls' => 'bg-label-success'],
+                    'inspecting' => ['label' => 'Inspecting', 'cls' => 'bg-label-primary'],
+                    'has_issues' => ['label' => 'Has Issues', 'cls' => 'bg-label-danger'],
+                    'pending'    => ['label' => 'Pending',    'cls' => 'bg-label-warning'],
+                    default      => ['label' => 'No Request', 'cls' => 'bg-label-secondary'],
+                  };
                 @endphp
                 <tr id="row-reg-{{ $reg->registration_id }}"
                     data-name="{{ strtolower($guestName) }}"
@@ -196,7 +210,7 @@
                       <span class="badge bg-label-warning"><i class="ri-money-dollar-circle-line me-1"></i>Cash</span>
                     @endif
                     <div class="mt-1">
-                      @if($reg->balance <= 0)
+                      @if($balanceOk)
                         <span class="badge bg-label-success">Paid</span>
                       @else
                         <span class="badge bg-label-danger">Unpaid</span>
@@ -213,6 +227,11 @@
                     @endif
                   </td>
 
+                  {{-- NEW: Inspection status column --}}
+                  <td>
+                    <span class="badge {{ $inspectionLabel['cls'] }}">{{ $inspectionLabel['label'] }}</span>
+                  </td>
+
                   <td>
                     <div class="dropdown">
                       <button type="button" class="btn btn-sm btn-icon" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -223,6 +242,7 @@
                            href="{{ route('super_admin.registration.show', $reg->registration_id) }}">
                           <i class="icon-base ri ri-eye-line me-2"></i>View Details
                         </a>
+                        {{-- Only show checkout option; the modal itself enforces the gates --}}
                         <a class="dropdown-item text-warning" href="javascript:void(0);"
                            data-bs-toggle="modal"
                            data-bs-target="#checkoutModal{{ $reg->registration_id }}">
@@ -234,7 +254,7 @@
                 </tr>
               @empty
                 <tr id="emptyRow">
-                  <td colspan="8">
+                  <td colspan="9">
                     <div class="text-center py-5">
                       <i class="icon-base ri ri-hotel-bed-line icon-48px text-muted mb-3 d-block"></i>
                       <h5>No Active Guests</h5>
@@ -255,13 +275,17 @@
 {{-- ─── ALL MODALS ─── --}}
 @foreach($registrations as $reg)
   @php
-    $checkout  = \Carbon\Carbon::parse($reg->expected_checkout);
-    $checkinAt = \Carbon\Carbon::parse($reg->check_in_at);
-    $guestName = trim($reg->guest_first_name . ' ' . $reg->guest_last_name) ?: '—';
-    $allGuests = \Illuminate\Support\Facades\DB::table('guest_details')
-                    ->where('reservation_id', $reg->reservation_id)
-                    ->orderBy('is_primary', 'desc')
-                    ->get();
+    $checkout        = \Carbon\Carbon::parse($reg->expected_checkout);
+    $checkinAt       = \Carbon\Carbon::parse($reg->check_in_at);
+    $guestName       = trim($reg->guest_first_name . ' ' . $reg->guest_last_name) ?: '—';
+    $allGuests       = \Illuminate\Support\Facades\DB::table('guest_details')
+                          ->where('reservation_id', $reg->reservation_id)
+                          ->orderBy('is_primary', 'desc')
+                          ->get();
+
+    $inspectionOk    = isset($reg->inspection_status) && $reg->inspection_status === 'cleared';
+    $balanceOk       = $reg->balance <= 0;
+    $canCheckout     = $inspectionOk && $balanceOk;
   @endphp
 
   {{-- CHECK-OUT CONFIRM MODAL --}}
@@ -273,15 +297,34 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          @if($reg->balance > 0)
-            <div class="alert alert-warning">
-              <i class="icon-base ri ri-money-dollar-circle-line me-2"></i>
-              <strong>Collect remaining balance of ₱{{ number_format($reg->balance, 2) }}</strong> before checking out.
+
+          {{-- ── Gate blockers ── --}}
+          @if(! $inspectionOk)
+            <div class="alert alert-danger">
+              <i class="icon-base ri ri-search-eye-line me-2"></i>
+              <strong>Room inspection not cleared.</strong>
+              The room must be inspected and marked as <em>Cleared</em> before checkout.
+              Current status:
+              <span class="badge bg-label-{{ match($reg->inspection_status ?? 'none') {
+                'inspecting' => 'primary',
+                'has_issues' => 'danger',
+                'pending'    => 'warning',
+                default      => 'secondary',
+              } }} ms-1">{{ ucfirst(str_replace('_', ' ', $reg->inspection_status ?? 'No Request')) }}</span>
             </div>
-          @else
+          @endif
+
+          @if(! $balanceOk)
+            <div class="alert alert-danger">
+              <i class="icon-base ri ri-money-dollar-circle-line me-2"></i>
+              <strong>Outstanding balance of ₱{{ number_format($reg->balance, 2) }}</strong> must be collected before checking out.
+            </div>
+          @endif
+
+          @if($canCheckout)
             <div class="alert alert-success">
               <i class="icon-base ri ri-checkbox-circle-line me-2"></i>
-              Guest is fully paid. Ready to check out.
+              All requirements met. Ready to check out.
             </div>
           @endif
 
@@ -299,16 +342,28 @@
                 ₱{{ number_format($reg->balance, 2) }}
               </td>
             </tr>
+            <tr>
+              <td class="text-muted fw-semibold">Inspection</td>
+              <td>
+                <span class="badge bg-label-{{ $inspectionOk ? 'success' : 'danger' }}">
+                  {{ $inspectionOk ? 'Cleared' : ucfirst(str_replace('_', ' ', $reg->inspection_status ?? 'No Request')) }}
+                </span>
+              </td>
+            </tr>
           </table>
 
-          <p class="text-muted small mb-0">
-            <i class="ri-information-line me-1"></i>
-            The room will be marked as <strong>Available</strong> after checkout.
-          </p>
+          @if($canCheckout)
+            <p class="text-muted small mb-0">
+              <i class="ri-information-line me-1"></i>
+              The room will be marked as <strong>Available</strong> after checkout.
+            </p>
+          @endif
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-warning btn-checkout-confirm"
+          <button type="button"
+                  class="btn btn-warning btn-checkout-confirm {{ $canCheckout ? '' : 'disabled' }}"
+                  {{ $canCheckout ? '' : 'disabled title="Complete inspection and settle balance first"' }}
                   data-registration-id="{{ $reg->registration_id }}"
                   data-url="{{ route('super_admin.registration.process-check-out', $reg->registration_id) }}"
                   data-modal="checkoutModal{{ $reg->registration_id }}">
@@ -349,7 +404,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // ── AJAX Check-out ────────────────────────────────────────────
   document.addEventListener('click', function (e) {
     const btn = e.target.closest('.btn-checkout-confirm');
-    if (!btn) return;
+    if (!btn || btn.disabled) return;
 
     const registrationId = btn.dataset.registrationId;
     const url            = btn.dataset.url;
@@ -411,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (rows.length === 0) {
       document.getElementById('checkoutTableBody').innerHTML = `
         <tr id="emptyRow">
-          <td colspan="8">
+          <td colspan="9">
             <div class="text-center py-5">
               <i class="icon-base ri ri-hotel-bed-line icon-48px text-muted mb-3 d-block"></i>
               <h5>No Active Guests</h5>

@@ -25,10 +25,9 @@ class LoginBasic extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string|min:6',
+        'email'    => 'required|email',
+        'password' => 'required|string', // removed min:6
         ]);
-
         $email = $request->input('email');
         $password = $request->input('password');
         $remember = $request->has('remember');

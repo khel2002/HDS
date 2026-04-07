@@ -481,12 +481,6 @@
                 <span>Continue with Google</span>
             </a>
 
-            {{-- Sign Up --}}
-            <div class="signup-row">
-                <span>Don't have an account? </span>
-                <a href="{{ url('auth/register') }}">Sign up</a>
-            </div>
-
             {{-- Terms --}}
             <p class="terms-text">
                 By continuing, you agree to our

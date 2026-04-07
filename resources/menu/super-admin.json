@@ -25,28 +25,32 @@
       "menuHeader": "Guest Management"
     },
     {
-    "name": "Registration",
-    "icon": "menu-icon icon-base ri ri-door-open-line",
-    "slug": "registration",
-    "submenu": [
-      {
-        "url": "/super-admin/registration/check-in",
-        "name": "Check-in",
-        "slug": "check-in"
-      },
-      {
-        "url": "/super-admin/registration/check-out",
-        "name": "Check-out",
-        "slug": "check-out"
-      },
-      {
-        "url": "/super-admin/registration/all",
-        "name": "All Registrations",
-        "slug": "all-registrations"
-      }
-    ]
+      "name": "Registration",
+      "icon": "menu-icon icon-base ri ri-door-open-line",
+      "slug": "registration",
+      "submenu": [
+        {
+          "url": "/super-admin/registration/check-in",
+          "name": "Check-in",
+          "slug": "check-in"
+        },
+        {
+          "url": "/super-admin/registration/check-out",
+          "name": "Check-out",
+          "slug": "check-out"
+        },
+         {
+          "url": "/super-admin/checkout-requests",
+          "name": "Checkout Requests",
+          "slug": "checkout-requests"
+        },
+        {
+          "url": "/super-admin/registration/all",
+          "name": "All Registrations",
+          "slug": "all-registrations"
+        }
+      ]
     },
-
     {
       "name": "Guest Management",
       "icon": "menu-icon icon-base ri ri-user-3-line",
@@ -178,7 +182,6 @@
           "name": "Pending Payments",
           "slug": "pending-payments"
         }
-
       ]
     },
     {

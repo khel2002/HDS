@@ -49,7 +49,9 @@ class ReservationController extends Controller
                 ],
             ];
 
-            return view('content.reservation.reservation-form', compact('room'));
+            $authUser = auth()->user();
+
+            return view('content.reservation.reservation-form', compact('room', 'authUser'));
 
         } catch (Exception $e) {
             \Log::error('showReservationForm: ' . $e->getMessage());
@@ -114,7 +116,11 @@ class ReservationController extends Controller
             'payment_method' => $request->input('payment_method'),
         ]);
 
+        $isLoggedIn = auth()->check();
+
         // ── 1. Top-level validation ───────────────────────────────
+        // contact_number and dob are nullable for logged-in users who may
+        // not have those fields populated yet — JS validates presence client-side.
         $validated = $request->validate([
             'rooms'          => 'required|json',
             'rooms_data'     => 'required|array|min:1',
@@ -122,8 +128,8 @@ class ReservationController extends Controller
             'middle_name'    => 'nullable|string|max:45',
             'last_name'      => 'required|string|max:45',
             'email'          => 'required|email|max:100',
-            'contact_number' => 'required|string|max:45',
-            'dob'            => 'required|date|before:today',
+            'contact_number' => 'nullable|string|max:45',
+            'dob'            => 'nullable|date|before:today',
             'payment_method' => 'required|in:cash,online',
         ]);
 
@@ -133,8 +139,7 @@ class ReservationController extends Controller
             return back()->withInput()->with('error', 'No rooms selected. Please go back and select a room.');
         }
 
-        $roomIds  = array_column($roomsList, 'room_id');
-        // Re-index to ensure 0-based sequential keys
+        $roomIds   = array_column($roomsList, 'room_id');
         $roomsData = array_values($request->input('rooms_data', []));
 
         if (count($roomIds) !== count($roomsData)) {
@@ -189,10 +194,56 @@ class ReservationController extends Controller
                 ->get()
                 ->keyBy('room_id');
 
-            // ── 7. Duplicate email guard ──────────────────────────
-            if (DB::table('users')->where('email', $validated['email'])->exists()) {
-                DB::rollBack();
-                return back()->withInput()->with('error', 'An account with this email already exists. Please use a different email.');
+            // ── 7. User account: reuse existing or create new ─────
+            $tempPassword = null;
+            $isNewAccount = false;
+
+            if ($isLoggedIn) {
+                // Logged-in user: always reuse their existing account.
+                // If the form submitted an updated contact_number, persist it.
+                $userId = auth()->id();
+
+                $updateFields = [];
+                if (!empty($validated['contact_number'])) {
+                    $updateFields['contact_number'] = $validated['contact_number'];
+                }
+                if (!empty($validated['dob'])) {
+                    $updateFields['dob'] = $validated['dob'];
+                }
+                if (!empty($updateFields)) {
+                    $updateFields['updated_at'] = now();
+                    DB::table('users')->where('user_id', $userId)->update($updateFields);
+                }
+
+                \Log::info('STORE - using existing auth user', ['user_id' => $userId]);
+
+            } else {
+                // Guest: check for duplicate email then create a temp account
+                if (DB::table('users')->where('email', $validated['email'])->exists()) {
+                    DB::rollBack();
+                    return back()->withInput()->with('error', 'An account with this email already exists. Please use a different email or log in.');
+                }
+
+                $tempPassword = Str::random(12);
+                $guestRoleId  = DB::table('roles')->where('role_name', 'guest')->value('role_id');
+                if (!$guestRoleId) throw new Exception('Guest role not found in the roles table.');
+
+                $userId = DB::table('users')->insertGetId([
+                    'role_id'        => $guestRoleId,
+                    'email'          => $validated['email'],
+                    'password'       => Hash::make($tempPassword),
+                    'first_name'     => $validated['first_name'],
+                    'middle_name'    => $validated['middle_name'] ?? null,
+                    'last_name'      => $validated['last_name'],
+                    'contact_number' => $validated['contact_number'] ?? null,
+                    'dob'            => $validated['dob'] ?? null,
+                    'temporary_act'  => 1,
+                    'STATUS'         => 'active',
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ]);
+                $isNewAccount = true;
+                \Log::info('STORE - new guest user created', ['user_id' => $userId]);
             }
 
             // ── 8. Fees & primary dates ───────────────────────────
@@ -202,26 +253,7 @@ class ReservationController extends Controller
             $primaryDeparture = $roomsData[0]['departure_date'];
             $primaryNights    = (int)(new \DateTime($primaryArrival))->diff(new \DateTime($primaryDeparture))->days;
 
-            // ── 9. Create user account (holder only) ──────────────
-            $tempPassword = Str::random(12);
-            $guestRoleId  = DB::table('roles')->where('role_name', 'guest')->value('role_id');
-            if (!$guestRoleId) throw new Exception('Guest role not found in the roles table.');
-
-            $userId = DB::table('users')->insertGetId([
-                'role_id'       => $guestRoleId,
-                'email'         => $validated['email'],
-                'password'      => Hash::make($tempPassword),
-                'first_name'    => $validated['first_name'],
-                'middle_name'   => $validated['middle_name'] ?? null,
-                'last_name'     => $validated['last_name'],
-                'temporary_act' => 1,
-                'STATUS'        => 'active',
-                'created_at'    => now(),
-                'updated_at'    => now(),
-            ]);
-            \Log::info('STORE - user created', ['user_id' => $userId]);
-
-            // ── 10. Payment record ────────────────────────────────
+            // ── 9. Payment record ─────────────────────────────────
             $paymentId = DB::table('payments')->insertGetId([
                 'payment_method' => 'cash',
                 'amount'         => $totalFee,
@@ -229,7 +261,7 @@ class ReservationController extends Controller
                 'payment_status' => 'pending',
             ]);
 
-            // ── 11. Reservations + guests per room ────────────────
+            // ── 10. Reservations + guests per room ────────────────
             $reservationIds = [];
             $totalSubtotal  = 0;
 
@@ -241,10 +273,10 @@ class ReservationController extends Controller
                 $balance  = $subtotal - $feePerRoom;
                 $totalSubtotal += $subtotal;
 
-                // a) Insert reservation — guest_details_id nullable until we create the guest
+                // a) Insert reservation
                 $resId = DB::table('reservations')->insertGetId([
                     'user_id'              => $userId,
-                    'guest_details_id'     => null,   // updated below after guest insert
+                    'guest_details_id'     => null,
                     'payment_id'           => $paymentId,
                     'room_id'              => $roomId,
                     'reservation_fee'      => $feePerRoom,
@@ -303,28 +335,30 @@ class ReservationController extends Controller
                 'user_id'         => $userId,
             ]);
 
-            // ── 12. Confirmation email ────────────────────────────
-            $roomDetails = collect($roomIds)->map(fn($id) => [
-                'room_number'    => $roomTypes[$id]->room_number,
-                'room_type_name' => $roomTypes[$id]->room_type_name,
-            ])->toArray();
+            // ── 11. Confirmation email (only for new guest accounts) ──
+            if ($isNewAccount) {
+                $roomDetails = collect($roomIds)->map(fn($id) => [
+                    'room_number'    => $roomTypes[$id]->room_number,
+                    'room_type_name' => $roomTypes[$id]->room_type_name,
+                ])->toArray();
 
-            $this->sendEmail([
-                'first_name'      => $validated['first_name'],
-                'last_name'       => $validated['last_name'],
-                'email'           => $validated['email'],
-                'password'        => $tempPassword,
-                'rooms'           => $roomDetails,
-                'room_count'      => count($roomIds),
-                'arrival_date'    => $primaryArrival,
-                'departure_date'  => $primaryDeparture,
-                'no_nights'       => $primaryNights,
-                'total_amount'    => $totalSubtotal,
-                'reservation_fee' => $totalFee,
-                'balance'         => $totalSubtotal - $totalFee,
-            ]);
+                $this->sendEmail([
+                    'first_name'      => $validated['first_name'],
+                    'last_name'       => $validated['last_name'],
+                    'email'           => $validated['email'],
+                    'password'        => $tempPassword,
+                    'rooms'           => $roomDetails,
+                    'room_count'      => count($roomIds),
+                    'arrival_date'    => $primaryArrival,
+                    'departure_date'  => $primaryDeparture,
+                    'no_nights'       => $primaryNights,
+                    'total_amount'    => $totalSubtotal,
+                    'reservation_fee' => $totalFee,
+                    'balance'         => $totalSubtotal - $totalFee,
+                ]);
+            }
 
-            // ── 13. Redirect to confirmation ──────────────────────
+            // ── 12. Redirect to confirmation ──────────────────────
             $idsStr = implode(',', $reservationIds);
             $token  = hash_hmac('sha256', $userId . '|' . $idsStr, config('app.key'));
 
@@ -333,7 +367,7 @@ class ReservationController extends Controller
                 'rids'  => $idsStr,
                 'token' => $token,
                 'pm'    => 'cash',
-                'pw'    => $tempPassword,
+                'pw'    => $isNewAccount ? $tempPassword : null,
             ]);
 
         } catch (Exception $e) {
@@ -364,7 +398,6 @@ class ReservationController extends Controller
                 ->with('error', 'Invalid confirmation link. Please check your email.');
         }
 
-        // Verify signed token
         $expected = hash_hmac('sha256', $uid . '|' . $rids, config('app.key'));
         if (!hash_equals($expected, $token)) {
             return redirect()->route('frontpage.index')
@@ -402,7 +435,6 @@ class ReservationController extends Controller
         $user  = DB::table('users')->where('user_id', $uid)->first();
         $first = $reservations->first();
 
-        // Lead guest of the first reservation (for display)
         $leadGuest = DB::table('guest_details')
             ->where('reservation_id', $first->reservation_id)
             ->where('is_primary', 1)
@@ -428,10 +460,10 @@ class ReservationController extends Controller
             'last_name'       => $leadGuest->last_name  ?? '',
         ];
 
-        $credentials = [
+        $credentials = $pw ? [
             'email'    => $user->email ?? '',
-            'password' => $pw ?? '(check your email)',
-        ];
+            'password' => $pw,
+        ] : null;
 
         $paymentMethod  = $pm;
         $paymentSuccess = true;
@@ -497,7 +529,6 @@ class ReservationController extends Controller
                 ->where('reservation_id', $reservation_id)
                 ->update(['reservation_status' => 'cancelled']);
 
-            // If this user has no other active reservations, delete the temp account
             $otherActive = DB::table('reservations')
                 ->where('user_id', $res->user_id)
                 ->where('reservation_id', '!=', $reservation_id)
@@ -550,12 +581,12 @@ class ReservationController extends Controller
 
     private function statusColor(string $status): string
     {
-        return match ($status) {
+        return match (strtolower($status)) {
             'pending'   => '#fbbf24',
             'approved'  => '#10b981',
             'rejected'  => '#ef4444',
             'cancelled' => '#6b7280',
-            default     => '#3b82f6',
+            default     => '#3b82f6'
         };
     }
 }

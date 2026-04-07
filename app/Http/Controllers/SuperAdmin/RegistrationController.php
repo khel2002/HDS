@@ -114,7 +114,6 @@ class RegistrationController extends Controller
 
             DB::commit();
 
-            // Return updated stats
             $stats = $this->buildCheckInStats();
 
             return response()->json([
@@ -142,10 +141,24 @@ class RegistrationController extends Controller
             ->join('rooms',         'reservations.room_id',           '=', 'rooms.room_id')
             ->join('room_types',    'rooms.room_type_id',             '=', 'room_types.room_type_id')
             ->join('payments',      'registrations.payment_id',       '=', 'payments.payment_id')
-            ->leftJoin('guest_details', function ($join) {
-                $join->on('guest_details.reservation_id', '=', 'reservations.reservation_id')
-                     ->where('guest_details.is_primary', '=', 1);
+            ->leftJoin('guest_details as gd', function ($join) {
+                $join->on('gd.reservation_id', '=', 'reservations.reservation_id')
+                     ->where('gd.is_primary', '=', 1);
             })
+            // Attach only the latest checkout request per registration
+            ->leftJoinSub(
+                DB::table('checkout_requests')
+                    ->select('registration_id', 'status')
+                    ->whereIn('id', function ($sub) {
+                        $sub->selectRaw('MAX(id)')
+                            ->from('checkout_requests')
+                            ->groupBy('registration_id');
+                    }),
+                'cr',
+                'cr.registration_id',
+                '=',
+                'registrations.registration_id'
+            )
             ->whereNull('registrations.check_out_date')
             ->select(
                 'registrations.registration_id',
@@ -165,9 +178,11 @@ class RegistrationController extends Controller
                 'payments.payment_status',
                 'users.email',
                 'users.user_id',
-                DB::raw("COALESCE(guest_details.first_name, '') as guest_first_name"),
-                DB::raw("COALESCE(guest_details.last_name, '')  as guest_last_name"),
-                DB::raw("COALESCE(guest_details.contact_number, '') as guest_contact"),
+                // Expose inspection status to the blade
+                DB::raw("COALESCE(cr.status, 'none') as inspection_status"),
+                DB::raw("COALESCE(gd.first_name, '') as guest_first_name"),
+                DB::raw("COALESCE(gd.last_name, '')  as guest_last_name"),
+                DB::raw("COALESCE(gd.contact_number, '') as guest_contact"),
             )
             ->orderBy('reservations.check_out_date', 'asc')
             ->get();
@@ -177,6 +192,10 @@ class RegistrationController extends Controller
 
     // ─────────────────────────────────────────────────────────────
     // PROCESS CHECK-OUT (AJAX)
+    // Guards:
+    //   1. Checkout request must exist and be 'cleared'
+    //   2. All damage charges must be acknowledged
+    //   3. Reservation balance must be 0
     // ─────────────────────────────────────────────────────────────
     public function processCheckOut(Request $request, $registration_id)
     {
@@ -195,6 +214,58 @@ class RegistrationController extends Controller
                 ->where('reservation_id', $reg->reservation_id)
                 ->first();
 
+            if (!$res) {
+                return response()->json(['success' => false, 'message' => 'Reservation not found.'], 404);
+            }
+
+            // [GATE 1] Room inspection must be cleared
+            $checkoutRequest = DB::table('checkout_requests')
+                ->where('registration_id', $registration_id)
+                ->orderByDesc('created_at')
+                ->first();
+
+            if (! $checkoutRequest) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No checkout request found. The guest must submit a checkout request first.',
+                ], 422);
+            }
+
+            if ($checkoutRequest->status !== 'cleared') {
+                $statusLabels = [
+                    'pending'    => 'pending inspection',
+                    'inspecting' => 'currently being inspected',
+                    'has_issues' => 'has unresolved issues',
+                ];
+                $label = $statusLabels[$checkoutRequest->status] ?? $checkoutRequest->status;
+                return response()->json([
+                    'success' => false,
+                    'message' => "Cannot check out: room inspection is {$label}. Complete the inspection first.",
+                ], 422);
+            }
+
+            // [GATE 2] All damage charges must be acknowledged by the guest
+            $unacknowledged = DB::table('checkout_damage_charges')
+                ->where('registration_id', $registration_id)
+                ->where('is_acknowledged', 0)
+                ->count();
+
+            if ($unacknowledged > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Guest has {$unacknowledged} unacknowledged damage charge(s). Wait for the guest to acknowledge before checking out.",
+                ], 422);
+            }
+
+            // [GATE 3] Balance must be fully paid
+            if ($res->balance > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Guest still has an outstanding balance of ₱' . number_format($res->balance, 2) . '. Collect full payment before checking out.',
+                ], 422);
+            }
+
+            // All gates passed — process checkout
             DB::table('registrations')
                 ->where('registration_id', $registration_id)
                 ->update(['check_out_date' => now()->toDateString()]);
@@ -202,6 +273,13 @@ class RegistrationController extends Controller
             DB::table('reservations')
                 ->where('reservation_id', $reg->reservation_id)
                 ->update(['balance' => 0]);
+
+            // Free the room
+            if ($res->room_id) {
+                DB::table('rooms')
+                    ->where('room_id', $res->room_id)
+                    ->update(['status' => 'available']);
+            }
 
             DB::commit();
 

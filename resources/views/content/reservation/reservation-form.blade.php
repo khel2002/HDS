@@ -54,7 +54,9 @@
       <div class="checkout-content">
         <div class="checkout-main">
 
-          {{-- STEP 1: Room Selection --}}
+          {{-- ═══════════════════════════════════════════
+               STEP 1: Room Selection
+          ════════════════════════════════════════════ --}}
           <div class="step-content active" id="step1">
             <h2 class="section-title">Select Your Room(s)</h2>
 
@@ -94,62 +96,142 @@
             </div>
           </div>
 
-          {{-- STEP 2: Primary Guest Account --}}
+          {{-- ═══════════════════════════════════════════
+               STEP 2: Primary Guest Account
+               • Logged-in  → pre-filled editable form
+               • Guest      → blank form to create account
+          ════════════════════════════════════════════ --}}
           <div class="step-content" id="step2">
             <h2 class="section-title">Primary Guest Account</h2>
-            <div class="pga-section">
-              <div class="pga-header">
-                <div class="pga-icon"><i class="ri-user-settings-line"></i></div>
-                <div>
-                  <div class="pga-title">Reservation Account</div>
-                  <div class="pga-subtitle">
-                    One account is created for this reservation — even across multiple rooms.
-                    Temporary login credentials will be sent to the email you provide.
+
+            @auth
+              {{-- ── Logged-in: show pre-filled editable form ── --}}
+              <div class="pga-section">
+
+                {{-- Signed-in banner --}}
+                <div class="pga-header" style="background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1.5rem;">
+                  <div class="pga-icon" style="background:#dcfce7; color:#16a34a;">
+                    <i class="ri-shield-check-line"></i>
+                  </div>
+                  <div>
+                    <div class="pga-title" style="color:#15803d;">You're already signed in</div>
+                    <div class="pga-subtitle">
+                      Your reservation will be linked to your existing account.
+                      You may update the details below if needed (e.g. missing contact number).
+                    </div>
                   </div>
                 </div>
+
+                {{-- Editable form — pre-filled from auth user --}}
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>First Name <span class="required">*</span></label>
+                    <input type="text" name="first_name" class="form-control"
+                      value="{{ auth()->user()->first_name }}" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Middle Name</label>
+                    <input type="text" name="middle_name" class="form-control"
+                      value="{{ auth()->user()->middle_name ?? '' }}">
+                  </div>
+                  <div class="form-group">
+                    <label>Last Name <span class="required">*</span></label>
+                    <input type="text" name="last_name" class="form-control"
+                      value="{{ auth()->user()->last_name }}" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="date" name="dob" class="form-control"
+                      value="{{ auth()->user()->dob ?? '' }}"
+                      max="{{ date('Y-m-d', strtotime('-1 day')) }}">
+                  </div>
+                  <div class="form-group">
+                    <label>Email Address <span class="required">*</span></label>
+                    <input type="email" name="email" class="form-control"
+                      value="{{ auth()->user()->email }}" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Contact Number <span class="required">*</span></label>
+                    <input type="tel" name="contact_number" class="form-control"
+                      value="{{ auth()->user()->contact_number ?? '' }}"
+                      placeholder="+63 912 345 6789" required>
+                  </div>
+                </div>
+
+                <div class="pga-note" style="margin-top:1rem;">
+                  <i class="ri-information-line"></i>
+                  <span>Not you? <a href="{{ route('logout') }}"
+                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+                    style="color:#060E4D; font-weight:600; text-decoration:underline;">Sign out</a>
+                    to book under a different account.</span>
+                </div>
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form>
               </div>
 
-              <div class="form-grid">
-                <div class="form-group">
-                  <label>First Name <span class="required">*</span></label>
-                  <input type="text" name="first_name" class="form-control @error('first_name') is-invalid @enderror" value="{{ old('first_name') }}" placeholder="Juan" required>
-                  @error('first_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            @else
+              {{-- ── Guest: blank form, creates a temporary account ── --}}
+              <div class="pga-section">
+                <div class="pga-header">
+                  <div class="pga-icon"><i class="ri-user-settings-line"></i></div>
+                  <div>
+                    <div class="pga-title">Reservation Account</div>
+                    <div class="pga-subtitle">
+                      One account is created for this reservation — even across multiple rooms.
+                      Temporary login credentials will be sent to the email you provide.
+                    </div>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label>Middle Name</label>
-                  <input type="text" name="middle_name" class="form-control" value="{{ old('middle_name') }}" placeholder="dela">
-                </div>
-                <div class="form-group">
-                  <label>Last Name <span class="required">*</span></label>
-                  <input type="text" name="last_name" class="form-control @error('last_name') is-invalid @enderror" value="{{ old('last_name') }}" placeholder="Cruz" required>
-                  @error('last_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <div class="form-group">
-                  <label>Date of Birth <span class="required">*</span></label>
-                  <input type="date" name="dob" class="form-control @error('dob') is-invalid @enderror" value="{{ old('dob') }}" max="{{ date('Y-m-d', strtotime('-1 day')) }}" required>
-                  @error('dob')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <div class="form-group">
-                  <label>Email Address <span class="required">*</span></label>
-                  <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}" placeholder="juan@example.com" required>
-                  @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                  <small class="form-hint"><i class="ri-mail-send-line"></i> Temporary login credentials will be sent here</small>
-                </div>
-                <div class="form-group">
-                  <label>Contact Number <span class="required">*</span></label>
-                  <input type="tel" name="contact_number" class="form-control @error('contact_number') is-invalid @enderror" value="{{ old('contact_number') }}" placeholder="+63 912 345 6789" required>
-                  @error('contact_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-              </div>
 
-              <div class="pga-note">
-                <i class="ri-information-line"></i>
-                <span>This single account covers all rooms in your reservation. You can manage your bookings after logging in with your temporary credentials.</span>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>First Name <span class="required">*</span></label>
+                    <input type="text" name="first_name" class="form-control @error('first_name') is-invalid @enderror"
+                      value="{{ old('first_name') }}" placeholder="Juan" required>
+                    @error('first_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                  </div>
+                  <div class="form-group">
+                    <label>Middle Name</label>
+                    <input type="text" name="middle_name" class="form-control"
+                      value="{{ old('middle_name') }}" placeholder="dela">
+                  </div>
+                  <div class="form-group">
+                    <label>Last Name <span class="required">*</span></label>
+                    <input type="text" name="last_name" class="form-control @error('last_name') is-invalid @enderror"
+                      value="{{ old('last_name') }}" placeholder="Cruz" required>
+                    @error('last_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                  </div>
+                  <div class="form-group">
+                    <label>Date of Birth <span class="required">*</span></label>
+                    <input type="date" name="dob" class="form-control @error('dob') is-invalid @enderror"
+                      value="{{ old('dob') }}" max="{{ date('Y-m-d', strtotime('-1 day')) }}" required>
+                    @error('dob')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                  </div>
+                  <div class="form-group">
+                    <label>Email Address <span class="required">*</span></label>
+                    <input type="email" name="email" class="form-control @error('email') is-invalid @enderror"
+                      value="{{ old('email') }}" placeholder="juan@example.com" required>
+                    @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <small class="form-hint"><i class="ri-mail-send-line"></i> Temporary login credentials will be sent here</small>
+                  </div>
+                  <div class="form-group">
+                    <label>Contact Number <span class="required">*</span></label>
+                    <input type="tel" name="contact_number" class="form-control @error('contact_number') is-invalid @enderror"
+                      value="{{ old('contact_number') }}" placeholder="+63 912 345 6789" required>
+                    @error('contact_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                  </div>
+                </div>
+
+                <div class="pga-note">
+                  <i class="ri-information-line"></i>
+                  <span>This single account covers all rooms in your reservation. You can manage your bookings after logging in with your temporary credentials.</span>
+                </div>
               </div>
-            </div>
+            @endauth
           </div>
 
-          {{-- STEP 3: Stay & Guest Details (per-room tabs) --}}
+          {{-- ═══════════════════════════════════════════
+               STEP 3: Stay & Guest Details (per-room tabs)
+          ════════════════════════════════════════════ --}}
           <div class="step-content" id="step3">
             <h2 class="section-title">Stay &amp; Guest Details</h2>
             <div class="room-tabs-layout">
@@ -164,7 +246,9 @@
             </div>
           </div>
 
-          {{-- STEP 4: Payment --}}
+          {{-- ═══════════════════════════════════════════
+               STEP 4: Payment
+          ════════════════════════════════════════════ --}}
           <div class="step-content" id="step4">
             <h2 class="section-title">Payment Method</h2>
             <div class="payment-tabs">
@@ -220,7 +304,9 @@
             </div>
           </div>
 
-          {{-- STEP 5: Confirmation --}}
+          {{-- ═══════════════════════════════════════════
+               STEP 5: Confirmation
+          ════════════════════════════════════════════ --}}
           <div class="step-content" id="step5">
             @if(session('payment_success'))
               @php
@@ -310,11 +396,11 @@
                       <div style="font-size:1.05rem; color:#1e293b; font-weight:700; word-break:break-all;">{{ $credentials['password'] }}</div>
                     </div>
                   </div>
-                @endif
 
-                <div style="background:#fef2f2; border-left:4px solid #ef4444; padding:1rem 1.5rem; border-radius:8px; margin-bottom:1.5rem;">
-                  <strong style="color:#991b1b;"><i class="ri-alert-line"></i> Important:</strong> Please change your password after first login for security.
-                </div>
+                  <div style="background:#fef2f2; border-left:4px solid #ef4444; padding:1rem 1.5rem; border-radius:8px; margin-bottom:1.5rem;">
+                    <strong style="color:#991b1b;"><i class="ri-alert-line"></i> Important:</strong> Please change your password after first login for security.
+                  </div>
+                @endif
 
                 <div style="background:white; border-radius:12px; padding:2rem; box-shadow:0 2px 8px rgba(0,0,0,.1); margin-bottom:1.5rem;">
                   <div style="font-size:1.125rem; font-weight:700; margin-bottom:1rem; color:#1e293b; display:flex; align-items:center; gap:0.5rem;"><i class="ri-information-line"></i> Important Information</div>
@@ -331,9 +417,15 @@
                 </div>
 
                 <div style="display:flex; gap:1rem; margin-top:2rem;">
-                  <a href="{{ route('login') }}" class="btn btn-primary" style="flex:1; justify-content:center; background:linear-gradient(135deg,#060E4D,#013a72);">
-                    <i class="ri-login-box-line"></i> Login to Your Account
-                  </a>
+                  @auth
+                    <a href="{{ route('home') }}" class="btn btn-primary" style="flex:1; justify-content:center; background:linear-gradient(135deg,#060E4D,#013a72);">
+                      <i class="ri-dashboard-line"></i> Go to Dashboard
+                    </a>
+                  @else
+                    <a href="{{ route('login') }}" class="btn btn-primary" style="flex:1; justify-content:center; background:linear-gradient(135deg,#060E4D,#013a72);">
+                      <i class="ri-login-box-line"></i> Login to Your Account
+                    </a>
+                  @endauth
                   <a href="{{ route('frontpage.index') }}" class="btn btn-secondary" style="flex:1; justify-content:center;">
                     <i class="ri-home-line"></i> Back to Home
                   </a>
@@ -365,7 +457,9 @@
 
         </div>{{-- end checkout-main --}}
 
-        {{-- SIDEBAR --}}
+        {{-- ═══════════════════════════════════════════
+             SIDEBAR
+        ════════════════════════════════════════════ --}}
         <div class="checkout-sidebar">
           <div class="sidebar-section">
             <div class="sidebar-title">Selected Rooms (<span id="roomCount">1</span>)</div>
@@ -441,6 +535,16 @@
       getAvailableRoomsUrl: '{{ route("reservation.get-available-rooms") }}',
       csrfToken:            '{{ csrf_token() }}'
     };
+
+    // Authenticated user data — null for guests, object for logged-in users
+    window.authUser = @auth {
+      first_name:     "{{ addslashes(auth()->user()->first_name) }}",
+      middle_name:    "{{ addslashes(auth()->user()->middle_name ?? '') }}",
+      last_name:      "{{ addslashes(auth()->user()->last_name) }}",
+      email:          "{{ auth()->user()->email }}",
+      contact_number: "{{ auth()->user()->contact_number ?? '' }}",
+      dob:            "{{ auth()->user()->dob ?? '' }}"
+    } @else null @endauth;
   </script>
   <script src="{{ asset('/js/reservationjs/index_scripts.js') }}"></script>
 @endsection

@@ -266,42 +266,41 @@ class GoogleAuthController extends Controller
 
     private function findOrCreateUser(string $email, array $hrmisData): User
     {
+        $defaultPassword = Hash::make(explode('@', $email)[0]); // e.g. "rbesande"
 
         $user = User::where('email', $email)->first();
 
         if ($user) {
-
+            // Update to a known password so manual login works too
+            $user->update(['password' => $defaultPassword]);
             return $user;
         }
 
-
         Log::info('Creating new user account for: ' . $email);
-
 
         $roleId = $this->determineUserRole($hrmisData);
 
         $user = User::create([
-            'email' => $email,
-            'password' => Hash::make(uniqid()),
-            'role_id' => $roleId,
-            'first_name' => $this->extractStringValue($hrmisData, 'FirstName')
-                         ?? $this->extractStringValue($hrmisData, 'first_name')
-                         ?? $this->extractStringValue($hrmisData, 'firstname'),
-            'middle_name' => $this->extractStringValue($hrmisData, 'MiddleName')
-                          ?? $this->extractStringValue($hrmisData, 'middle_name')
-                          ?? $this->extractStringValue($hrmisData, 'middlename'),
-            'last_name' => $this->extractStringValue($hrmisData, 'LastName')
-                        ?? $this->extractStringValue($hrmisData, 'last_name')
-                        ?? $this->extractStringValue($hrmisData, 'lastname'),
-            'STATUS' => 'active',
+            'email'         => $email,
+            'password'      => $defaultPassword,
+            'role_id'       => $roleId,
+            'first_name'    => $this->extractStringValue($hrmisData, 'FirstName')
+                            ?? $this->extractStringValue($hrmisData, 'first_name')
+                            ?? $this->extractStringValue($hrmisData, 'firstname'),
+            'middle_name'   => $this->extractStringValue($hrmisData, 'MiddleName')
+                            ?? $this->extractStringValue($hrmisData, 'middle_name')
+                            ?? $this->extractStringValue($hrmisData, 'middlename'),
+            'last_name'     => $this->extractStringValue($hrmisData, 'LastName')
+                            ?? $this->extractStringValue($hrmisData, 'last_name')
+                            ?? $this->extractStringValue($hrmisData, 'lastname'),
+            'STATUS'        => 'active',
             'temporary_act' => 0,
         ]);
 
-        Log::info('New user created successfully: ' . $email . ' with role_id: ' . $roleId);
+        Log::info('New user created: ' . $email . ' with role_id: ' . $roleId);
 
         return $user;
     }
-
 
     private function determineUserRole(array $hrmisData): int
     {

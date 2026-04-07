@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   initializeCheckout();
+  applyAuthUserPrefill();
   setupEventListeners();
   updateSidebarRooms();
   updatePricing();
@@ -59,6 +60,8 @@ function setupEventListeners() {
     tab.addEventListener('click', () => switchPaymentMethod(tab.dataset.payment));
   });
 
+  // Bind live-update listeners for ALL name/email/phone inputs
+  // (works for both guests and logged-in users since both now show visible fields)
   ['first_name', 'last_name', 'email', 'contact_number'].forEach(field => {
     const el = document.querySelector(`input[name="${field}"]`);
     if (el) {
@@ -73,6 +76,23 @@ function setupEventListeners() {
 
   document.getElementById('nextStepBtn')?.addEventListener('click', nextStep);
   document.getElementById('backBtn')?.addEventListener('click', prevStep);
+}
+
+// ─────────────────────────────────────────────
+// AUTH USER PRE-FILL
+// ─────────────────────────────────────────────
+
+/**
+ * If window.authUser is set (logged-in session):
+ * - Update the sidebar display immediately using authUser data.
+ * - The Step 2 form is now visible and pre-filled via Blade,
+ *   so we do NOT skip step 2 anymore.
+ */
+function applyAuthUserPrefill() {
+  const u = window.authUser;
+  if (!u) return;
+  // Update sidebar display immediately
+  updateGuestDisplay();
 }
 
 // ─────────────────────────────────────────────
@@ -123,15 +143,9 @@ function refreshPricingDisplay(nights) {
 // ROOM FORM STATE  (persist across step navigation)
 // ─────────────────────────────────────────────
 
-// Stores the last saved values keyed by input[name]
 let _savedRoomFormState = {};
-// Tracks whether Step 3 has been rendered at least once
-let _step3Initialized = false;
+let _step3Initialized   = false;
 
-/**
- * Snapshot every input/select/textarea inside #roomTabsForms.
- * Call this before leaving Step 3.
- */
 function saveRoomFormState() {
   const container = document.getElementById('roomTabsForms');
   if (!container) return;
@@ -140,15 +154,10 @@ function saveRoomFormState() {
   });
 }
 
-/**
- * Restore all saved values back into the freshly-rendered form.
- * Call this after renderRoomForms() rebuilds the DOM.
- */
 function restoreRoomFormState() {
   const container = document.getElementById('roomTabsForms');
   if (!container) return;
 
-  // First pass: restore selects (guest count) so guest blocks are rebuilt correctly
   container.querySelectorAll('select.room-guest-count').forEach(el => {
     if (el.name && _savedRoomFormState[el.name] !== undefined) {
       el.value = _savedRoomFormState[el.name];
@@ -159,7 +168,6 @@ function restoreRoomFormState() {
     }
   });
 
-  // Second pass: restore all inputs/textareas (including newly-built guest blocks)
   container.querySelectorAll('input, select, textarea').forEach(el => {
     if (el.name && _savedRoomFormState[el.name] !== undefined) {
       el.value = _savedRoomFormState[el.name];
@@ -178,14 +186,11 @@ function renderRoomTabsAndForms() {
 
   setTimeout(() => {
     if (_step3Initialized && Object.keys(_savedRoomFormState).length > 0) {
-      // Returning to step 3 — restore what the user already typed
       restoreRoomFormState();
-      // Re-bind date change listeners after DOM rebuild
       document.querySelectorAll('.room-arrival-date, .room-departure-date').forEach(input => {
         input.addEventListener('change', updatePricing);
       });
     } else {
-      // First visit — inject URL pre-filled dates + account prefill
       injectPrefilledDates();
       prefillPrimaryGuestFromAccount();
       _step3Initialized = true;
@@ -205,23 +210,28 @@ function injectPrefilledDates() {
 }
 
 /**
- * ✅ Reads the Step 2 account fields and pre-fills Room 1 / Guest 1 (primary guest).
- * Only Room 1's first guest block is auto-filled — other rooms are left blank.
+ * Pre-fills Room 1 / Guest 1 from:
+ * - window.authUser (logged-in) — pulls from the live Step 2 form fields
+ *   so any edits the user made are respected.
+ * - Step 2 form fields (guest path).
  * Fields are not overwritten if the user already typed something.
  */
 function prefillPrimaryGuestFromAccount() {
-  const firstName = document.querySelector('input[name="first_name"]')?.value.trim()  || '';
-  const lastName  = document.querySelector('input[name="last_name"]')?.value.trim()   || '';
-  const email     = document.querySelector('input[name="email"]')?.value.trim()        || '';
-  const phone     = document.querySelector('input[name="contact_number"]')?.value.trim() || '';
+  // For logged-in users, prefer the live Step 2 form values so edits are captured
+  const firstName = document.querySelector('input[name="first_name"]')?.value.trim()
+    || window.authUser?.first_name || '';
+  const lastName  = document.querySelector('input[name="last_name"]')?.value.trim()
+    || window.authUser?.last_name  || '';
+  const email     = document.querySelector('input[name="email"]')?.value.trim()
+    || window.authUser?.email      || '';
+  const phone     = document.querySelector('input[name="contact_number"]')?.value.trim()
+    || window.authUser?.contact_number || '';
 
-  // Helper: fill only if currently empty
   function fillIfEmpty(selector, value) {
     const el = document.querySelector(selector);
     if (el && !el.value.trim() && value) el.value = value;
   }
 
-  // Room index 0, Guest index 0 = Room 1, Primary Guest
   fillIfEmpty(`input[name="rooms_data[0][guests][0][first_name]"]`, firstName);
   fillIfEmpty(`input[name="rooms_data[0][guests][0][last_name]"]`,  lastName);
   fillIfEmpty(`input[name="rooms_data[0][guests][0][email]"]`,      email);
@@ -306,7 +316,6 @@ function renderRoomForms() {
       </div>
     </div>`).join('');
 
-  // Bind date change → re-price
   container.querySelectorAll('.room-arrival-date, .room-departure-date').forEach(input => {
     input.addEventListener('change', updatePricing);
   });
@@ -322,7 +331,6 @@ function onGuestCountChange(roomIdx, count) {
   const c = document.getElementById(`guestBlocksContainer_${roomIdx}`);
   if (c) {
     c.innerHTML = buildGuestBlocks(roomIdx, parseInt(count));
-    // ✅ Re-apply prefill after rebuilding guest blocks for Room 1
     if (roomIdx === 0) prefillPrimaryGuestFromAccount();
   }
 }
@@ -340,9 +348,10 @@ function buildGuestBlocks(roomIdx, count) {
     const req       = isPrimary ? 'required' : '';
     const reqStar   = isPrimary ? ' <span class="required">*</span>' : '';
 
-    // ✅ For Room 1 / Guest 1, embed a subtle "from account" badge
+    const badgeLabel = '<i class="ri-shield-check-line"></i> From your account';
+
     const primaryBadge = (isPrimary && isRoom1)
-      ? `<span class="guest-prefill-badge"><i class="ri-user-settings-line"></i> From your account</span>`
+      ? `<span class="guest-prefill-badge">${badgeLabel}</span>`
       : '';
 
     return `
@@ -491,7 +500,6 @@ function addRoom(roomId, roomNumber, roomTypeName, description, ratePerNight, ma
     </div>`;
 
   document.querySelectorAll('.remove-room-btn').forEach(b => b.style.display = 'flex');
-  // Room list changed — reset step 3 state so it re-initializes fresh
   _step3Initialized = false;
   _savedRoomFormState = {};
   if (document.getElementById('roomTabsList')) renderRoomTabsAndForms();
@@ -547,10 +555,16 @@ function updateSidebarRooms() {
 // SIDEBAR GUEST DISPLAY
 // ─────────────────────────────────────────────
 function updateGuestDisplay() {
-  const fn    = document.querySelector('input[name="first_name"]')?.value  || '';
-  const ln    = document.querySelector('input[name="last_name"]')?.value   || '';
-  const email = document.querySelector('input[name="email"]')?.value       || '';
-  const phone = document.querySelector('input[name="contact_number"]')?.value || '';
+  // Always read from the live Step 2 form fields (works for both auth and guest users)
+  const fn    = document.querySelector('input[name="first_name"]')?.value
+    || window.authUser?.first_name || '';
+  const ln    = document.querySelector('input[name="last_name"]')?.value
+    || window.authUser?.last_name  || '';
+  const email = document.querySelector('input[name="email"]')?.value
+    || window.authUser?.email      || '';
+  const phone = document.querySelector('input[name="contact_number"]')?.value
+    || window.authUser?.contact_number || '';
+
   if (fn || ln) setEl('guestNameDisplay',  `${fn} ${ln}`.trim());
   if (email)    setEl('guestEmailDisplay', email);
   if (phone)    setEl('guestPhoneDisplay', `Mobile: ${phone}`);
@@ -605,7 +619,10 @@ function nextStep() {
 
 function prevStep() {
   if (currentStep === 3) saveRoomFormState();
-  if (currentStep > 1) { currentStep--; updateStepDisplay(); }
+  if (currentStep > 1) {
+    currentStep--;
+    updateStepDisplay();
+  }
 }
 
 function goToStep(n) {
@@ -634,8 +651,13 @@ function validateStep(step) {
       { name: 'last_name',      label: 'Last Name' },
       { name: 'email',          label: 'Email' },
       { name: 'contact_number', label: 'Contact Number' },
-      { name: 'dob',            label: 'Date of Birth' },
     ];
+
+    // dob is only required for guest (non-logged-in) users
+    if (!window.authUser) {
+      required.push({ name: 'dob', label: 'Date of Birth' });
+    }
+
     for (const f of required) {
       const el = document.querySelector(`input[name="${f.name}"]`);
       if (!el?.value.trim()) {
@@ -644,12 +666,14 @@ function validateStep(step) {
         return false;
       }
     }
+
     const emailEl = document.querySelector('input[name="email"]');
     if (emailEl && !isValidEmail(emailEl.value)) {
       alert2('warning', 'Invalid Email', 'Please enter a valid email address.');
       emailEl.focus();
       return false;
     }
+
     updateGuestDisplay();
     return true;
   }
@@ -729,9 +753,7 @@ function updateStepDisplay() {
   if (guestBlock) guestBlock.style.display = currentStep >= 3 ? 'block' : 'none';
 
   if (currentStep === 3) {
-    // Save any existing state first (in case we're re-entering step 3)
     saveRoomFormState();
-    activeRoomTab = activeRoomTab;  // keep current tab, don't reset to 0
     renderRoomTabsAndForms();
   }
 
@@ -766,15 +788,16 @@ async function initiateStripePayment() {
       }
     }
 
+    // Always read from the live Step 2 form fields
     const payload = {
       reservation_data: {
         rooms,
-        first_name:     document.querySelector('input[name="first_name"]')?.value    || '',
-        middle_name:    document.querySelector('input[name="middle_name"]')?.value    || '',
-        last_name:      document.querySelector('input[name="last_name"]')?.value      || '',
-        email:          document.querySelector('input[name="email"]')?.value          || '',
-        contact_number: document.querySelector('input[name="contact_number"]')?.value || '',
-        dob:            document.querySelector('input[name="dob"]')?.value            || '',
+        first_name:     document.querySelector('input[name="first_name"]')?.value     || window.authUser?.first_name     || '',
+        middle_name:    document.querySelector('input[name="middle_name"]')?.value    || window.authUser?.middle_name    || '',
+        last_name:      document.querySelector('input[name="last_name"]')?.value      || window.authUser?.last_name      || '',
+        email:          document.querySelector('input[name="email"]')?.value          || window.authUser?.email          || '',
+        contact_number: document.querySelector('input[name="contact_number"]')?.value || window.authUser?.contact_number || '',
+        dob:            document.querySelector('input[name="dob"]')?.value            || window.authUser?.dob            || '',
       },
       amount: fee,
     };
@@ -870,12 +893,10 @@ function debounce(fn, ms) {
   return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
 }
 
-// Spin animation for loader
 const _css = document.createElement('style');
 _css.textContent = `
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ✅ "From your account" badge on primary guest block */
   .guest-prefill-badge {
     display: inline-flex;
     align-items: center;
