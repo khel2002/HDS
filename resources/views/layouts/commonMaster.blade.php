@@ -7,7 +7,8 @@
   <meta charset="utf-8" />
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
-    <title>@yield('title', 'Hotel De SLSU')</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">  {{-- ← ADD THIS LINE --}}
+  <title>@yield('title', 'Hotel De SLSU')</title>
   <meta name="description" content="Hotel De SLSU" />
   <meta name="keywords" content="Hotel De SLSU, Hotel, SLSU, Southern Leyte State University" />
   <!-- Include Styles -->
@@ -21,8 +22,6 @@
   <!-- Layout Content -->
   @yield('layoutContent')
   <!--/ Layout Content -->
-
-
 
   <!-- Include Scripts -->
   @include('layouts/sections/scripts')
