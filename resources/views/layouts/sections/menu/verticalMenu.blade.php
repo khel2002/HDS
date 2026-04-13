@@ -15,10 +15,9 @@ use Illuminate\Support\Facades\Route;
             layout-menu-toggle: triggers expand/collapse of the whole sidebar.
             The Menu JS class listens for clicks on this element.
         --}}
-        <a href="javascript:void(0);"
-           class="layout-menu-toggle menu-link text-large ms-auto d-xl-flex align-items-center justify-content-center">
-            <i class="bx bx-chevron-left bx-sm align-middle"></i>
-        </a>
+          <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
+            <i class="menu-toggle-icon d-xl-inline-block align-middle"></i>
+          </a>
     </div>
 
     <div class="menu-inner-shadow"></div>
