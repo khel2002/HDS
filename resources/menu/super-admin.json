@@ -233,53 +233,6 @@
           "url": "/super-admin/users/all",
           "name": "All Users",
           "slug": "all-users"
-        },
-        {
-          "url": "/super-admin/users/super-admins",
-          "name": "Super Admins",
-          "slug": "super-admin-users"
-        },
-        {
-          "url": "/super-admin/users/admins",
-          "name": "Admins",
-          "slug": "admin-users"
-        },
-        {
-          "url": "/super-admin/users/staff",
-          "name": "Staff Users",
-          "slug": "staff-users"
-        },
-        {
-          "url": "/super-admin/users/guests",
-          "name": "Guest Users",
-          "slug": "guest-users"
-        },
-        {
-          "url": "/super-admin/users/roles",
-          "name": "Manage Roles",
-          "slug": "manage-roles"
-        }
-      ]
-    },
-    {
-      "name": "Permissions",
-      "icon": "menu-icon icon-base ri ri-shield-user-line",
-      "slug": "permissions",
-      "submenu": [
-        {
-          "url": "/super-admin/permissions/all",
-          "name": "All Permissions",
-          "slug": "all-permissions"
-        },
-        {
-          "url": "/super-admin/permissions/role-permissions",
-          "name": "Role Permissions",
-          "slug": "role-permissions"
-        },
-        {
-          "url": "/super-admin/permissions/assign",
-          "name": "Assign Permissions",
-          "slug": "assign-permissions"
         }
       ]
     },

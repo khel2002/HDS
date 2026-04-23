@@ -3,6 +3,11 @@
 use Illuminate\Support\Facades\Route;
 
 // ─── Controllers ──────────────────────────────────────────────────────────────
+use App\Http\Controllers\Staff\{
+    StaffDashboardController,
+    StaffReservationController,
+    StaffRegistrationController
+};
 
 use App\Http\Controllers\FrontpageController;
 use App\Http\Controllers\PaymentController;
@@ -13,7 +18,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\authentications\{
     LoginBasic,
     RegisterBasic,
-    ForgotPasswordBasic
+    ForgotPasswordBasic,
 };
 
 use App\Http\Controllers\pages\{
@@ -40,7 +45,9 @@ use App\Http\Controllers\SuperAdmin\{
     BreakfastController,
     RegistrationController,
     WalkInReservationController,
-    CheckoutRequestController
+    CheckoutRequestController,
+    UserManagementController,
+    GuestController
 };
 
 
@@ -160,7 +167,52 @@ Route::middleware('auth')->group(function () {
             Route::get('/status',       [GuestCheckoutController::class, 'status'])->name('status');
         });
     });
+    // ══════════════════════════════════════════════════════════════════════════
+    // Staff PANEL
+    // ══════════════════════════════════════════════════════════════════════════
+    Route::middleware('staff')->prefix('staff')->name('staff.')->group(function () {
 
+    Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
+
+    // ── Reservations ──────────────────────────────────
+    Route::prefix('reservations')->name('reservations.')->group(function () {
+        Route::get('/all',   [StaffReservationController::class, 'index'])->name('index');
+        Route::get('/{id}',  [StaffReservationController::class, 'show'])->name('show');
+
+        // Cancel single room
+        Route::post('/{id}/cancel', [StaffReservationController::class, 'cancel'])->name('cancel');
+
+        // Cancel all rooms in a booking
+        Route::post('/booking/{paymentId}/cancel', [StaffReservationController::class, 'cancelBooking'])
+            ->name('booking.cancel');
+    });
+
+    // ── Registration / Check-in / Check-out ──────────────────────────────────
+    Route::prefix('registration')->name('registration.')->group(function () {
+
+        // All registrations (history)
+        Route::get('/history',  [RegistrationController::class, 'all'])->name('all');
+
+        // Active registrations
+        Route::get('/active',   [RegistrationController::class, 'checkOut'])->name('active');
+
+        // Check-in
+        Route::get('/check-in',  [RegistrationController::class, 'checkIn'])->name('check-in');
+        Route::post('/check-in/{reservation_id}/process',
+            [RegistrationController::class, 'processCheckIn']
+        )->name('process-check-in');
+
+        // Check-out
+        Route::get('/check-out', [RegistrationController::class, 'checkOut'])->name('check-out');
+        Route::post('/check-out/{registration_id}/process',
+            [RegistrationController::class, 'processCheckOut']
+        )->name('process-check-out');
+
+        // Show single registration
+        Route::get('/{registration_id}', [RegistrationController::class, 'show'])->name('show');
+    });
+
+});
 
     // ══════════════════════════════════════════════════════════════════════════
     // ADMIN PANEL
@@ -274,6 +326,22 @@ Route::middleware('auth')->group(function () {
             Route::get('/orders',                [BreakfastController::class, 'orders'])->name('orders');
             Route::patch('/orders/{id}/status',  [BreakfastController::class, 'updateOrderStatus'])->name('orders.status');
         });
+        Route::prefix('users')->name('users.')->group(function () {
+            Route::get('/all',             [UserManagementController::class, 'index'])->name('index');
+            Route::post('/',            [UserManagementController::class, 'store'])->name('store');
+            Route::get('/{id}',         [UserManagementController::class, 'show'])->name('show');
+            Route::put('/{id}',         [UserManagementController::class, 'update'])->name('update');
+            Route::post('/{id}/status', [UserManagementController::class, 'updateStatus'])->name('status');
+            Route::delete('/{id}',      [UserManagementController::class, 'destroy'])->name('destroy');
+        });
+        Route::prefix('guests')->name('guests.')->group(function () {
+            Route::get('/all',     [GuestController::class, 'all'])     ->name('all');
+            Route::get('/current', [GuestController::class, 'current']) ->name('current');
+            Route::get('/history', [GuestController::class, 'history']) ->name('history');
+        
+            Route::get   ('/{id}',        [GuestController::class, 'show'])         ->name('show');
+            Route::patch ('/{id}/status', [GuestController::class, 'updateStatus']) ->name('update-status');
+            Route::delete('/{id}',        [GuestController::class, 'destroy'])      ->name('destroy');
+        });
     });
-
-}); // end auth middleware
+});

@@ -142,12 +142,31 @@ class FrontpageController extends Controller
                         ]
                     ];
                 });
+                $amenities = DB::table('landing_amenities')
+                ->where('is_active', 1)
+                ->orderBy('sort_order')
+                ->get();
 
-            return view('frontpages.landingpage', compact('roomsFirst', 'roomsSecond', 'roomsMobFirst', 'roomsMobSecond'));
+            $why_items = DB::table('landing_why_items')
+                ->where('is_active', 1)
+                ->orderBy('sort_order')
+                ->get();
+
+            return view('frontpages.landingpage', compact(
+                'roomsFirst', 'roomsSecond',
+                'roomsMobFirst', 'roomsMobSecond',
+                'amenities', 'why_items'
+            ));
 
         } catch (\Exception $e) {
-            \Log::error('Error loading landing page: ' . $e->getMessage());
-            return view('frontpages.landingpage')->with('error', 'Unable to load rooms');
+          return view('frontpages.landingpage', [
+                'roomsFirst'    => collect(),
+                'roomsSecond'   => collect(),
+                'roomsMobFirst' => collect(),
+                'roomsMobSecond'=> collect(),
+                'amenities'     => collect(),
+                'why_items'     => collect(),
+            ])->with('error', 'Unable to load rooms');
         }
     }
 
