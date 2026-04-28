@@ -137,11 +137,6 @@
           "url": "/staff/breakfast/menu",
           "name": "Breakfast Menu",
           "slug": "breakfast-menu"
-        },
-        {
-          "url": "/staff/breakfast/pending",
-          "name": "Pending Orders",
-          "slug": "pending-breakfast"
         }
       ]
     },

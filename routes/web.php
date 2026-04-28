@@ -6,7 +6,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Staff\{
     StaffDashboardController,
     StaffReservationController,
-    StaffRegistrationController
+    StaffRegistrationController,
+    StaffGuestController,
+    StaffBreakfastController
+
 };
 
 use App\Http\Controllers\FrontpageController;
@@ -211,8 +214,24 @@ Route::middleware('auth')->group(function () {
         // Show single registration
         Route::get('/{registration_id}', [RegistrationController::class, 'show'])->name('show');
     });
+    
+    Route::prefix('guests')->name('guests.')->group(function () {
+        Route::get('/all',     [StaffGuestController::class, 'all'])          ->name('all');
+        Route::get('/current', [StaffGuestController::class, 'current'])      ->name('current');
+        Route::get('/history', [GuestController::class, 'history'])      ->name('history');
+        Route::get('/{id}',    [GuestController::class, 'show'])         ->name('show');
+        Route::patch('/{id}/status', [GuestController::class, 'updateStatus']) ->name('update-status');
+        });
+        Route::prefix('breakfast')->name('breakfast.')->group(function () {
+            Route::get('/menu',                        [StaffBreakfastController::class, 'menu'])->name('menu.index');
+            Route::patch('/menu/{id}/toggle',          [StaffBreakfastController::class, 'toggleAvailability'])->name('menu.toggle');
 
-});
+            // orders (already added previously)
+            Route::get('/orders',                      [StaffBreakfastController::class, 'index'])->name('orders.index');
+            Route::get('/orders/pending',              [StaffBreakfastController::class, 'pending'])->name('orders.pending');
+            Route::patch('/orders/{id}/status',        [StaffBreakfastController::class, 'updateOrderStatus'])->name('orders.status');
+        });
+    });
 
     // ══════════════════════════════════════════════════════════════════════════
     // ADMIN PANEL
