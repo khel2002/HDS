@@ -8,7 +8,8 @@ use App\Http\Controllers\Staff\{
     StaffReservationController,
     StaffRegistrationController,
     StaffGuestController,
-    StaffBreakfastController
+    StaffBreakfastController,
+    RoomServiceController as StaffRoomServiceController
 
 };
 
@@ -38,6 +39,7 @@ use App\Http\Controllers\Guest\RoomServiceController as GuestRoomServiceControll
 use App\Http\Controllers\admin\AdminDashboardController;
 use App\Http\Controllers\admin\accounts\AdminAccountManagementController;
 use App\Http\Controllers\admin\accounts\GuestAccountManagementController;
+use App\Http\Controllers\admin\ReservationController as AdminReservationController;
 
 use App\Http\Controllers\SuperAdmin\{
     SuperAdminDashboardController,
@@ -50,7 +52,8 @@ use App\Http\Controllers\SuperAdmin\{
     WalkInReservationController,
     CheckoutRequestController,
     UserManagementController,
-    GuestController
+    GuestController,
+    RoomServiceController as SuperAdminRoomServiceController
 };
 
 
@@ -222,7 +225,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}',    [GuestController::class, 'show'])         ->name('show');
         Route::patch('/{id}/status', [GuestController::class, 'updateStatus']) ->name('update-status');
         });
-        Route::prefix('breakfast')->name('breakfast.')->group(function () {
+    Route::prefix('breakfast')->name('breakfast.')->group(function () {
             Route::get('/menu',                        [StaffBreakfastController::class, 'menu'])->name('menu.index');
             Route::patch('/menu/{id}/toggle',          [StaffBreakfastController::class, 'toggleAvailability'])->name('menu.toggle');
 
@@ -230,6 +233,10 @@ Route::middleware('auth')->group(function () {
             Route::get('/orders',                      [StaffBreakfastController::class, 'index'])->name('orders.index');
             Route::get('/orders/pending',              [StaffBreakfastController::class, 'pending'])->name('orders.pending');
             Route::patch('/orders/{id}/status',        [StaffBreakfastController::class, 'updateOrderStatus'])->name('orders.status');
+        });
+        Route::prefix('room-service')->name('room-service.')->group(function () {
+            Route::get('/requests',               [StaffRoomServiceController::class, 'index'])->name('requests.index');
+            Route::patch('/requests/{id}/status', [StaffRoomServiceController::class, 'updateStatus'])->name('requests.status');
         });
     });
 
@@ -249,6 +256,18 @@ Route::middleware('auth')->group(function () {
             Route::post('/users/{id}/status', [AdminAccountManagementController::class, 'updateStatus'])->name('users.status');
             Route::post('/users/{id}/delete', [AdminAccountManagementController::class, 'destroy'])->name('users.destroy');
         });
+        Route::prefix('reservations')->name('reservations.')->group(function () {
+        Route::get('/walk-in',   [AdminReservationController::class, 'index'])->name('walkin');
+        Route::get('/all',          [AdminReservationController::class, 'index'])->name('index');
+        Route::get('/{id}',      [AdminReservationController::class, 'show'])->name('show');
+        Route::delete('/{id}',   [AdminReservationController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/approve', [AdminReservationController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject',  [AdminReservationController::class, 'reject'])->name('reject');
+        Route::post('/{id}/cancel',  [AdminReservationController::class, 'cancel'])->name('cancel');
+        Route::post('/booking/{paymentId}/approve', [AdminReservationController::class, 'approveBooking'])->name('booking.approve');
+        Route::post('/booking/{paymentId}/reject',  [AdminReservationController::class, 'rejectBooking'])->name('booking.reject');
+        Route::post('/booking/{paymentId}/cancel',  [AdminReservationController::class, 'cancelBooking'])->name('booking.cancel');
+    });
 
         // Guest Accounts
         Route::get('/guest-accounts', [GuestAccountManagementController::class, 'index'])->name('guest-management');
@@ -361,6 +380,10 @@ Route::middleware('auth')->group(function () {
             Route::get   ('/{id}',        [GuestController::class, 'show'])         ->name('show');
             Route::patch ('/{id}/status', [GuestController::class, 'updateStatus']) ->name('update-status');
             Route::delete('/{id}',        [GuestController::class, 'destroy'])      ->name('destroy');
+        });
+        Route::prefix('room-service')->name('room-service.')->group(function () {
+            Route::get('/requests',              [SuperAdminRoomServiceController::class, 'index'])->name('requests.index');
+            Route::patch('/requests/{id}/status',[SuperAdminRoomServiceController::class, 'updateStatus'])->name('requests.status');
         });
     });
 });

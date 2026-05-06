@@ -117,7 +117,7 @@
       "slug": "service-requests",
       "submenu": [
         {
-          "url": "/staff/services/all",
+       "url": "/staff/room-service/requests",
           "name": "All Requests",
           "slug": "all-service-requests"
         }

@@ -40,19 +40,9 @@
           "slug": "check-out"
         },
         {
-          "url": "/admin/registration/active",
-          "name": "Active Registrations",
-          "slug": "active-registrations"
-        },
-        {
           "url": "/admin/registration/all",
           "name": "All Registrations",
           "slug": "all-registrations"
-        },
-        {
-          "url": "/admin/registration/history",
-          "name": "Registration History",
-          "slug": "registration-history"
         }
       ]
     },
@@ -70,11 +60,6 @@
           "url": "/admin/guests/current",
           "name": "Current Guests",
           "slug": "current-guests"
-        },
-        {
-          "url": "/admin/guests/vip",
-          "name": "VIP Guests",
-          "slug": "vip-guests"
         },
         {
           "url": "/admin/guests/history",
@@ -95,22 +80,7 @@
           "url": "/admin/rooms/all",
           "name": "All Rooms",
           "slug": "all-rooms"
-        },
-        {
-          "url": "/admin/rooms/available",
-          "name": "Available",
-          "slug": "available-rooms"
-        },
-        {
-          "url": "/admin/rooms/occupied",
-          "name": "Occupied",
-          "slug": "occupied-rooms"
-        },
-        {
-          "url": "/admin/rooms/maintenance",
-          "name": "Maintenance",
-          "slug": "maintenance-rooms"
-        }
+        }  
       ]
     },
     {
@@ -122,11 +92,6 @@
           "url": "/admin/room-types/all",
           "name": "All Room Types",
           "slug": "all-room-types"
-        },
-        {
-          "url": "/admin/room-types/pricing",
-          "name": "Manage Pricing",
-          "slug": "room-type-pricing"
         }
       ]
     },
@@ -282,12 +247,6 @@
       ]
     },
     {
-      "url": "/admin/analytics",
-      "name": "Analytics Dashboard",
-      "icon": "menu-icon icon-base ri ri-bar-chart-box-line",
-      "slug": "analytics"
-    },
-    {
       "menuHeader": "User Management"
     },
     {
@@ -299,11 +258,6 @@
           "url": "/admin/account-management",
           "name": "All Users",
           "slug": "admin.accounts-management"
-        },
-        {
-          "url": "/admin/guest-accounts",
-          "name": "Guest Users",
-          "slug": "admin.guest-management"
         }
       ]
     },

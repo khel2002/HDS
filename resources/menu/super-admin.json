@@ -120,11 +120,11 @@
       "icon": "menu-icon icon-base ri ri-customer-service-2-line",
       "slug": "service-requests",
       "submenu": [
-        {
-          "url": "/super-admin/services/all",
-          "name": "All Requests",
-          "slug": "all-service-requests"
-        }
+      {
+      "url": "/super-admin/room-service/requests",
+      "name": "Room Service",
+      "slug": "room-service-requests"
+       }
       ]
     },
     {
